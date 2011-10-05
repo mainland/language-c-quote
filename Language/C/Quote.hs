@@ -1,0 +1,162 @@
+-- Copyright (c) 2010-2011
+--         The President and Fellows of Harvard College.
+--
+-- Redistribution and use in source and binary forms, with or without
+-- modification, are permitted provided that the following conditions
+-- are met:
+-- 1. Redistributions of source code must retain the above copyright
+--    notice, this list of conditions and the following disclaimer.
+-- 2. Redistributions in binary form must reproduce the above copyright
+--    notice, this list of conditions and the following disclaimer in the
+--    documentation and/or other materials provided with the distribution.
+-- 3. Neither the name of the University nor the names of its contributors
+--    may be used to endorse or promote products derived from this software
+--    without specific prior written permission.
+
+-- THIS SOFTWARE IS PROVIDED BY THE UNIVERSITY AND CONTRIBUTORS ``AS IS'' AND
+-- ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-- ARE DISCLAIMED.  IN NO EVENT SHALL THE UNIVERSITY OR CONTRIBUTORS BE LIABLE
+-- FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-- DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-- OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-- HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-- LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-- SUCH DAMAGE.
+
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  Language.C.Quote
+-- Copyright   :  (c) Harvard University 2010-2011
+-- License     :  BSD-style
+-- Maintainer  :  mainland@eecs.harvard.edu
+--
+-- There are three modules that provide quasiquoters, each for a different C
+-- variant. 'Language.C.Quote.C' parses C99, 'Language.C.Quote.GCC' parses C99
+-- plus GNU extensions, and 'Language.C.Quote.CUDA' parses C99 plus GNU and CUDA
+-- extensions. The quasiquoters generate Template Haskell expressions that use
+-- data constructors that must be in scope where the quasiquoted expression
+-- occurs. You will be safe if you add the following imports to any module using
+-- the quasiquoters provided by this package:
+--
+-- > import qualified Data.Loc
+-- > import qualified Data.Symbol
+-- > import qualified Language.C.Syntax
+--
+-- These modules may also be imported unqualified, of course. The quasioquoters
+-- also use some constructors defined in the standard Prelude, so if it is not
+-- imported by default, it must be imported qualified.
+--
+-- The following quasiquoters are defined:
+--
+-- [@cdecl@] Declaration, of type @'InitGroup'@.
+--
+-- [@cedecl@] External declarations (top-level declarations in a C file,
+-- including function definitions and declarations), of type @'Definition'@.
+--
+-- [@cenum@] Component of an @enum@ definition, of type @'CEnum'@.
+--
+-- [@cexp@] Expression, of type @'Exp'@.
+--
+-- [@cfun@] Function definition, of type @'Func'@.
+--
+-- [@cinit@] Initializer, of type @'Initializer'@.
+--
+-- [@cparam@] Declaration of a function parameter, of type @'Param'@.
+--
+-- [@csdecl@] Declaration of a struct member, of type @'FieldGroup'@.
+--
+-- [@cty@] A C type, of type @'Type'@.
+--
+-- [@cunit@] A compilation unit, of type @['Definition']@.
+--
+-- Antiquotations allow splicing in subterms during quotation. These subterms
+-- may bound to a Haskell variable or may be the value of a Haskell
+-- expression. Antiquotations appear in a quasiquotation in the form
+-- @$ANTI:VARID@, where @VARID@ is a Haskell variable identifier, or in the form
+-- @$ANTI:(EXP)@, where @EXP@ is a Haskell expressions (the parentheses must
+-- appear in this case). Additionally, @$VARID@ is shorthand for @$exp:VARID@
+-- and @$(EXP)@ is shorthand for @$exp:(EXP)@. The following antiquotations
+-- (ANTI) are supported:
+--
+-- [@id@] A C identifier. The argument must have type @'String'@.
+--
+-- [@int@] An @integer@ constant. The argument must be an instance of
+-- @'Integral'@.
+--
+-- [@uint@] An @unsigned integer@ constant. The argument must be an instance of
+-- @'Integral'@.
+--
+-- [@lint@] A @long integer@ constant. The argument must be an instance of
+-- @'Integral'@.
+--
+-- [@ulint@] An @unsigned long integer@ constant. The argument must be an
+-- instance of @'Integral'@.
+--
+-- [@float@] A @float@ constant. The argument must be an instance of
+-- @'Fractional'@.
+--
+-- [@double@] A @double@ constant. The argument must be an instance of
+-- @'Fractional'@.
+--
+-- [@long double@] A @long double@ constant. The argument must be an instance
+-- of @'Fractional'@.
+--
+-- [@char@] A @char@ constant. The argument must have type @'Char'@.
+--
+-- [@string@] A string (@char*@) constant. The argument must have type
+-- @'String'@.
+--
+-- [@exp@] A C expression. The argument must be an instance of @'ToExp'@.
+--
+-- [@func@] A function definition. The argument must have type @'Func'@.
+--
+-- [@args@] A list of function arguments. The argument must have type @['Exp']@.
+--
+-- [@decl@] A declaration. The argument must have type @'InitGroup'@.
+--
+-- [@decls@] A list of declarations. The argument must have type
+-- @['InitGroup']@.
+--
+-- [@sdecl@] A struct member declaration. The argument must have type
+-- @'FieldGroup'@.
+--
+-- [@sdecls@] A list of struct member declarations. The argument must have type
+-- @['FieldGroup']@.
+--
+-- [@enum@] An enum member. The argument must have type @'CEnum'@.
+--
+-- [@enums@] An list of enum members. The argument must have type @['CEnum']@.
+--
+-- [@esc@] An arbitrary top-level C "definition," such as an @#include@ or a
+-- @#define@. The argument must have type @'String'@.
+--
+-- [@edecl@] An external definition. The argument must have type @'Definition'@.
+--
+-- [@edecls@] An list of external definitions. The argument must have type
+-- @['Definition']@.
+--
+-- [@item@] A statement block item. The argument must have type @'BlockItem'@.
+--
+-- [@items@] A list of statement block item. The argument must have type
+-- @['BlockItem']@.
+--
+-- [@stm@] A statement. The argument must have type @'Stm'@.
+--
+-- [@stms@] A list statements. The argument must have type @['Stm']@.
+--
+-- [@ty@] A C type. The argument must have type @'Type'@.
+--
+-- [@spec@] A declaration specifier. The argument must have type @'DeclSpec'@.
+--
+-- [@param@] A function parameter. The argument must have type @'Param'@.
+--
+-- [@params@] A list of function parameters. The argument must have type
+-- @['Param']@.
+--------------------------------------------------------------------------------
+
+module Language.C.Quote where
+
+import Language.C.Quote.Base
+import Language.C.Syntax
