@@ -1,4 +1,4 @@
--- Copyright (c) 2006-2010
+-- Copyright (c) 2006-2011
 --         The President and Fellows of Harvard College.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Language.C.Parser.Monad
--- Copyright   :  (c) Harvard University 2006-2010
+-- Copyright   :  (c) Harvard University 2006-2011
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 --

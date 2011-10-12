@@ -4,7 +4,7 @@ import Control.Monad (mapM_,
 import qualified Data.ByteString.Char8 as B
 import Data.Loc
 import Data.Symbol
-import IO
+import System.IO
 import System.Environment (getArgs)
 import Text.PrettyPrint.Mainland
 

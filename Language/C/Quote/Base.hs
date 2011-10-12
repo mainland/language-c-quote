@@ -530,7 +530,7 @@ dataToQa mkCon mkLit appCon antiQ t =
           constr = toConstr t
 
           con :: k
-          con = mkCon (mkName' mod occ)
+          con = mkCon (mkConName mod occ)
             where
               mod :: String
               mod = (tyconModule . dataTypeName . dataTypeOf) t
@@ -538,21 +538,21 @@ dataToQa mkCon mkLit appCon antiQ t =
               occ :: String
               occ = showConstr constr
 
-              mkName' :: String -> String -> Name
-              mkName' "Prelude" "(:)" = Name (mkOccName ":") NameS
-              mkName' "Prelude" "[]"  = Name (mkOccName "[]") NameS
-              mkName' "Prelude" "()"  = Name (mkOccName "()") NameS
+              mkConName :: String -> String -> Name
+              mkConName "Prelude" "(:)" = Name (mkOccName ":") NameS
+              mkConName "Prelude" "[]"  = Name (mkOccName "[]") NameS
+              mkConName "Prelude" "()"  = Name (mkOccName "()") NameS
 
-              mkName' "Prelude" s@('(' : ',' : rest) = go rest
+              mkConName "Prelude" s@('(' : ',' : rest) = go rest
                 where
                   go :: String -> Name
                   go (',' : rest) = go rest
                   go ")"          = Name (mkOccName s) NameS
                   go _            = Name (mkOccName occ) (NameQ (mkModName mod))
 
-              mkName' "GHC.Real" ":%" = mkNameG_d "base" "GHC.Real" ":%"
+              mkConName "GHC.Real" ":%" = mkNameG_d "base" "GHC.Real" ":%"
 
-              mkName' mod occ = Name (mkOccName occ) (NameQ (mkModName mod))
+              mkConName mod occ = Name (mkOccName occ) (NameQ (mkModName mod))
 
           conArgs :: [Q q]
           conArgs = gmapQ (dataToQa mkCon mkLit appCon antiQ) t
