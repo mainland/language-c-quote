@@ -82,10 +82,12 @@ module Language.C.Parser.Monad (
 
     gccExts,
     cudaExts,
+    openCLExts,
 
     useExts,
     useGccExts,
-    useCUDAExts
+    useCUDAExts,
+    useOpenCLExts
   ) where
 
 import Control.Monad.Exception
@@ -306,8 +308,14 @@ gccExts = (bit . fromEnum) Gcc
 cudaExts :: ExtensionsInt
 cudaExts = (bit . fromEnum) CUDA
 
+openClExts :: ExtensionsInt
+openCLExts = (bit . fromEnum) CUDA
+
 useGccExts :: P Bool
 useGccExts = useExts gccExts
 
 useCUDAExts :: P Bool
 useCUDAExts = useExts cudaExts
+
+useOpenCLExts :: P Bool
+useOpenCLExts = useExts cudaExts
