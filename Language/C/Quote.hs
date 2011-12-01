@@ -44,7 +44,7 @@
 -- > import qualified Data.Symbol
 -- > import qualified Language.C.Syntax
 --
--- These modules may also be imported unqualified, of course. The quasioquoters
+-- These modules may also be imported unqualified, of course. The quasiquoters
 -- also use some constructors defined in the standard Prelude, so if it is not
 -- imported by default, it must be imported qualified.
 --
