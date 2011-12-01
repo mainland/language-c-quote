@@ -172,6 +172,21 @@ import qualified Language.C.Syntax as C
  '__shared__'    { L _ T.Tshared }
  '__noinline__'  { L _ T.Tnoinline }
 
+ 'private'      { L _ T.TCLPrivate }
+ '__private'    { L _ T.TCLPrivate }
+ 'local'        { L _ T.TCLLocal }
+ '__local'      { L _ T.TCLLocal }
+ 'global'       { L _ T.TCLGlobal }
+ '__global'     { L _ T.TCLGlobal }
+ 'constant'     { L _ T.TCLConstant }
+ '__constant'   { L _ T.TCLConstant }
+ 'read_only'    { L _ T.TCLReadOnly }
+ '__read_only'  { L _ T.TCLReadOnly }
+ 'write_only'   { L _ T.TCLWriteOnly }
+ '__write_only' { L _ T.TCLWriteOnly }
+ 'kernel'       { L _ T.TCLKernel }
+ '__kernel'     { L _ T.TCLKernel }
+
  'typename'       { L _ T.Ttypename }
 
  ANTI_ID          { L _ (T.Tanti_id _) }
@@ -948,6 +963,22 @@ type_qualifier :
   | '__constant__' { TSconstant (locOf $1) }
   | '__shared__'   { TSshared (locOf $1) }
   | '__noinline__' { TSnoinline (locOf $1) }
+
+  {- Extension: OpenCL -}
+  | 'private'   { TSCLPrivate (locOf $1) }
+  | '__private'   { TSCLPrivate (locOf $1) }
+  | 'local'   { TSCLLocal (locOf $1) }
+  | '__local'   { TSCLLocal (locOf $1) }
+  | 'global'   { TSCLGlobal (locOf $1) }
+  | '__global'   { TSCLGlobal (locOf $1) }
+  | 'constant'   { TSCLConstant (locOf $1) }
+  | '__constant'   { TSCLConstant (locOf $1) }
+  | 'read_only'   { TSCLReadOnly (locOf $1) }
+  | '__read_only'   { TSCLReadOnly (locOf $1) }
+  | 'write_only'   { TSCLWriteOnly (locOf $1) }
+  | '__write_only'   { TSCLWriteOnly (locOf $1) }
+  | 'kernel'   { TSCLKernel (locOf $1) }
+  | '__kernel'   { TSCLKernel (locOf $1) }
 
 -- Consider the following C program:
 --
@@ -1762,6 +1793,16 @@ data TySpec = TSauto !SrcLoc
             | TSshared !SrcLoc
             | TSnoinline !SrcLoc
 
+            -- OpenCL
+            | TSCLPrivate !SrcLoc
+            | TSCLLocal !SrcLoc
+            | TSCLGlobal !SrcLoc
+            | TSCLConstant !SrcLoc
+            | TSCLReadOnly !SrcLoc
+            | TSCLWriteOnly !SrcLoc
+            | TSCLKernel !SrcLoc
+
+
 instance Located DeclTySpec where
     getLoc (DeclTySpec _ loc)      = getLoc loc
     getLoc (AntiDeclTySpec _ loc)  = getLoc loc
@@ -1806,6 +1847,14 @@ instance Located TySpec where
     getLoc (TSconstant loc)      = getLoc loc
     getLoc (TSshared loc)        = getLoc loc
     getLoc (TSnoinline loc)      = getLoc loc
+
+    getLoc (TSCLPrivate loc)     = getLoc loc
+    getLoc (TSCLLocal loc)       = getLoc loc
+    getLoc (TSCLGlobal loc)      = getLoc loc
+    getLoc (TSCLConstant loc)    = getLoc loc
+    getLoc (TSCLReadOnly loc)    = getLoc loc
+    getLoc (TSCLWriteOnly loc)   = getLoc loc
+    getLoc (TSCLKernel loc)      = getLoc loc
 
 instance Pretty TySpec where
     ppr (TSauto _)       = text "auto"
@@ -1853,6 +1902,14 @@ instance Pretty TySpec where
     ppr (TSshared _)    = text "__shared__"
     ppr (TSnoinline _)  = text "__noinline__"
 
+    ppr (TSCLPrivate _)     = text "private"
+    ppr (TSCLLocal _)       = text "local"
+    ppr (TSCLGlobal _)      = text "global"
+    ppr (TSCLConstant _)    = text "constant"
+    ppr (TSCLReadOnly _)    = text "read_only"
+    ppr (TSCLWriteOnly _)   = text "write_only"
+    ppr (TSCLKernel _)      = text "kernel"
+
 isStorage :: TySpec -> Bool
 isStorage (TSauto _)      = True
 isStorage (TSregister _)  = True
@@ -1875,33 +1932,47 @@ mkStorage specs = map mk (filter isStorage specs)
       mk _                 = error "internal error in mkStorage"
 
 isTypeQual :: TySpec -> Bool
-isTypeQual (TSconst _)     = True
-isTypeQual (TSvolatile _)  = True
-isTypeQual (TSinline _)    = True
-isTypeQual (TSrestrict _)  = True
-isTypeQual (TSdevice _)    = True
-isTypeQual (TSglobal _)    = True
-isTypeQual (TShost _)      = True
-isTypeQual (TSconstant _)  = True
-isTypeQual (TSshared _)    = True
-isTypeQual (TSnoinline _)  = True
-isTypeQual _               = False
+isTypeQual (TSconst _)       = True
+isTypeQual (TSvolatile _)    = True
+isTypeQual (TSinline _)      = True
+isTypeQual (TSrestrict _)    = True
+isTypeQual (TSdevice _)      = True
+isTypeQual (TSglobal _)      = True
+isTypeQual (TShost _)        = True
+isTypeQual (TSconstant _)    = True
+isTypeQual (TSshared _)      = True
+isTypeQual (TSnoinline _)    = True
+isTypeQual (TSCLPrivate _)   = True
+isTypeQual (TSCLLocal _)     = True
+isTypeQual (TSCLGlobal _)    = True
+isTypeQual (TSCLConstant _)  = True
+isTypeQual (TSCLReadOnly _)  = True
+isTypeQual (TSCLWriteOnly _) = True
+isTypeQual (TSCLKernel _)    = True
+isTypeQual _                 = False
 
 mkTypeQuals :: [TySpec] -> [TypeQual]
 mkTypeQuals specs = map mk (filter isTypeQual specs)
     where
       mk :: TySpec -> TypeQual
-      mk (TSconst loc)     = Tconst loc
-      mk (TSvolatile loc)  = Tvolatile loc
-      mk (TSinline loc)    = Tinline loc
-      mk (TSrestrict loc)  = Trestrict loc
-      mk (TSdevice loc)    = Tdevice loc
-      mk (TSglobal loc)    = Tglobal loc
-      mk (TShost loc)      = Thost loc
-      mk (TSconstant loc)  = Tconstant loc
-      mk (TSshared loc)    = Tshared loc
-      mk (TSnoinline loc)  = Tnoinline loc
-      mk _                 = error "internal error in mkTypeQual"
+      mk (TSconst loc)       = Tconst loc
+      mk (TSvolatile loc)    = Tvolatile loc
+      mk (TSinline loc)      = Tinline loc
+      mk (TSrestrict loc)    = Trestrict loc
+      mk (TSdevice loc)      = Tdevice loc
+      mk (TSglobal loc)      = Tglobal loc
+      mk (TShost loc)        = Thost loc
+      mk (TSconstant loc)    = Tconstant loc
+      mk (TSshared loc)      = Tshared loc
+      mk (TSnoinline loc)    = Tnoinline loc
+      mk (TSCLPrivate loc)   = TCLPrivate loc
+      mk (TSCLLocal loc)     = TCLLocal loc
+      mk (TSCLGlobal loc)    = TCLGlobal loc
+      mk (TSCLConstant loc)  = TCLConstant loc
+      mk (TSCLReadOnly loc)  = TCLReadOnly loc
+      mk (TSCLWriteOnly loc) = TCLWriteOnly loc
+      mk (TSCLKernel loc)    = TCLKernel loc
+      mk _                   = error "internal error in mkTypeQual"
 
 isSign :: TySpec -> Bool
 isSign (TSsigned _)    = True

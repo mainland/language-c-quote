@@ -168,6 +168,15 @@ data Token = Teof
            | Tshared
            | Tnoinline
 
+           -- OpenCL
+           | TCLPrivate
+           | TCLLocal
+           | TCLGlobal
+           | TCLConstant
+           | TCLReadOnly
+           | TCLWriteOnly
+           | TCLKernel
+           
            -- Antiquoting
            | Ttypename
 
@@ -389,7 +398,22 @@ keywords = [("auto",       Tauto,      Nothing),
             ("__host__",     Thost,     Just [CUDA]),
             ("__constant__", Tconstant, Just [CUDA]),
             ("__shared__",   Tshared,   Just [CUDA]),
-            ("__noinline__", Tnoinline, Just [CUDA])
+            ("__noinline__", Tnoinline, Just [CUDA]),
+            
+            ("private",      TCLPrivate,    Just [OpenCL]),
+            ("__private",    TCLPrivate,    Just [OpenCL]),
+            ("local",        TCLLocal,      Just [OpenCL]),
+            ("__local",      TCLLocal,      Just [OpenCL]),
+            ("global",       TCLGlobal,     Just [OpenCL]),
+            ("__global",     TCLGlobal,     Just [OpenCL]),
+            ("constant",     TCLConstant,   Just [OpenCL]),
+            ("__constant",   TCLConstant,   Just [OpenCL]),
+            ("read_only",    TCLReadOnly,   Just [OpenCL]),
+            ("__read_only",  TCLReadOnly,   Just [OpenCL]),
+            ("write_only",   TCLWriteOnly,  Just [OpenCL]),
+            ("__write_only", TCLWriteOnly,  Just [OpenCL]),
+            ("kernel",       TCLKernel,     Just [OpenCL]),
+            ("__kernel",     TCLKernel,     Just [OpenCL])
            ]
 
 type ExtensionsInt = Word32

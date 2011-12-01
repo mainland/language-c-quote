@@ -46,6 +46,7 @@ import Data.Loc
 
 data Extensions = Gcc
                 | CUDA
+                | OpenCL
   deriving (Eq, Ord, Enum, Show)
 
 data Id = Id String !SrcLoc
@@ -74,6 +75,15 @@ data TypeQual = Tconst !SrcLoc
               | Tconstant !SrcLoc
               | Tshared !SrcLoc
               | Tnoinline !SrcLoc
+
+              -- OpenCL
+              | TCLPrivate !SrcLoc
+              | TCLLocal !SrcLoc
+              | TCLGlobal !SrcLoc
+              | TCLConstant !SrcLoc
+              | TCLReadOnly !SrcLoc
+              | TCLWriteOnly !SrcLoc
+              | TCLKernel !SrcLoc
     deriving (Eq, Ord, Data, Typeable)
 
 data Sign = Tsigned !SrcLoc
@@ -350,18 +360,26 @@ instance Located Storage where
     getLoc (Ttypedef loc)   = getLoc loc
 
 instance Located TypeQual where
-    getLoc (Tconst loc)     = getLoc loc
-    getLoc (Tvolatile loc)  = getLoc loc
-    getLoc (Tinline loc)    = getLoc loc
+    getLoc (Tconst loc)       = getLoc loc
+    getLoc (Tvolatile loc)    = getLoc loc
+    getLoc (Tinline loc)      = getLoc loc
 
-    getLoc (Trestrict loc)  = getLoc loc
+    getLoc (Trestrict loc)    = getLoc loc
 
-    getLoc (Tdevice loc)    = getLoc loc
-    getLoc (Tglobal loc)    = getLoc loc
-    getLoc (Thost loc)      = getLoc loc
-    getLoc (Tconstant loc)  = getLoc loc
-    getLoc (Tshared loc)    = getLoc loc
-    getLoc (Tnoinline loc)  = getLoc loc
+    getLoc (Tdevice loc)      = getLoc loc
+    getLoc (Tglobal loc)      = getLoc loc
+    getLoc (Thost loc)        = getLoc loc
+    getLoc (Tconstant loc)    = getLoc loc
+    getLoc (Tshared loc)      = getLoc loc
+    getLoc (Tnoinline loc)    = getLoc loc
+
+    getLoc (TCLPrivate loc)   = getLoc loc
+    getLoc (TCLLocal loc)     = getLoc loc
+    getLoc (TCLGlobal loc)    = getLoc loc
+    getLoc (TCLConstant loc)  = getLoc loc
+    getLoc (TCLReadOnly loc)  = getLoc loc
+    getLoc (TCLWriteOnly loc) = getLoc loc
+    getLoc (TCLKernel loc)    = getLoc loc
 
 instance Located Sign where
     getLoc (Tsigned loc)    = getLoc loc
