@@ -74,11 +74,13 @@
 -- Antiquotations allow splicing in subterms during quotation. These subterms
 -- may bound to a Haskell variable or may be the value of a Haskell
 -- expression. Antiquotations appear in a quasiquotation in the form
--- @$ANTI:VARID@, where @VARID@ is a Haskell variable identifier, or in the form
--- @$ANTI:(EXP)@, where @EXP@ is a Haskell expressions (the parentheses must
--- appear in this case). Additionally, @$VARID@ is shorthand for @$exp:VARID@
--- and @$(EXP)@ is shorthand for @$exp:(EXP)@. The following antiquotations
--- (ANTI) are supported:
+-- @$ANTI:VARID@, where @ANTI@ is a valid antiquote specifier and @VARID@ is a
+-- Haskell variable identifier, or in the form @$ANTI:(EXP)@, where @EXP@ is a
+-- Haskell expressions (the parentheses must appear in this case). The Haskell
+-- expression may itself contain a quasiquote, but in that case the final @|]@
+-- must be escaped as @\|\]@. Additionally, @$VARID@ is shorthand for
+-- @$exp:VARID@ and @$(EXP)@ is shorthand for @$exp:(EXP)@, i.e., @exp@ is the
+-- default antiquote specifier. Valid antiquote specifiers are:
 --
 -- [@id@] A C identifier. The argument must have type @'String'@.
 --

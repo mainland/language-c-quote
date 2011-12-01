@@ -298,9 +298,14 @@ lexAnti antiTok pos buf len = do
         case maybe_c of
           Nothing ->               return (reverse s)
           Just '(' ->              lexExpression (depth+1) ('(' : s)
-          Just ')' | depth == 0 -> return (reverse s)
+          Just ')' | depth == 0 -> return (unescape (reverse s))
                    | otherwise ->  lexExpression (depth-1) (')' : s)
           Just c ->                lexExpression depth (c : s)
+      where
+        unescape :: String -> String
+        unescape ('\\':'|':'\\':']':s)  = '|' : ']' : unescape s
+        unescape (c:s)                  = c : unescape s
+        unescape []                     = []
 
     isIdStartChar :: Char -> Bool
     isIdStartChar '_' = True
