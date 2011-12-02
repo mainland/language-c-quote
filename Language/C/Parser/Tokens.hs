@@ -1,4 +1,4 @@
--- Copyright (c) 2006-2010
+-- Copyright (c) 2006-2011
 --         The President and Fellows of Harvard College.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Language.C.Parser.Tokens
--- Copyright   :  (c) Harvard University 2006-2010
+-- Copyright   :  (c) Harvard University 2006-2011
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 --
@@ -159,14 +159,23 @@ data Token = Teof
            | Ttypeof
 
            -- CUDA
-           | T3lt
-           | T3gt
-           | Tdevice
-           | Tglobal
-           | Thost
-           | Tconstant
-           | Tshared
-           | Tnoinline
+           | TCUDA3lt
+           | TCUDA3gt
+           | TCUDAdevice
+           | TCUDAglobal
+           | TCUDAhost
+           | TCUDAconstant
+           | TCUDAshared
+           | TCUDAnoinline
+
+           -- OpenCL
+           | TCLprivate
+           | TCLlocal
+           | TCLglobal
+           | TCLconstant
+           | TCLreadonly
+           | TCLwriteonly
+           | TCLkernel
 
            -- Antiquoting
            | Ttypename
@@ -319,12 +328,23 @@ tokenStrings = [(Tlparen,     "("),
                 --
                 -- CUDA extensions
                 --
-                (Tdevice,   "__device__"),
-                (Tglobal,   "__global__"),
-                (Thost,     "__host__"),
-                (Tconstant, "__constant__"),
-                (Tshared,   "__shared__"),
-                (Tnoinline, "__noinline__")
+                (TCUDAdevice,   "__device__"),
+                (TCUDAglobal,   "__global__"),
+                (TCUDAhost,     "__host__"),
+                (TCUDAconstant, "__constant__"),
+                (TCUDAshared,   "__shared__"),
+                (TCUDAnoinline, "__noinline__"),
+
+                --
+                -- OpenCL extensions
+                --
+                (TCLprivate,   "__private"),
+                (TCLlocal,     "__local"),
+                (TCLglobal,    "__global"),
+                (TCLconstant,  "__constant"),
+                (TCLreadonly,  "read_only"),
+                (TCLwriteonly, "write_only"),
+                (TCLkernel,    "__kernel")
                 ]
 
 keywords :: [(String,      Token,      Maybe [Extensions])]
@@ -384,12 +404,27 @@ keywords = [("auto",       Tauto,      Nothing),
             ("__volatile",        Tvolatile,        Just [Gcc]),
             ("__volatile__",      Tvolatile,        Just [Gcc]),
 
-            ("__device__",   Tdevice,   Just [CUDA]),
-            ("__global__",   Tglobal,   Just [CUDA]),
-            ("__host__",     Thost,     Just [CUDA]),
-            ("__constant__", Tconstant, Just [CUDA]),
-            ("__shared__",   Tshared,   Just [CUDA]),
-            ("__noinline__", Tnoinline, Just [CUDA])
+            ("__device__",   TCUDAdevice,   Just [CUDA]),
+            ("__global__",   TCUDAglobal,   Just [CUDA]),
+            ("__host__",     TCUDAhost,     Just [CUDA]),
+            ("__constant__", TCUDAconstant, Just [CUDA]),
+            ("__shared__",   TCUDAshared,   Just [CUDA]),
+            ("__noinline__", TCUDAnoinline, Just [CUDA]),
+
+            ("private",      TCLprivate,   Just [OpenCL]),
+            ("__private",    TCLprivate,   Just [OpenCL]),
+            ("local",        TCLlocal,     Just [OpenCL]),
+            ("__local",      TCLlocal,     Just [OpenCL]),
+            ("global",       TCLglobal,    Just [OpenCL]),
+            ("__global",     TCLglobal,    Just [OpenCL]),
+            ("constant",     TCLconstant,  Just [OpenCL]),
+            ("__constant",   TCLconstant,  Just [OpenCL]),
+            ("read_only",    TCLreadonly,  Just [OpenCL]),
+            ("__read_only",  TCLreadonly,  Just [OpenCL]),
+            ("write_only",   TCLwriteonly, Just [OpenCL]),
+            ("__write_only", TCLwriteonly, Just [OpenCL]),
+            ("kernel",       TCLkernel,    Just [OpenCL]),
+            ("__kernel",     TCLkernel,    Just [OpenCL])
            ]
 
 type ExtensionsInt = Word32

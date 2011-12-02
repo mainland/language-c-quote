@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleInstances #-}
 
--- Copyright (c) 2006-2010
+-- Copyright (c) 2006-2011
 --         The President and Fellows of Harvard College.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Language.C.Pretty
--- Copyright   :  (c) Harvard University 2006-2010
+-- Copyright   :  (c) Harvard University 2006-2011
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 --
@@ -133,18 +133,26 @@ instance Pretty Storage where
     ppr (Ttypedef _)   = text "typedef"
 
 instance Pretty TypeQual where
-    ppr (Tconst _)     = text "const"
-    ppr (Tvolatile _)  = text "volatile"
-    ppr (Tinline _)    = text "inline"
+    ppr (Tconst _)        = text "const"
+    ppr (Tvolatile _)     = text "volatile"
+    ppr (Tinline _)       = text "inline"
 
-    ppr (Trestrict _)  = text "__restrict"
+    ppr (Trestrict _)     = text "__restrict"
 
-    ppr (Tdevice _)    = text "__device__"
-    ppr (Tglobal _)    = text "__global__"
-    ppr (Thost _)      = text "__host__"
-    ppr (Tconstant _)  = text "__constant__"
-    ppr (Tshared _)    = text "__shared__"
-    ppr (Tnoinline _)  = text "__noinline__"
+    ppr (TCUDAdevice _)   = text "__device__"
+    ppr (TCUDAglobal _)   = text "__global__"
+    ppr (TCUDAhost _)     = text "__host__"
+    ppr (TCUDAconstant _) = text "__constant__"
+    ppr (TCUDAshared _)   = text "__shared__"
+    ppr (TCUDAnoinline _) = text "__noinline__"
+
+    ppr (TCLprivate _)    = text "__private"
+    ppr (TCLlocal _)      = text "__local"
+    ppr (TCLglobal _)     = text "__global"
+    ppr (TCLconstant _)   = text "__constant"
+    ppr (TCLreadonly _)   = text "read_only"
+    ppr (TCLwriteonly _)  = text "write_only"
+    ppr (TCLkernel _)     = text "__kernel"
 
 instance Pretty Sign where
     ppr (Tsigned _)    = text "signed"

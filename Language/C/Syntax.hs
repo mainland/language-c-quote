@@ -1,4 +1,4 @@
--- Copyright (c) 2006-2010
+-- Copyright (c) 2006-2011
 --         The President and Fellows of Harvard College.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Language.C.Syntax
--- Copyright   :  (c) Harvard University 2006-2010
+-- Copyright   :  (c) Harvard University 2006-2011
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 --
@@ -46,6 +46,7 @@ import Data.Loc
 
 data Extensions = Gcc
                 | CUDA
+                | OpenCL
   deriving (Eq, Ord, Enum, Show)
 
 data Id = Id String !SrcLoc
@@ -68,12 +69,21 @@ data TypeQual = Tconst !SrcLoc
               | Trestrict !SrcLoc
 
               -- CUDA
-              | Tdevice !SrcLoc
-              | Tglobal !SrcLoc
-              | Thost !SrcLoc
-              | Tconstant !SrcLoc
-              | Tshared !SrcLoc
-              | Tnoinline !SrcLoc
+              | TCUDAdevice !SrcLoc
+              | TCUDAglobal !SrcLoc
+              | TCUDAhost !SrcLoc
+              | TCUDAconstant !SrcLoc
+              | TCUDAshared !SrcLoc
+              | TCUDAnoinline !SrcLoc
+
+              -- OpenCL
+              | TCLprivate !SrcLoc
+              | TCLlocal !SrcLoc
+              | TCLglobal !SrcLoc
+              | TCLconstant !SrcLoc
+              | TCLreadonly !SrcLoc
+              | TCLwriteonly !SrcLoc
+              | TCLkernel !SrcLoc
     deriving (Eq, Ord, Data, Typeable)
 
 data Sign = Tsigned !SrcLoc
@@ -356,12 +366,20 @@ instance Located TypeQual where
 
     getLoc (Trestrict loc)  = getLoc loc
 
-    getLoc (Tdevice loc)    = getLoc loc
-    getLoc (Tglobal loc)    = getLoc loc
-    getLoc (Thost loc)      = getLoc loc
-    getLoc (Tconstant loc)  = getLoc loc
-    getLoc (Tshared loc)    = getLoc loc
-    getLoc (Tnoinline loc)  = getLoc loc
+    getLoc (TCUDAdevice loc)    = getLoc loc
+    getLoc (TCUDAglobal loc)    = getLoc loc
+    getLoc (TCUDAhost loc)      = getLoc loc
+    getLoc (TCUDAconstant loc)  = getLoc loc
+    getLoc (TCUDAshared loc)    = getLoc loc
+    getLoc (TCUDAnoinline loc)  = getLoc loc
+
+    getLoc (TCLprivate loc)   = getLoc loc
+    getLoc (TCLlocal loc)     = getLoc loc
+    getLoc (TCLglobal loc)    = getLoc loc
+    getLoc (TCLconstant loc)  = getLoc loc
+    getLoc (TCLreadonly loc)  = getLoc loc
+    getLoc (TCLwriteonly loc) = getLoc loc
+    getLoc (TCLkernel loc)    = getLoc loc
 
 instance Located Sign where
     getLoc (Tsigned loc)    = getLoc loc

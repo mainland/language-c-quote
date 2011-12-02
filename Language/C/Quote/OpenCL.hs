@@ -27,14 +27,14 @@
 
 --------------------------------------------------------------------------------
 -- |
--- Module      :  Language.C.Quote.CUDA
+-- Module      :  Language.C.Quote.OpenCL
 -- Copyright   :  (c) Harvard University 2006-2011
 -- License     :  BSD-style
--- Maintainer  :  mainland@eecs.harvard.edu
+-- Maintainer  :  Martin Dybdal <dybber@dybber.dk>
 --
 --------------------------------------------------------------------------------
 
-module Language.C.Quote.CUDA (
+module Language.C.Quote.OpenCL (
     ToExp(..),
     cexp,
     cedecl,
@@ -54,18 +54,19 @@ import qualified Language.C.Syntax as C
 import Language.C.Quote.Base (ToExp(..), quasiquote)
 
 exts :: [C.Extensions]
-exts = [C.CUDA]
+exts = [C.OpenCL]
+
 
 typenames :: [String]
 typenames =
-  concatMap (typeN 4) ["char", "uchar", "short", "ushort",
-                       "int",  "uint",  "long",  "ulong",
-                       "float"] ++
-  concatMap (typeN 2) ["longlong", "double"] ++
-  ["dim3"]
+    concatMap typeN
+    ["char", "uchar", "short", "ushort", "int", "uint",
+     "long" , "ulong", "float", "double", "bool", "half", "quad"] ++
+    ["uchar", "ushort", "uint", "ulong",
+    "half", "quad", "image2d_t", "image3d_t", "sampler_t", "event_t"]
 
-typeN :: Int -> String -> [String]
-typeN k typename = [typename ++ show n | n <- [1..k]]
+typeN :: String -> [String]
+typeN typename = [typename ++ show n | n <- [2, 3, 4, 8, 16]]
 
 cdecl  = quasiquote exts typenames P.parseDecl
 cedecl = quasiquote exts typenames P.parseEdecl

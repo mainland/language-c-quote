@@ -209,10 +209,10 @@ c :-
  ">>=" { token Trsh_assign }
 
  "<<<" / { ifExtension cudaExts }
-         { token T3lt }
+         { token TCUDA3lt }
 
  ">>>" / { ifExtension cudaExts }
-         { token T3gt }
+         { token TCUDA3gt }
 }
 
 {

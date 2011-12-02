@@ -1,5 +1,5 @@
 name:          language-c-quote
-version:       0.3.0.1
+version:       0.3.1.0
 cabal-version: >= 1.10
 license:       BSD3
 license-file:  LICENSE
@@ -9,11 +9,11 @@ maintainer:    mainland@eecs.harvard.edu
 stability:     alpha
 homepage:      http://www.eecs.harvard.edu/~mainland/
 category:      Language
-synopsis:      C/CUDA quasiquoting library.
+synopsis:      C/CUDA/OpenCL quasiquoting library.
 
 description:
   This package provides a general parser for the C language, including most GCC
-  extensions and some CUDA extensions.
+  extensions and some CUDA and OpenCL extensions.
 
 build-type: Custom
 
@@ -49,6 +49,7 @@ library
     Language.C.Quote.C
     Language.C.Quote.CUDA
     Language.C.Quote.GCC
+    Language.C.Quote.OpenCL
     Language.C.Smart
     Language.C.Syntax
 

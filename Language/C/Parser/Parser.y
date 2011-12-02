@@ -163,14 +163,29 @@ import qualified Language.C.Syntax as C
  '__builtin_va_list' { L _ T.Tbuiltin_va_list }
  '__typeof__'        { L _ T.Ttypeof }
 
- '<<<'           { L _ T.T3lt }
- '>>>'           { L _ T.T3gt }
- '__device__'    { L _ T.Tdevice }
- '__global__'    { L _ T.Tglobal }
- '__host__'      { L _ T.Thost }
- '__constant__'  { L _ T.Tconstant }
- '__shared__'    { L _ T.Tshared }
- '__noinline__'  { L _ T.Tnoinline }
+ '<<<'           { L _ T.TCUDA3lt }
+ '>>>'           { L _ T.TCUDA3gt }
+ '__device__'    { L _ T.TCUDAdevice }
+ '__global__'    { L _ T.TCUDAglobal }
+ '__host__'      { L _ T.TCUDAhost }
+ '__constant__'  { L _ T.TCUDAconstant }
+ '__shared__'    { L _ T.TCUDAshared }
+ '__noinline__'  { L _ T.TCUDAnoinline }
+
+ 'private'      { L _ T.TCLprivate }
+ '__private'    { L _ T.TCLprivate }
+ 'local'        { L _ T.TCLlocal }
+ '__local'      { L _ T.TCLlocal }
+ 'global'       { L _ T.TCLglobal }
+ '__global'     { L _ T.TCLglobal }
+ 'constant'     { L _ T.TCLconstant }
+ '__constant'   { L _ T.TCLconstant }
+ 'read_only'    { L _ T.TCLreadonly }
+ '__read_only'  { L _ T.TCLreadonly }
+ 'write_only'   { L _ T.TCLwriteonly }
+ '__write_only' { L _ T.TCLwriteonly }
+ 'kernel'       { L _ T.TCLkernel }
+ '__kernel'     { L _ T.TCLkernel }
 
  'typename'       { L _ T.Ttypename }
 
@@ -942,12 +957,28 @@ type_qualifier :
   | 'volatile' { TSvolatile (locOf $1) }
 
   {- Extension: CUDA -}
-  | '__device__'   { TSdevice (locOf $1) }
-  | '__global__'   { TSglobal (locOf $1) }
-  | '__host__'     { TShost (locOf $1) }
-  | '__constant__' { TSconstant (locOf $1) }
-  | '__shared__'   { TSshared (locOf $1) }
-  | '__noinline__' { TSnoinline (locOf $1) }
+  | '__device__'   { TSCUDAdevice (locOf $1) }
+  | '__global__'   { TSCUDAglobal (locOf $1) }
+  | '__host__'     { TSCUDAhost (locOf $1) }
+  | '__constant__' { TSCUDAconstant (locOf $1) }
+  | '__shared__'   { TSCUDAshared (locOf $1) }
+  | '__noinline__' { TSCUDAnoinline (locOf $1) }
+
+  {- Extension: OpenCL -}
+  | 'private'      { TSCLprivate (locOf $1) }
+  | '__private'    { TSCLprivate (locOf $1) }
+  | 'local'        { TSCLlocal (locOf $1) }
+  | '__local'      { TSCLlocal (locOf $1) }
+  | 'global'       { TSCLglobal (locOf $1) }
+  | '__global'     { TSCLglobal (locOf $1) }
+  | 'constant'     { TSCLconstant (locOf $1) }
+  | '__constant'   { TSCLconstant (locOf $1) }
+  | 'read_only'    { TSCLreadonly (locOf $1) }
+  | '__read_only'  { TSCLreadonly (locOf $1) }
+  | 'write_only'   { TSCLwriteonly (locOf $1) }
+  | '__write_only' { TSCLwriteonly (locOf $1) }
+  | 'kernel'       { TSCLkernel (locOf $1) }
+  | '__kernel'     { TSCLkernel (locOf $1) }
 
 -- Consider the following C program:
 --
@@ -1755,12 +1786,21 @@ data TySpec = TSauto !SrcLoc
             | TSrestrict !SrcLoc
 
             -- CUDA
-            | TSdevice !SrcLoc
-            | TSglobal !SrcLoc
-            | TShost !SrcLoc
-            | TSconstant !SrcLoc
-            | TSshared !SrcLoc
-            | TSnoinline !SrcLoc
+            | TSCUDAdevice !SrcLoc
+            | TSCUDAglobal !SrcLoc
+            | TSCUDAhost !SrcLoc
+            | TSCUDAconstant !SrcLoc
+            | TSCUDAshared !SrcLoc
+            | TSCUDAnoinline !SrcLoc
+
+            -- OpenCL
+            | TSCLprivate !SrcLoc
+            | TSCLlocal !SrcLoc
+            | TSCLglobal !SrcLoc
+            | TSCLconstant !SrcLoc
+            | TSCLreadonly !SrcLoc
+            | TSCLwriteonly !SrcLoc
+            | TSCLkernel !SrcLoc
 
 instance Located DeclTySpec where
     getLoc (DeclTySpec _ loc)      = getLoc loc
@@ -1800,12 +1840,20 @@ instance Located TySpec where
 
     getLoc (TSrestrict loc)      = getLoc loc
 
-    getLoc (TSdevice loc)        = getLoc loc
-    getLoc (TSglobal loc)        = getLoc loc
-    getLoc (TShost loc)          = getLoc loc
-    getLoc (TSconstant loc)      = getLoc loc
-    getLoc (TSshared loc)        = getLoc loc
-    getLoc (TSnoinline loc)      = getLoc loc
+    getLoc (TSCUDAdevice loc)    = getLoc loc
+    getLoc (TSCUDAglobal loc)    = getLoc loc
+    getLoc (TSCUDAhost loc)      = getLoc loc
+    getLoc (TSCUDAconstant loc)  = getLoc loc
+    getLoc (TSCUDAshared loc)    = getLoc loc
+    getLoc (TSCUDAnoinline loc)  = getLoc loc
+
+    getLoc (TSCLprivate loc)     = getLoc loc
+    getLoc (TSCLlocal loc)       = getLoc loc
+    getLoc (TSCLglobal loc)      = getLoc loc
+    getLoc (TSCLconstant loc)    = getLoc loc
+    getLoc (TSCLreadonly loc)    = getLoc loc
+    getLoc (TSCLwriteonly loc)   = getLoc loc
+    getLoc (TSCLkernel loc)      = getLoc loc
 
 instance Pretty TySpec where
     ppr (TSauto _)       = text "auto"
@@ -1846,12 +1894,20 @@ instance Pretty TySpec where
 
     ppr (TSva_list _)   = text "__builtin_va_list"
 
-    ppr (TSdevice _)    = text "__device__"
-    ppr (TSglobal _)    = text "__global__"
-    ppr (TShost _)      = text "__host__"
-    ppr (TSconstant _)  = text "__constant__"
-    ppr (TSshared _)    = text "__shared__"
-    ppr (TSnoinline _)  = text "__noinline__"
+    ppr (TSCUDAdevice _)    = text "__device__"
+    ppr (TSCUDAglobal _)    = text "__global__"
+    ppr (TSCUDAhost _)      = text "__host__"
+    ppr (TSCUDAconstant _)  = text "__constant__"
+    ppr (TSCUDAshared _)    = text "__shared__"
+    ppr (TSCUDAnoinline _)  = text "__noinline__"
+
+    ppr (TSCLprivate _)     = text "__private"
+    ppr (TSCLlocal _)       = text "__local"
+    ppr (TSCLglobal _)      = text "__global"
+    ppr (TSCLconstant _)    = text "__constant"
+    ppr (TSCLreadonly _)    = text "read_only"
+    ppr (TSCLwriteonly _)   = text "write_only"
+    ppr (TSCLkernel _)      = text "__kernel"
 
 isStorage :: TySpec -> Bool
 isStorage (TSauto _)      = True
@@ -1875,33 +1931,47 @@ mkStorage specs = map mk (filter isStorage specs)
       mk _                 = error "internal error in mkStorage"
 
 isTypeQual :: TySpec -> Bool
-isTypeQual (TSconst _)     = True
-isTypeQual (TSvolatile _)  = True
-isTypeQual (TSinline _)    = True
-isTypeQual (TSrestrict _)  = True
-isTypeQual (TSdevice _)    = True
-isTypeQual (TSglobal _)    = True
-isTypeQual (TShost _)      = True
-isTypeQual (TSconstant _)  = True
-isTypeQual (TSshared _)    = True
-isTypeQual (TSnoinline _)  = True
-isTypeQual _               = False
+isTypeQual (TSconst _)        = True
+isTypeQual (TSvolatile _)     = True
+isTypeQual (TSinline _)       = True
+isTypeQual (TSrestrict _)     = True
+isTypeQual (TSCUDAdevice _)   = True
+isTypeQual (TSCUDAglobal _)   = True
+isTypeQual (TSCUDAhost _)     = True
+isTypeQual (TSCUDAconstant _) = True
+isTypeQual (TSCUDAshared _)   = True
+isTypeQual (TSCUDAnoinline _) = True
+isTypeQual (TSCLprivate _)    = True
+isTypeQual (TSCLlocal _)      = True
+isTypeQual (TSCLglobal _)     = True
+isTypeQual (TSCLconstant _)   = True
+isTypeQual (TSCLreadonly _)   = True
+isTypeQual (TSCLwriteonly _)  = True
+isTypeQual (TSCLkernel _)     = True
+isTypeQual _                  = False
 
 mkTypeQuals :: [TySpec] -> [TypeQual]
 mkTypeQuals specs = map mk (filter isTypeQual specs)
     where
       mk :: TySpec -> TypeQual
-      mk (TSconst loc)     = Tconst loc
-      mk (TSvolatile loc)  = Tvolatile loc
-      mk (TSinline loc)    = Tinline loc
-      mk (TSrestrict loc)  = Trestrict loc
-      mk (TSdevice loc)    = Tdevice loc
-      mk (TSglobal loc)    = Tglobal loc
-      mk (TShost loc)      = Thost loc
-      mk (TSconstant loc)  = Tconstant loc
-      mk (TSshared loc)    = Tshared loc
-      mk (TSnoinline loc)  = Tnoinline loc
-      mk _                 = error "internal error in mkTypeQual"
+      mk (TSconst loc)        = Tconst loc
+      mk (TSvolatile loc)     = Tvolatile loc
+      mk (TSinline loc)       = Tinline loc
+      mk (TSrestrict loc)     = Trestrict loc
+      mk (TSCUDAdevice loc)   = TCUDAdevice loc
+      mk (TSCUDAglobal loc)   = TCUDAglobal loc
+      mk (TSCUDAhost loc)     = TCUDAhost loc
+      mk (TSCUDAconstant loc) = TCUDAconstant loc
+      mk (TSCUDAshared loc)   = TCUDAshared loc
+      mk (TSCUDAnoinline loc) = TCUDAnoinline loc
+      mk (TSCLprivate loc)    = TCLprivate loc
+      mk (TSCLlocal loc)      = TCLlocal loc
+      mk (TSCLglobal loc)     = TCLglobal loc
+      mk (TSCLconstant loc)   = TCLconstant loc
+      mk (TSCLreadonly loc)   = TCLreadonly loc
+      mk (TSCLwriteonly loc)  = TCLwriteonly loc
+      mk (TSCLkernel loc)     = TCLkernel loc
+      mk _                    = error "internal error in mkTypeQual"
 
 isSign :: TySpec -> Bool
 isSign (TSsigned _)    = True
