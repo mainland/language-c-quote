@@ -34,6 +34,7 @@
 --
 --------------------------------------------------------------------------------
 
+{-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -41,6 +42,7 @@
 module Language.C.Parser.Monad (
     AlexInput(..),
     alexGetChar,
+    alexGetByte,
     alexMaybeGetChar,
     alexGetCharOrFail,
     alexInputPrevChar,
@@ -94,6 +96,8 @@ import Control.Monad.Exception
 import Control.Monad.Identity
 import Control.Monad.State
 import Data.Bits
+import Data.Word
+import Data.ByteString.Internal (c2w)
 import qualified Data.ByteString.Char8 as B
 import Data.List (foldl')
 import Data.Loc
@@ -107,6 +111,11 @@ import Language.C.Syntax
 data AlexInput = AlexInput {-#UNPACK#-} !Pos
                            {-#UNPACK#-} !B.ByteString
                            {-#UNPACK#-} !Int
+
+alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
+alexGetByte ai
+    | Just (c, ai') <- alexGetChar ai   = Just (c2w c, ai')
+    | otherwise                         = Nothing
 
 alexGetChar :: AlexInput -> Maybe (Char, AlexInput)
 alexGetChar (AlexInput pos buf off)
