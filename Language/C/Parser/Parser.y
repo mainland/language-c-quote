@@ -1,5 +1,6 @@
 {
 {-# OPTIONS -w #-}
+{-# LANGUAGE BangPatterns #-}
 
 -- Copyright (c) 2006-2011
 --         The President and Fellows of Harvard College.
