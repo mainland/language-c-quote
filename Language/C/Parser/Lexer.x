@@ -42,6 +42,7 @@ module Language.C.Parser.Lexer (
     lexToken
   ) where
 
+import Control.Applicative
 import Control.Monad (when)
 import Control.Monad.Error
 import Control.Monad.Exception
@@ -216,91 +217,83 @@ c :-
 }
 
 {
-charEscapes :: [(Char, Char)]
-charEscapes = [('n', '\n'),
-               ('t', '\t'),
-               ('v', '\v'),
-               ('b', '\b'),
-               ('r', '\r'),
-               ('f', '\f'),
-               ('a', '\a'),
-               ('\\', '\\'),
-               ('?', '?'),
-               ('\'', '\''),
-               ('\"', '\"')
-              ]
+type Action = AlexInput -> AlexInput -> P (L Token)
 
-type Action = Pos -> B.ByteString -> Int -> P (L Token)
+inputString :: AlexInput -> AlexInput -> String
+inputString beg end =
+  (B.unpack . B.take (alexOff end - alexOff beg)) (alexInp beg)
+
+locateTok :: AlexInput -> AlexInput -> Token -> L Token
+locateTok beg end tok =
+    L (Loc (alexPos beg) (alexPos end)) tok
+
+token :: Token -> Action
+token tok beg end =
+    return $ locateTok beg end tok
 
 setLineFromPragma :: Action
-setLineFromPragma pos buf len = do
-    setPos pos'
+setLineFromPragma beg end = do
+    inp <- getInput
+    setInput inp { alexPos = pos' }
     lexToken
   where
-    (_ : l : ws) = (words . B.unpack . B.take len) buf
+    (_ : l : ws) = words (inputString beg end)
     line = read l - 1
     filename = (takeWhile (/= '\"') . drop 1 . concat . intersperse " ") ws
 
     pos' :: Pos
-    pos' = Pos (intern filename) line 1 (posCoff pos)
-
-locateTok :: Pos -> Token -> P (L Token)
-locateTok end tok = do
-    start <- getLastPos
-    setLastPos end
-    return $ L (Loc start end) tok
-
-token :: Token -> Action
-token tok pos buf len =
-    locateTok pos tok
+    pos' = Pos (intern filename) line 1 (posCoff (alexPos beg))
 
 identifier :: Action
-identifier pos buf len =
-    case Map.lookup kw keywordMap of
-      Nothing ->              nonKeyword
-      Just (tok, Nothing) ->  keyword tok
-      Just (tok, Just i) ->   do  isKw <- useExts i
-                                  if isKw then keyword tok else nonKeyword
+identifier beg end =
+    case Map.lookup ident keywordMap of
+      Nothing             -> nonKeyword
+      Just (tok, Nothing) -> keyword tok
+      Just (tok, Just i)  -> do  isKw <- useExts i
+                                 if isKw then keyword tok else nonKeyword
   where
-    kw = (B.unpack . B.take len) buf
+    ident :: String
+    ident = inputString beg end
 
-    keyword tok  = locateTok pos tok
+    keyword :: Token -> P (L Token)
+    keyword tok =
+        return $ locateTok beg end tok
 
+    nonKeyword :: P (L Token)
     nonKeyword = do
-        test <- isTypedef kw
-        if test
-          then locateTok pos (Tnamed kw)
-          else locateTok pos (Tidentifier kw)
+        test <- isTypedef ident
+        return $
+          if test
+          then locateTok beg end (Tnamed ident)
+          else locateTok beg end (Tidentifier ident)
 
 lexAnti ::(String -> Token) ->  Action
-lexAnti antiTok pos buf len = do
-    c <- alexGetCharOrFail
+lexAnti antiTok beg end = do
+    c <- nextChar
     s <- case c of
            '('                 -> lexExpression 0 ""
            _ | isIdStartChar c -> lexIdChars [c]
-             | otherwise       -> illegalCharacterLiteral pos
-    end <- getPos
-    locateTok end (antiTok s)
+             | otherwise       -> lexerError beg (text "Illegal anitquotation")
+    return $ locateTok beg end (antiTok s)
   where
     lexIdChars :: String -> P String
     lexIdChars s = do
-        inp     <- getInput
-        maybe_c <- alexMaybeGetChar
+        maybe_c <- maybePeekChar
         case maybe_c of
-          Nothing ->             return (reverse s)
-          Just c | isIdChar c -> lexIdChars (c : s)
-                 | otherwise ->  setInput inp >> return (reverse s)
+          Just c | isIdChar c -> skipChar >> lexIdChars (c : s)
+          _                   -> return (reverse s)
 
     lexExpression :: Int -> String -> P String
     lexExpression depth s = do
-        inp     <- getInput
-        maybe_c <- alexMaybeGetChar
+        maybe_c <- maybePeekChar
         case maybe_c of
-          Nothing ->               return (reverse s)
-          Just '(' ->              lexExpression (depth+1) ('(' : s)
-          Just ')' | depth == 0 -> return (unescape (reverse s))
-                   | otherwise ->  lexExpression (depth-1) (')' : s)
-          Just c ->                lexExpression depth (c : s)
+          Nothing               -> do end <- getInput
+                                      parserError (Loc (alexPos beg) (alexPos end))
+                                                  (text "Unterminated antiquotation")
+          Just '('              -> skipChar >> lexExpression (depth+1) ('(' : s)
+          Just ')' | depth == 0 -> skipChar >> return (unescape (reverse s))
+                   | otherwise  -> skipChar >> lexExpression (depth-1) (')' : s)
+          Just c                -> skipChar >> lexExpression depth (c : s)
       where
         unescape :: String -> String
         unescape ('\\':'|':'\\':']':s)  = '|' : ']' : unescape s
@@ -317,125 +310,65 @@ lexAnti antiTok pos buf len = do
     isIdChar c    = isAlphaNum c
 
 lexCharTok :: Action
-lexCharTok pos buf len = do
-    c <- alexGetCharOrFail
-    case c of
-      '\''  -> emptyCharacterLiteral pos
-      '\\'  -> do  c <- lexEscape
-                   quote <- alexGetCharOrFail
-                   when (quote /= '\'') $
-                       illegalCharacterLiteral pos
-                   end <- getPos
-                   raw <- liftM ('\'' :) (getBuffRange pos end)
-                   locateTok end (TcharConst (raw, c))
-      _ ->     do  quote <- alexGetCharOrFail
-                   when (quote /= '\'') $
-                       illegalCharacterLiteral pos
-                   end <- getPos
-                   raw <- liftM ('\'' :) (getBuffRange pos end)
-                   locateTok end (TcharConst (raw, c))
+lexCharTok beg cur = do
+    c   <- nextChar >>= lexChar
+    end <- getInput
+    return $ locateTok beg end (TcharConst (inputString beg end, c))
+  where
+    lexChar :: Char -> P Char
+    lexChar '\'' = emptyCharacterLiteral beg
+    lexChar '\\' = do c <- lexCharEscape
+                      assertNextChar '\''
+                      return c
+    lexChar c    = do assertNextChar '\''
+                      return c
+
+    assertNextChar :: Char -> P ()
+    assertNextChar c = do
+        c' <- nextChar
+        when (c' /= c) $
+            illegalCharacterLiteral cur
 
 lexStringTok :: Action
-lexStringTok pos buf len = do
+lexStringTok beg _ = do
     s    <- lexString ""
-    end  <- getPos
-    raw  <- liftM ('"' :) (getBuffRange pos end)
-    locateTok end (TstringConst (raw, s))
+    end  <- getInput
+    return $ locateTok beg end (TstringConst (inputString beg end, s))
   where
     lexString :: String -> P String
     lexString s = do
-        c <- alexGetCharOrFail
+        c <- nextChar
         case c of
-          '"'   -> return (reverse s)
-          '\\'  -> do  c' <- lexEscape
-                       lexString (c' : s)
-          _     -> lexString (c : s)
+          '"'  -> return (reverse s)
+          '\\' -> do  c' <- lexCharEscape
+                      lexString (c' : s)
+          _    -> lexString (c : s)
 
-lexEscape :: P Char
-lexEscape = do
-    inp <- getInput
-    c <- alexGetCharOrFail
+lexCharEscape :: P Char
+lexCharEscape = do
+    cur  <- getInput
+    c    <- nextChar
     case c of
-      'x' -> do  i <- checkedReadNum isHexDigit 16 hexDigit
-                 return $ chr i
-      n | isDigit n ->
-              do  setInput inp
-                  i <- checkedReadNum isOctDigit 8 octDigit
-                  return $ chr i
-      c -> case lookup c charEscapes of
-             Nothing -> return c
-             Just c' -> return c'
+      'a'  -> return '\a'
+      'b'  -> return '\b'
+      'f'  -> return '\f'
+      'n'  -> return '\n'
+      'r'  -> return '\r'
+      't'  -> return '\t'
+      'v'  -> return '\v'
+      '\\' -> return '\\'
+      '\'' -> return '\''
+      '"'  -> return '"'
+      '?'  -> return '?'
+      'x'  -> chr <$> checkedReadNum isHexDigit 16 hexDigit
+      n | isOctDigit n -> setInput cur >> chr <$> checkedReadNum isOctDigit 8 octDigit
+      c -> return c
 
-type Radix = (Integer, Char -> Int)
-
-decDigit :: Char -> Int
-decDigit c  | c >= '0' && c <= '9' = ord c - ord '0'
-            | otherwise            = error "error in decimal constant"
-
-octDigit :: Char -> Int
-octDigit c  | c >= '0' && c <= '7' = ord c - ord '0'
-            | otherwise            = error "error in octal constant"
-
-hexDigit :: Char -> Int
-hexDigit c  | c >= 'a' && c <= 'f' = ord c - ord 'a'
-            | c >= 'A' && c <= 'F' = ord c - ord 'A'
-            | c >= '0' && c <= '9' = ord c - ord '0'
-            | otherwise            = error "error in hexadecimal constant"
-
-decimal :: Radix
-decimal = (10, decDigit)
-
-octal :: Radix
-octal = (8, octDigit)
-
-hexadecimal :: Radix
-hexadecimal = (16, hexDigit)
-
-readInteger :: Radix -> ReadS Integer
-readInteger (radix, charToInt) =
-    go 0
-  where
-    go :: Integer -> ReadS Integer
-    go  x  []                     = return (x, "")
-    go  x  (c : cs)  | isDigit c  = go (x * radix + toInteger (charToInt c)) cs
-                     | otherwise  = return (x, c : cs)
-
-readRational :: ReadS Rational
-readRational s = do
-    (n, d, t)  <- readFix s
-    (x, u)     <- readExponent t
-    return ((n % 1) * 10^^(x - toInteger d), t)
-  where
-    readFix :: String ->  [(Integer, Int, String)]
-    readFix s =
-        return (read (i ++ f), length f, u)
-      where
-        (i, t) = span isDigit s
-        (f, u) = case t of
-                   '.' : u ->  span isDigit u
-                   _ ->        ("", t)
-
-    readExponent :: ReadS Integer
-    readExponent ""                        = return (0, "")
-    readExponent (e : s)  | e `elem` "eE"  = go s
-                          | otherwise      = return (0, s)
-      where
-        go :: ReadS Integer
-        go  ('+' : s)  = readDecimal s
-        go  ('-' : s)  = do  (x, t) <- readDecimal s
-                             return (-x, t)
-        go  s          = readDecimal s
-
-    readDecimal :: ReadS Integer
-    readDecimal = readInteger decimal
-
-lexInteger  ::  Int
-            ->  Radix
-            ->  Action
-lexInteger ndrop radix pos buf len =
+lexInteger :: Int -> Radix -> Action
+lexInteger ndrop radix beg end =
     case i of
-      [n] ->  locateTok pos (toToken n)
-      _ ->    fail "bad parse for integer"
+      [n] -> return $ locateTok beg end (toToken n)
+      _   -> fail "bad parse for integer"
   where
     num :: String
     num = (takeWhile isDigit . drop ndrop)  s
@@ -444,7 +377,7 @@ lexInteger ndrop radix pos buf len =
     suffix = (map toLower . takeWhile (not . isDigit) . reverse) s
 
     s :: String
-    s = (B.unpack . B.take len) buf
+    s = inputString beg end
 
     i :: [Integer]
     i = do  (n, _) <- readInteger radix s
@@ -464,13 +397,13 @@ lexInteger ndrop radix pos buf len =
         isUnsigned = if 'u' `elem` suffix then C.Unsigned else C.Signed
 
 lexFloat :: Action
-lexFloat pos buf len =
+lexFloat beg end =
     case i of
-      [n] ->  locateTok pos (toToken n)
-      _ ->    fail "bad parse for integer"
+      [n] -> return $ locateTok beg end (toToken n)
+      _   -> fail "bad parse for integer"
   where
     s :: String
-    s = (B.unpack . B.take len) buf
+    s = inputString beg end
 
     prefix :: String
     prefix = takeWhile (not . isSuffix) s
@@ -488,61 +421,105 @@ lexFloat pos buf len =
     toToken :: Rational -> Token
     toToken n =
         case suffix of
-          "" ->   TdoubleConst (s, n)
-          "f" ->  TfloatConst (s, n)
-          "l" ->  TlongDoubleConst (s, n)
+          ""  -> TdoubleConst (s, n)
+          "f" -> TfloatConst (s, n)
+          "l" -> TlongDoubleConst (s, n)
+
+type Radix = (Integer, Char -> Bool, Char -> Int)
+
+decDigit :: Char -> Int
+decDigit c  | c >= '0' && c <= '9' = ord c - ord '0'
+            | otherwise            = error "error in decimal constant"
+
+octDigit :: Char -> Int
+octDigit c  | c >= '0' && c <= '7' = ord c - ord '0'
+            | otherwise            = error "error in octal constant"
+
+hexDigit :: Char -> Int
+hexDigit c  | c >= 'a' && c <= 'f' = 10 + ord c - ord 'a'
+            | c >= 'A' && c <= 'F' = 10 + ord c - ord 'A'
+            | c >= '0' && c <= '9' = ord c - ord '0'
+            | otherwise            = error "error in hexadecimal constant"
+
+decimal :: Radix
+decimal = (10, isDigit, decDigit)
+
+octal :: Radix
+octal = (8, isOctDigit, octDigit)
+
+hexadecimal :: Radix
+hexadecimal = (16, isHexDigit, hexDigit)
+
+readInteger :: Radix -> ReadS Integer
+readInteger (radix, isRadixDigit, charToInt) =
+    go 0
+  where
+    go :: Integer -> ReadS Integer
+    go  x  []             = return (x, "")
+    go  x  (c : cs)
+        | isRadixDigit c  = go (x * radix + toInteger (charToInt c)) cs
+        | otherwise       = return (x, c : cs)
+
+readDecimal :: ReadS Integer
+readDecimal = readInteger decimal
+
+readRational :: ReadS Rational
+readRational s = do
+    (n, d, t)  <- readFix s
+    (x, _)     <- readExponent t
+    return ((n % 1) * 10^^(x - toInteger d), t)
+  where
+    readFix :: String ->  [(Integer, Int, String)]
+    readFix s =
+        return (read (i ++ f), length f, u)
+      where
+        (i, t) = span isDigit s
+        (f, u) = case t of
+                   '.' : u  -> span isDigit u
+                   _        -> ("", t)
+
+    readExponent :: ReadS Integer
+    readExponent ""                        = return (0, "")
+    readExponent (e : s)  | e `elem` "eE"  = go s
+                          | otherwise      = return (0, s)
+      where
+        go :: ReadS Integer
+        go  ('+' : s)  = readDecimal s
+        go  ('-' : s)  = do  (x, t) <- readDecimal s
+                             return (-x, t)
+        go  s          = readDecimal s
 
 checkedReadNum :: (Char -> Bool) -> Int -> (Char -> Int) -> P Int
 checkedReadNum isDigit base conv = do
-    c <- alexGetCharOrFail
+    cur  <- getInput
+    c    <- peekChar
     when (not $ isDigit c) $
-        getPos >>= illegalNumericalLiteral
+       illegalNumericalLiteral cur
     readNum isDigit base conv
+
+readNum :: (Char -> Bool) -> Int -> (Char -> Int) -> P Int
+readNum isDigit base conv =
+    read 0
   where
-    readNum :: (Char -> Bool) -> Int -> (Char -> Int) -> P Int
-    readNum isDigit base conv = read 0
-      where
-          read :: Int -> P Int
-          read i = do
-              inp <- getInput
-              c <- alexGetCharOrFail
-              if isDigit c
-                then read (i*base + conv c)
-                else setInput inp >> return i
+    read :: Int -> P Int
+    read n = do
+        c <- peekChar
+        if isDigit c
+          then do  let n' = n*base + conv c
+                   n' `seq` skipChar >> read n'
+          else return n
 
 lexToken :: P (L Token)
 lexToken = do
-  inp@(AlexInput pos buf off) <- getInput
-  sc <- getLexState
-  st <- get
-  case alexScanUser st inp sc of
-    AlexEOF -> return $ L (Loc pos pos) Teof
-    AlexError (AlexInput pos2 _ _) ->
-        lexerError pos2 ((text . B.unpack . B.take (min 80 (B.length rest))) rest)
-      where
-        rest = B.drop off buf
-    AlexSkip inp2 _ -> do
-        setInput inp2
-        pos <- getPos
-        setLastPos pos
-        lexToken
-    AlexToken inp2@(AlexInput end _ _) len t -> do
-        setInput inp2
-        t end (B.drop off buf) len
-
-emptyCharacterLiteral :: Pos -> P a
-emptyCharacterLiteral pos =
-    throw $ ParserException (getLoc pos) (text "empty character literal")
-
-illegalCharacterLiteral :: Pos -> P a
-illegalCharacterLiteral pos =
-    throw $ ParserException (getLoc pos) (text "illegal character literal")
-
-illegalNumericalLiteral :: Pos -> P a
-illegalNumericalLiteral pos =
-    throw $ ParserException (getLoc pos) (text "illegal numerical literal")
-
-lexerError :: Pos -> Doc -> P a
-lexerError pos s =
-    throw $ ParserException (getLoc pos) (text "lexer error on" <+> squotes s)
+    beg  <- getInput
+    sc   <- getLexState
+    st   <- get
+    case alexScanUser st beg sc of
+      AlexEOF              -> return $ L (Loc (alexPos beg) (alexPos beg)) Teof
+      AlexError end        -> lexerError end (text rest)
+                                where
+                                  rest :: String
+                                  rest = B.unpack $ B.take 80 (alexInp end)
+      AlexSkip end _       -> setInput end >> lexToken
+      AlexToken end len t  -> setInput end >> t beg end
 }

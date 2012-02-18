@@ -36,43 +36,26 @@
 
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Language.C.Parser.Monad (
-    AlexInput(..),
-    alexGetChar,
-    alexGetByte,
-    alexMaybeGetChar,
-    alexGetCharOrFail,
-    alexInputPrevChar,
-    allowAnti,
-    ifExtension,
-
-    ParserException(..),
-    ParseContext(..),
-    PState,
-    emptyPState,
-
     P,
     runP,
     evalP,
 
-    failAt,
+    PState,
+    ParseContext(..),
+    emptyPState,
 
-    getBuffer,
-    setBuffer,
-    getBuffRange,
-    getLastPos,
-    setLastPos,
-    getPos,
-    setPos,
+    getInput,
+    setInput,
     pushLexState,
     popLexState,
     getLexState,
+    getCurToken,
+    setCurToken,
     getParseContext,
     setParseContext,
-    getInput,
-    setInput,
 
     addTypedef,
     addVariable,
@@ -88,9 +71,35 @@ module Language.C.Parser.Monad (
     useExts,
     useGccExts,
     useCUDAExts,
-    useOpenCLExts
+    useOpenCLExts,
+
+    LexerException(..),
+    ParserException(..),
+    failAt,
+    lexerError,
+    unexpectedEOF,
+    emptyCharacterLiteral,
+    illegalCharacterLiteral,
+    illegalNumericalLiteral,
+    parserError,
+    unclosed,
+    expected,
+
+    AlexInput(..),
+    alexGetChar,
+    alexGetByte,
+    alexInputPrevChar,
+    nextChar,
+    peekChar,
+    maybePeekChar,
+    skipChar,
+
+    AlexPredicate,
+    allowAnti,
+    ifExtension
   ) where
 
+import Control.Applicative (Applicative(..))
 import Control.Monad.Exception
 import Control.Monad.Identity
 import Control.Monad.State
@@ -107,82 +116,17 @@ import Text.PrettyPrint.Mainland
 import Language.C.Parser.Tokens
 import Language.C.Syntax
 
-data AlexInput = AlexInput {-#UNPACK#-} !Pos
-                           {-#UNPACK#-} !B.ByteString
-                           {-#UNPACK#-} !Int
-
-alexGetChar :: AlexInput -> Maybe (Char, AlexInput)
-alexGetChar (AlexInput pos buf off)
-    | off < B.length buf  =  c `seq` pos' `seq` off' `seq`
-                             Just (c, AlexInput pos' buf off')
-    | otherwise           =  Nothing
-  where
-    c     = B.index buf off
-    pos'  = advancePos pos c
-    off'  = off + 1
-
-alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
-alexGetByte inp =
-    case alexGetChar inp of
-      Nothing        -> Nothing
-      Just (c, inp') -> Just (c2w c, inp')
-
-alexMaybeGetChar :: P (Maybe Char)
-alexMaybeGetChar = do
-    inp <- getInput
-    case alexGetChar inp of
-      Nothing -> return Nothing
-      Just (c, inp')  -> setInput inp' >> return (Just c)
-
-alexGetCharOrFail :: P Char
-alexGetCharOrFail = do
-    inp <- getInput
-    case alexGetChar inp of
-      Nothing         -> fail "unexpected end of file"
-      Just (c, inp')  -> setInput inp' >> return c
-
-alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (AlexInput  _  _    0)    = '\n'
-alexInputPrevChar (AlexInput  _  buf  off)  = B.index buf (off - 1)
-
--- | The components of an 'AlexPredicate' are the predicate state, input stream
--- before the token, length of the token, input stream after the token.
-type AlexPredicate  =   PState
-                    ->  AlexInput
-                    ->  Int
-                    ->  AlexInput
-                    ->  Bool
-
-allowAnti :: AlexPredicate
-allowAnti  (PState { context = ParseQuasiQuote })  _ _ _  = True
-allowAnti  _                                       _ _ _  = False
-
-ifExtension :: ExtensionsInt -> AlexPredicate
-ifExtension i s _ _ _ = extensions s .&. i /= 0
-
-data ParserException = ParserException Loc Doc
-  deriving (Typeable)
-
-instance Exception ParserException where
-
-instance Show ParserException where
-    show (ParserException loc msg) =
-        show $ nest 4 $ ppr loc <> text ":" </> msg
-
 data ParseContext  =  ParseDirect
                    |  ParseQuasiQuote
 
 data PState = PState
-    { buf         :: !B.ByteString  -- ^ Buffer we're parsing
-    , off         :: !Int           -- ^ Current offset in the buffer
-    , lastPos     :: !Pos           -- ^ End position of last token parsed
-    , pos         :: !Pos           -- ^ Current source code position
-    , lexState    :: ![Int]
-    , context     :: !ParseContext
-    , extensions  :: !ExtensionsInt
-
-    , typedefs    :: !(Set.Set String)
-    , scopes      :: [Set.Set String]
+    { inp        :: !AlexInput
+    , curToken   :: L Token
+    , lexState   :: ![Int]
+    , context    :: !ParseContext
+    , extensions :: !ExtensionsInt
+    , typedefs   :: !(Set.Set String)
+    , scopes     :: [Set.Set String]
     }
 
 emptyPState :: [Extensions]
@@ -191,15 +135,12 @@ emptyPState :: [Extensions]
             -> B.ByteString
             -> Pos
             -> PState
-emptyPState exts typnames ctx bs pos = PState
-    { buf         = bs
-    , off         = 0
-    , lastPos     = pos
-    , pos         = pos
+emptyPState exts typnames ctx buf pos = PState
+    { inp         = inp
+    , curToken    = error "no token"
     , lexState    = [sc]
     , context     = ctx
     , extensions  = foldl' setBit 0 (map fromEnum exts)
-
     , typedefs    = Set.fromList typnames
     , scopes      = []
     }
@@ -209,52 +150,66 @@ emptyPState exts typnames ctx bs pos = PState
            ParseDirect     -> 0
            ParseQuasiQuote -> 1 {- qq lexer state -}
 
-newtype P a = P { unP :: StateT PState (ExceptionT Identity) a }
-  deriving (MonadException,
-            MonadState PState)
+    inp :: AlexInput
+    inp = AlexInput
+          { alexPos      = pos
+          , alexPrevChar = '\n'
+          , alexInp      = buf
+          , alexOff      = 0
+          }
+
+newtype P a = P { runP :: PState -> Either SomeException (a, PState) }
+
+instance Functor P where
+    fmap f x = x >>= return . f
+
+instance Applicative P where
+    pure  = return
+    (<*>) = ap
 
 instance Monad P where
-    m >>= f   = P $ unP m >>= unP . f
-    m1 >> m2  = P $ unP m1 >> unP m2
-    return    = P . return
-    fail msg  = do  pos <- getPos
-                    throw $ ParserException (getLoc pos) (text msg)
+    m >>= k = P $ \s ->
+        case runP m s of
+          Left e         -> Left e
+          Right (a, s')  -> runP (k a) s'
 
-runP :: P a -> PState -> Either SomeException (a, PState)
-runP m = runIdentity . runExceptionT . runStateT (unP m)
+    m1 >> m2 = P $ \s ->
+        case runP m1 s of
+          Left e         -> Left e
+          Right (_, s')  -> runP m2 s'
+
+    return a = P $ \s -> Right (a, s)
+
+    fail msg = do  inp <- getInput
+                   throw (ParserException (Loc (alexPos inp) (alexPos inp)) (ppr (alexPos inp)))
+
+instance MonadState PState P where
+    get    = P $ \s -> Right (s, s)
+    put s  = P $ \_ -> Right ((), s)
+
+instance MonadException P where
+    throw e = P $ \_ -> Left (toException e)
+
+    m `catch` h = P $ \s ->
+        case runP m s of
+          Left e ->
+              case fromException e of
+                Just e'  -> runP (h e') s
+                Nothing  -> Left e
+          Right (a, s')  -> Right (a, s')
 
 evalP :: P a -> PState -> Either SomeException a
-evalP m = runIdentity . runExceptionT . evalStateT (unP m)
+evalP comp st =
+    case runP comp st of
+      Left e        -> Left e
+      Right (a, _)  -> Right a
 
-failAt :: Loc -> String -> P a
-failAt loc msg =
-    throw $ ParserException loc (text msg)
+getInput  :: P AlexInput
+getInput = gets inp
 
-getBuffer :: P B.ByteString
-getBuffer = gets buf
-
-setBuffer  :: B.ByteString -> P ()
-setBuffer buf = modify $ \s ->
-    s { buf = buf }
-
-getBuffRange :: Pos -> Pos -> P String
-getBuffRange (Pos _ _ _ start) (Pos _ _ _ end) = do
-    b <- gets buf
-    return $ (B.unpack . B.take (end - start) . B.drop start) b
-
-getLastPos  :: P Pos
-getLastPos = gets lastPos
-
-setLastPos  :: Pos -> P ()
-setLastPos pos = modify $ \s ->
-    s { lastPos = pos }
-
-getPos :: P Pos
-getPos = gets pos
-
-setPos :: Pos -> P ()
-setPos pos = modify $ \s ->
-    s { pos = pos }
+setInput  :: AlexInput -> P ()
+setInput inp= modify $ \s ->
+    s { inp = inp }
 
 pushLexState :: Int -> P ()
 pushLexState ls = modify $ \s ->
@@ -270,6 +225,12 @@ popLexState = do
 getLexState :: P Int
 getLexState = gets (head . lexState)
 
+getCurToken :: P (L Token)
+getCurToken = gets curToken
+
+setCurToken :: L Token -> P ()
+setCurToken tok = modify $ \s -> s { curToken = tok }
+
 getParseContext :: P ParseContext
 getParseContext = gets context
 
@@ -277,20 +238,12 @@ setParseContext :: ParseContext -> P ()
 setParseContext ctx = modify $ \s ->
     s { context = ctx }
 
-getInput  :: P AlexInput
-getInput = gets $ \s ->
-    AlexInput (pos s) (buf s) (off s)
-
-setInput  :: AlexInput -> P ()
-setInput (AlexInput p b o) = modify $ \s ->
-    s { buf = b, off = o, pos = p }
-
 addTypedef :: String -> P ()
-addTypedef id = modify  $ \s ->
+addTypedef id = modify $ \s ->
     s { typedefs = Set.insert id (typedefs s) }
 
 addVariable :: String -> P ()
-addVariable id = modify  $ \s ->
+addVariable id = modify $ \s ->
     s { typedefs = Set.delete id (typedefs s) }
 
 isTypedef :: String -> P Bool
@@ -307,10 +260,6 @@ popScope = modify  $ \s ->
       , typedefs   = (head . scopes) s
       }
 
-useExts :: ExtensionsInt -> P Bool
-useExts ext = gets $ \s ->
-    extensions s .&. ext /= 0
-
 gccExts :: ExtensionsInt
 gccExts = (bit . fromEnum) Gcc
 
@@ -320,6 +269,10 @@ cudaExts = (bit . fromEnum) CUDA
 openCLExts :: ExtensionsInt
 openCLExts = (bit . fromEnum) OpenCL
 
+useExts :: ExtensionsInt -> P Bool
+useExts ext = gets $ \s ->
+    extensions s .&. ext /= 0
+
 useGccExts :: P Bool
 useGccExts = useExts gccExts
 
@@ -328,3 +281,137 @@ useCUDAExts = useExts cudaExts
 
 useOpenCLExts :: P Bool
 useOpenCLExts = useExts openCLExts
+
+data LexerException = LexerException Pos Doc
+  deriving (Typeable)
+
+instance Exception LexerException where
+
+instance Show LexerException where
+    show (LexerException pos msg) =
+        show $ nest 4 $ ppr pos <> text ":" </> msg
+
+data ParserException = ParserException Loc Doc
+  deriving (Typeable)
+
+instance Exception ParserException where
+
+instance Show ParserException where
+    show (ParserException loc msg) =
+        show $ nest 4 $ ppr loc <> text ":" </> msg
+
+failAt :: Loc -> String -> P a
+failAt loc msg =
+    throw $ ParserException loc (text msg)
+
+lexerError :: AlexInput -> Doc -> P a
+lexerError inp s =
+    throw $ LexerException (alexPos inp) (text "lexer error on" <+> squotes s)
+
+unexpectedEOF :: AlexInput -> P a
+unexpectedEOF inp =
+    lexerError inp  (text "unexpected end of file")
+
+emptyCharacterLiteral :: AlexInput -> P a
+emptyCharacterLiteral inp =
+    lexerError inp (text "empty character literal")
+
+illegalCharacterLiteral :: AlexInput -> P a
+illegalCharacterLiteral inp =
+    lexerError inp (text "illegal character literal")
+
+illegalNumericalLiteral :: AlexInput -> P a
+illegalNumericalLiteral inp =
+    lexerError inp (text "illegal numerical literal")
+
+parserError :: Loc -> Doc -> P a
+parserError loc msg =
+    throw $ ParserException loc msg
+
+unclosed :: Loc -> String -> P a
+unclosed loc x =
+    parserError (locEnd loc) (text "unclosed" <+> squotes (text x))
+
+expected :: [String] -> P b
+expected alts = do
+    tok@(L loc _) <- getCurToken
+    parserError (locStart loc) (text "expected" <+> pprAlts alts <+> pprGot tok)
+  where
+    pprAlts :: [String] -> Doc
+    pprAlts []        = empty
+    pprAlts [s]       = text s
+    pprAlts [s1, s2]  = text s1 <+> text "or" <+> text s2
+    pprAlts (s : ss)  = text s <> comma <+> pprAlts ss
+
+    pprGot :: L Token -> Doc
+    pprGot (L _ Teof)  = text "but reached end of file"
+    pprGot (L _ t)     = text "but got" <+> text (show t)
+
+data AlexInput = AlexInput
+  {  alexPos      :: {-#UNPACK#-} !Pos
+  ,  alexPrevChar :: {-#UNPACK#-} !Char
+  ,  alexInp      :: {-#UNPACK#-} !B.ByteString
+  ,  alexOff      :: {-#UNPACK#-} !Int
+  }
+
+alexGetChar :: AlexInput -> Maybe (Char, AlexInput)
+alexGetChar inp =
+    case B.uncons (alexInp inp) of
+      Nothing       -> Nothing
+      Just (c, bs)  -> Just (c, inp  {  alexPos       = advancePos (alexPos inp) c
+                                     ,  alexPrevChar  = c
+                                     ,  alexInp       = bs
+                                     ,  alexOff       = alexOff inp + 1
+                                     })
+
+alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
+alexGetByte inp =
+    case alexGetChar inp of
+      Nothing        -> Nothing
+      Just (c, inp') -> Just (c2w c, inp')
+
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar = alexPrevChar
+
+nextChar :: P Char
+nextChar = do
+    inp <- getInput
+    case alexGetChar inp of
+      Nothing         -> unexpectedEOF inp
+      Just (c, inp')  -> setInput inp' >> return c
+
+peekChar ::P Char
+peekChar = do
+    inp <- getInput
+    case B.uncons (alexInp inp) of
+      Nothing      -> unexpectedEOF inp
+      Just (c, _)  -> return c
+
+maybePeekChar :: P (Maybe Char)
+maybePeekChar = do
+    inp <- getInput
+    case alexGetChar inp of
+      Nothing      -> return Nothing
+      Just (c, _)  -> return (Just c)
+
+skipChar :: P ()
+skipChar = do
+    inp <- getInput
+    case alexGetChar inp of
+      Nothing         -> unexpectedEOF inp
+      Just (_, inp')  -> setInput inp'
+
+-- | The components of an 'AlexPredicate' are the predicate state, input stream
+-- before the token, length of the token, input stream after the token.
+type AlexPredicate =  PState
+                   -> AlexInput
+                   -> Int
+                   -> AlexInput
+                   -> Bool
+
+allowAnti :: AlexPredicate
+allowAnti  (PState { context = ParseQuasiQuote })  _ _ _  = True
+allowAnti  _                                       _ _ _  = False
+
+ifExtension :: ExtensionsInt -> AlexPredicate
+ifExtension i s _ _ _ = extensions s .&. i /= 0

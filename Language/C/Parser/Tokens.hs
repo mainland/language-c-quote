@@ -222,7 +222,7 @@ instance Show Token where
     show (TlongDoubleConst (s, _))      = s
     show (TcharConst (s, _))            = s
     show (TstringConst (s, _))          = s
-    show (Tidentifier s)                = "identifier: " ++ show s
+    show (Tidentifier s)                = s
     show t = fromMaybe (error "internal error: unknown token")
                        (lookup t tokenStrings)
 

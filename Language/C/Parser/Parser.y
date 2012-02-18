@@ -398,8 +398,10 @@ execution_configuration :: { ExeConfig }
 execution_configuration :
   argument_expression_list
     {%do {  let args = rev $1
-         ;  when (length args < 2 || length args > 4) $
-                badExecutionContext (getLoc args) args
+         ;  when (length args < 2 || length args > 4) $ do
+                parserError (locOf (rev $1)) $
+                  text "execution context should have 2-4 arguments, but saw" <+>
+                  ppr (length args)
          ;  return $
             case args of
               [gridDim, blockDim] ->
@@ -627,7 +629,7 @@ declaration_ :
       }
   | declaration_specifiers error
       {% do{ let (_, decl)  = $1
-           ; expected (locOf decl) ["';'"]
+           ; expected ["';'"]
            }
       }
   | ANTI_DECL
@@ -774,7 +776,7 @@ init_declarator :
   | declarator error
       {% do{  let (ident, declToDecl) = $1
            ;  let decl                = declToDecl (declRoot ident)
-           ;  expected (locOf decl) ["'='"]
+           ;  expected ["'='"]
            }
       }
 
@@ -1344,7 +1346,7 @@ typedef_name :
   | 'typename' identifier
       { TSnamed $2 ($1 <--> $2) }
   | 'typename' error
-      {% expected (locOf $1) ["identifier"] }
+      {% expected ["identifier"] }
   | '__typeof__' '(' unary_expression ')'
       { TStypeofExp $3 ($1 <--> $4) }
   | '__typeof__' '(' type_name ')'
@@ -1466,7 +1468,7 @@ expression_statement :: { Stm }
 expression_statement:
     ';'               { Exp Nothing (locOf $1) }
   | expression ';'    { Exp (Just $1) ($1 <--> $2) }
-  | expression error  {% expected (locOf $1) ["';'"] }
+  | expression error  {% expected ["';'"] }
 
 selection_statement :: { Stm }
 selection_statement :
@@ -1492,7 +1494,7 @@ iteration_statement :
   | 'do' statement 'while' '(' expression error
       {% unclosed ($4 <--> $5) "(" }
   | 'for' '(' error
-      {% expected (locOf $2) ["expression", "declaration"] }
+      {% expected ["expression", "declaration"] }
   | 'for' '(' declaration maybe_expression ';' ')' statement
       { For (Left $3) $4 Nothing $7 ($1 <--> $7) }
   | 'for' '(' maybe_expression ';' maybe_expression ';' ')' statement
@@ -1509,16 +1511,16 @@ iteration_statement :
 jump_statement :: { Stm }
 jump_statement :
     'goto' identifier ';'      { Goto $2 ($1 <--> $3) }
-  | 'goto' error               {% expected (locOf $1) ["identifier"] }
-  | 'goto' identifier error    {% expected (locOf $2) ["';'"] }
+  | 'goto' error               {% expected ["identifier"] }
+  | 'goto' identifier error    {% expected ["';'"] }
   | 'continue' ';'             { Continue ($1 <--> $2) }
-  | 'continue' error           {% expected (locOf $1) ["';'"] }
+  | 'continue' error           {% expected ["';'"] }
   | 'break' ';'                { Break ($1 <--> $2) }
-  | 'break' error              {% expected (locOf $1) ["';'"] }
+  | 'break' error              {% expected ["';'"] }
   | 'return' ';'               { Return Nothing ($1 <--> $2) }
-  | 'return' error             {% expected (locOf $1) ["';'"] }
+  | 'return' error             {% expected ["';'"] }
   | 'return' expression ';'    { Return (Just $2) ($1 <--> $3) }
-  | 'return' expression error  {% expected (locOf $2) ["';'"] }
+  | 'return' expression error  {% expected ["';'"] }
 
 {------------------------------------------------------------------------------
  -
@@ -1528,8 +1530,7 @@ jump_statement :
 
 translation_unit :: { [Definition] }
 translation_unit :
-    {- empty -}
-      { [] }
+    {- empty -}       { [] }
   | translation_unit_ { rev $1 }
 
 translation_unit_ :: { RevList Definition }
@@ -1572,8 +1573,8 @@ function_definition :
                      OldFunc dspec ident protoDecl args Nothing
                              blockItems
                              (decl <--> blockItems)
-               ; _ -> failAt (decl <--> blockItems :: Loc)
-                             "bad function declaration"
+               ; _ -> parserError (decl <--> blockItems :: Loc)
+                                  (text "bad function declaration")
                }
            }
       }
@@ -1588,8 +1589,8 @@ function_definition :
                      OldFunc dspec ident protoDecl args (Just (rev argDecls))
                              blockItems
                              (decl <--> blockItems)
-               ; _ -> failAt (decl <--> blockItems :: Loc)
-                             "bad function declaration"
+               ; _ -> parserError (decl <--> blockItems :: Loc)
+                                  (text "bad function declaration")
                }
            }
       }
@@ -1696,8 +1697,8 @@ asm_clobber :
 
 {
 happyError :: L T.Token -> P a
-happyError (L (Loc start _) _) =
-    throw $ ParserException (Loc start start) (text "parse error")
+happyError (L loc _) =
+    parserError (locStart loc) (text "parse error")
 
 getCHAR        (L _ (T.TcharConst x))        = x
 getSTRING      (L _ (T.TstringConst x))      = x
@@ -1707,8 +1708,8 @@ getLONG_LONG   (L _ (T.TlongLongIntConst x)) = x
 getFLOAT       (L _ (T.TfloatConst x))       = x
 getDOUBLE      (L _ (T.TdoubleConst x))      = x
 getLONG_DOUBLE (L _ (T.TlongDoubleConst x))  = x
-getID          (L _ (T.Tidentifier id))      = id
-getNAMED       (L _ (T.Tnamed id))           = id
+getID          (L _ (T.Tidentifier ident))   = ident
+getNAMED       (L _ (T.Tnamed ident))        = ident
 
 getANTI_ID          (L _ (T.Tanti_id v))          = v
 getANTI_INT         (L _ (T.Tanti_int v))         = v
@@ -1742,8 +1743,10 @@ getANTI_PARAM       (L _ (T.Tanti_param v))       = v
 getANTI_PARAMS      (L _ (T.Tanti_params v))      = v
 
 lexer :: (L T.Token -> P a) -> P a
-lexer cont =
-    lexToken >>= cont
+lexer cont = do
+    t <- lexToken
+    setCurToken t
+    cont t
 
 locate :: Loc -> (SrcLoc -> a) -> L a
 locate loc f = L loc (f (SrcLoc loc))
@@ -1984,11 +1987,11 @@ hasSign specs = any isSign specs
 mkSign :: [TySpec] -> P (Maybe Sign)
 mkSign specs =
     case filter isSign specs of
-      [] ->                return Nothing
-      [TSunsigned loc] ->  return (Just (Tunsigned loc))
-      [TSsigned loc] ->    return (Just (Tsigned loc))
-      [_] ->               fail "internal error in mkSign"
-      _ ->                 fail "multiple signs specified"
+      []               -> return Nothing
+      [TSunsigned loc] -> return (Just (Tunsigned loc))
+      [TSsigned loc]   -> return (Just (Tsigned loc))
+      [_]              -> fail "internal error in mkSign"
+      _                -> fail "multiple signs specified"
 
 checkNoSign :: [TySpec] -> String -> P ()
 checkNoSign spec msg  | hasSign spec  = fail msg
@@ -2215,40 +2218,4 @@ rev xs = go [] xs
   where
     go  l  RNil          = l
     go  l  (RCons x xs)  = go (x : l) xs
-
-expected  ::  Loc
-          ->  [String]
-          ->  P a
-expected loc alts =
-    throw $ ParserException (locEnd loc)
-        (text "unclosed" <+> go alts)
-  where
-    go :: [String] -> Doc
-    go []       = empty
-    go [x]      = text x
-    go [x, y]   = text x <+> text "or" <+> text y
-    go (x : xs) = text x <> comma <+> go xs
-
-unclosed  ::  Loc
-          ->  String
-          ->  P a
-unclosed loc x =
-    throw $ ParserException (locEnd loc)
-        (text "unclosed" <+> squotes (text x))
-
-badExecutionContext  ::  Loc
-                     ->  [Exp]
-                     ->  P a
-badExecutionContext loc es =
-    throw $ ParserException (locEnd loc) $
-    text "execution context should have 2-4 arguments, but saw" <+>
-    ppr (length es)
-
-badFunctionDeclaration  ::  Loc
-                        ->  [Exp]
-                        ->  P a
-badFunctionDeclaration loc es =
-    throw $ ParserException (locEnd loc) $
-    text "execution context should have 2-4 arguments, but saw" <+>
-    ppr (length es)
 }
