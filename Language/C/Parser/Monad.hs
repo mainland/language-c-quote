@@ -41,6 +41,7 @@
 module Language.C.Parser.Monad (
     AlexInput(..),
     alexGetChar,
+    alexGetByte,
     alexMaybeGetChar,
     alexGetCharOrFail,
     alexInputPrevChar,
@@ -95,10 +96,12 @@ import Control.Monad.Identity
 import Control.Monad.State
 import Data.Bits
 import qualified Data.ByteString.Char8 as B
+import Data.ByteString.Internal (c2w)
 import Data.List (foldl')
 import Data.Loc
 import qualified Data.Set as Set
 import Data.Typeable (Typeable)
+import Data.Word
 import Text.PrettyPrint.Mainland
 
 import Language.C.Parser.Tokens
@@ -117,6 +120,12 @@ alexGetChar (AlexInput pos buf off)
     c     = B.index buf off
     pos'  = advancePos pos c
     off'  = off + 1
+
+alexGetByte :: AlexInput -> Maybe (Word8, AlexInput)
+alexGetByte inp =
+    case alexGetChar inp of
+      Nothing        -> Nothing
+      Just (c, inp') -> Just (c2w c, inp')
 
 alexMaybeGetChar :: P (Maybe Char)
 alexMaybeGetChar = do

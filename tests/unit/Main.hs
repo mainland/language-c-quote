@@ -1,14 +1,18 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE QuasiQuotes #-}
 
 module Main where
 
 import Test.HUnit
 
+import Language.C.Quote.C
+import System.Exit (exitFailure, exitSuccess)
+
+#if !MIN_VERSION_template_haskell(2,7,0)
 import qualified Data.Loc
 import qualified Data.Symbol
-import Language.C.Quote.C
 import qualified Language.C.Syntax
-import System.Exit (exitFailure, exitSuccess)
+#endif /* !MIN_VERSION_template_haskell(2,7,0) */
 
 main = do
     count <- runTestTT tests

@@ -36,10 +36,12 @@
 -- variant. 'Language.C.Quote.C' parses C99, 'Language.C.Quote.GCC' parses C99
 -- plus GNU extensions, 'Language.C.Quote.CUDA' parses C99 plus GNU and CUDA
 -- extensions, and 'Language.C.Quote.OpenCL' parses C99 plus GNU and OpenCL
--- extensions. The quasiquoters generate Template Haskell expressions that use
--- data constructors that must be in scope where the quasiquoted expression
--- occurs. You will be safe if you add the following imports to any module using
--- the quasiquoters provided by this package:
+-- extensions.
+--
+-- For version of GHC prior to 7.4, the quasiquoters generate Template Haskell
+-- expressions that use data constructors that must be in scope where the
+-- quasiquoted expression occurs. You will be safe if you add the following
+-- imports to any module using the quasiquoters provided by this package:
 --
 -- > import qualified Data.Loc
 -- > import qualified Data.Symbol
@@ -47,7 +49,8 @@
 --
 -- These modules may also be imported unqualified, of course. The quasiquoters
 -- also use some constructors defined in the standard Prelude, so if it is not
--- imported by default, it must be imported qualified.
+-- imported by default, it must be imported qualified. On GHC 7.4 and above, you
+-- can use the quasiquoters without worrying about what names are in scope.
 --
 -- The following quasiquoters are defined:
 --

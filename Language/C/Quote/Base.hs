@@ -54,7 +54,14 @@ import Data.Loc
 import Data.Symbol
 import Language.Haskell.Meta (parseExp, parsePat)
 import Language.Haskell.TH
+#if MIN_VERSION_template_haskell(2,7,0)
+import Language.Haskell.TH.Quote (QuasiQuoter(..),
+                                  dataToQa,
+                                  dataToExpQ,
+                                  dataToPatQ)
+#else /* !MIN_VERSION_template_haskell(2,7,0) */
 import Language.Haskell.TH.Quote (QuasiQuoter(..))
+#endif /* !MIN_VERSION_template_haskell(2,7,0) */
 import Language.Haskell.TH.Syntax
 
 import qualified Language.C.Parser as P
@@ -506,6 +513,7 @@ quasiquote exts typenames p =
                 , quotePat = parse exts typenames p >=> dataToPatQ qqPat
                 }
 
+#if !MIN_VERSION_template_haskell(2,7,0)
 dataToQa  ::  forall a k q. Data a
           =>  (Name -> k)
           ->  (Lit -> Q q)
@@ -574,3 +582,4 @@ dataToPatQ  ::  Data a
             ->  a
             ->  Q Pat
 dataToPatQ = dataToQa id litP conP
+#endif /* !MIN_VERSION_template_haskell(2,7,0) */
