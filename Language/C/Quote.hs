@@ -32,9 +32,10 @@
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 --
--- There are three modules that provide quasiquoters, each for a different C
+-- There are four modules that provide quasiquoters, each for a different C
 -- variant. 'Language.C.Quote.C' parses C99, 'Language.C.Quote.GCC' parses C99
--- plus GNU extensions, and 'Language.C.Quote.CUDA' parses C99 plus GNU and CUDA
+-- plus GNU extensions, 'Language.C.Quote.CUDA' parses C99 plus GNU and CUDA
+-- extensions, and 'Language.C.Quote.OpenCL' parses C99 plus GNU and OpenCL
 -- extensions. The quasiquoters generate Template Haskell expressions that use
 -- data constructors that must be in scope where the quasiquoted expression
 -- occurs. You will be safe if you add the following imports to any module using
