@@ -51,13 +51,13 @@ lexFile exts filename = do
 parseFile :: Bool -> [C.Extensions] -> String -> IO ()
 parseFile doPrint exts filename = do
     s <- B.readFile filename
-    when (not (prop_ParsePrintUnitId s)) $
-        putStrLn $ "Bad pretty-printing: " ++ filename
     case P.parse exts [] P.ParseDirect P.parseUnit s start of
       Left err   -> fail $ show err
       Right defs -> if doPrint
                     then putStr $ prettyPragma 80 (ppr defs)
                     else return ()
+    when (not (prop_ParsePrintUnitId s)) $
+        putStrLn $ "Bad pretty-printing: " ++ filename
   where
     start :: Pos
     start = startPos filename
