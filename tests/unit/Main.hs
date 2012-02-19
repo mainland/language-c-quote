@@ -23,7 +23,7 @@ main = do
 tests = TestList [exp_id, exp_int, exp_float, exp_char, exp_string,
                   exp_exp, exp_func, exp_args, exp_decl, exp_sdecl,
                   exp_enum, exp_edecl, exp_stm, exp_param, exp_ty,
-                  pat_args]
+                  pat_args, exp_hexp]
 
 
 exp_id = "exp id" ~: [cexp|$id:ident|] ~?= [cexp|x|]
@@ -150,3 +150,7 @@ pat_args =
     stms = case [cstm|f(1, 2, 3);|] of
              [cstm|f(1, $args:es);|] -> es
              _ -> []
+
+exp_hexp =
+    "exp hexp" ~:  [cexp|$ulint:(13 - 2*5)|]
+               ~?= [cexp|3UL|]
