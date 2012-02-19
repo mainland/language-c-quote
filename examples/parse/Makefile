@@ -6,7 +6,7 @@ HAPPY_ARGS=-agci
 ALEX=alex 
 ALEX_ARGS=-gi
 
-APACHE_VERSION=2.2.15
+APACHE_VERSION=2.2.22
 
 SOURCE = Main.hs Opts.hs \
 	$(shell find ../../Language -name .svn -prune -o -type f | grep -v .svn) \
