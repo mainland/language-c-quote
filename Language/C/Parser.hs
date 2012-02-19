@@ -53,10 +53,9 @@ import Language.C.Syntax
 
 parse :: [Extensions]
       -> [String]
-      -> ParseContext
       -> P a
       -> B.ByteString
       -> Pos
       -> Either SomeException a
-parse exts typnames ctx p bs pos =
-    evalP p (emptyPState exts typnames ctx bs pos)
+parse exts typnames p bs pos =
+    evalP p (emptyPState exts typnames bs pos)

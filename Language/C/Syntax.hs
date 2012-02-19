@@ -44,7 +44,8 @@ import Data.Generics
 
 import Data.Loc
 
-data Extensions = Gcc
+data Extensions = Antiquotation
+                | Gcc
                 | CUDA
                 | OpenCL
   deriving (Eq, Ord, Enum, Show)

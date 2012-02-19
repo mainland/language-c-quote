@@ -58,7 +58,7 @@ prop_ParsePrintUnitId s =
 
     parse :: B.ByteString -> Either String [C.Definition]
     parse s =
-        case P.parse [Gcc] [] P.ParseDirect P.parseUnit s pos of
+        case P.parse [Gcc] [] P.parseUnit s pos of
           Left err   -> fail $ show err
           Right defs -> return defs
       where

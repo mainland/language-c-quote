@@ -44,7 +44,6 @@ module Language.C.Parser.Monad (
     evalP,
 
     PState,
-    ParseContext(..),
     emptyPState,
 
     getInput,
@@ -54,8 +53,6 @@ module Language.C.Parser.Monad (
     getLexState,
     getCurToken,
     setCurToken,
-    getParseContext,
-    setParseContext,
 
     addTypedef,
     addVariable,
@@ -69,6 +66,7 @@ module Language.C.Parser.Monad (
     openCLExts,
 
     useExts,
+    antiquotationExts,
     useGccExts,
     useCUDAExts,
     useOpenCLExts,
@@ -116,14 +114,10 @@ import Text.PrettyPrint.Mainland
 import Language.C.Parser.Tokens
 import Language.C.Syntax
 
-data ParseContext  =  ParseDirect
-                   |  ParseQuasiQuote
-
 data PState = PState
     { inp        :: !AlexInput
     , curToken   :: L Token
     , lexState   :: ![Int]
-    , context    :: !ParseContext
     , extensions :: !ExtensionsInt
     , typedefs   :: !(Set.Set String)
     , scopes     :: [Set.Set String]
@@ -131,25 +125,18 @@ data PState = PState
 
 emptyPState :: [Extensions]
             -> [String]
-            -> ParseContext
             -> B.ByteString
             -> Pos
             -> PState
-emptyPState exts typnames ctx buf pos = PState
+emptyPState exts typnames buf pos = PState
     { inp         = inp
     , curToken    = error "no token"
-    , lexState    = [sc]
-    , context     = ctx
+    , lexState    = [0]
     , extensions  = foldl' setBit 0 (map fromEnum exts)
     , typedefs    = Set.fromList typnames
     , scopes      = []
     }
   where
-    sc :: Int
-    sc = case ctx of
-           ParseDirect     -> 0
-           ParseQuasiQuote -> 1 {- qq lexer state -}
-
     inp :: AlexInput
     inp = AlexInput
           { alexPos      = pos
@@ -231,13 +218,6 @@ getCurToken = gets curToken
 setCurToken :: L Token -> P ()
 setCurToken tok = modify $ \s -> s { curToken = tok }
 
-getParseContext :: P ParseContext
-getParseContext = gets context
-
-setParseContext :: ParseContext -> P ()
-setParseContext ctx = modify $ \s ->
-    s { context = ctx }
-
 addTypedef :: String -> P ()
 addTypedef id = modify $ \s ->
     s { typedefs = Set.insert id (typedefs s) }
@@ -259,6 +239,9 @@ popScope = modify  $ \s ->
     s { scopes     = (tail . scopes) s
       , typedefs   = (head . scopes) s
       }
+
+antiquotationExts :: ExtensionsInt
+antiquotationExts = (bit . fromEnum) Antiquotation
 
 gccExts :: ExtensionsInt
 gccExts = (bit . fromEnum) Gcc
@@ -410,8 +393,7 @@ type AlexPredicate =  PState
                    -> Bool
 
 allowAnti :: AlexPredicate
-allowAnti  (PState { context = ParseQuasiQuote })  _ _ _  = True
-allowAnti  _                                       _ _ _  = False
+allowAnti = ifExtension antiquotationExts
 
 ifExtension :: ExtensionsInt -> AlexPredicate
 ifExtension i s _ _ _ = extensions s .&. i /= 0

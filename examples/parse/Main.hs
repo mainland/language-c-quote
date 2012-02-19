@@ -36,7 +36,7 @@ lexFile exts filename = do
       Right ts -> mapM_ print ts
   where
     ts :: B.ByteString -> Either SomeException [L T.Token]
-    ts buf = P.evalP tokens (P.emptyPState exts [] P.ParseDirect buf start)
+    ts buf = P.evalP tokens (P.emptyPState exts [] buf start)
 
     start :: Pos
     start = startPos filename
@@ -51,7 +51,7 @@ lexFile exts filename = do
 parseFile :: Bool -> [C.Extensions] -> String -> IO ()
 parseFile doPrint exts filename = do
     s <- B.readFile filename
-    case P.parse exts [] P.ParseDirect P.parseUnit s start of
+    case P.parse exts [] P.parseUnit s start of
       Left err   -> fail $ show err
       Right defs -> if doPrint
                     then putStr $ prettyPragma 80 (ppr defs)

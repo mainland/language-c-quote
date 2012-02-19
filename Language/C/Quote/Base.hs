@@ -48,6 +48,7 @@ module Language.C.Quote.Base (
   ) where
 
 import Control.Monad ((>=>))
+import Data.Bits
 import qualified Data.ByteString.Char8 as B
 import Data.Generics
 import Data.Loc
@@ -493,7 +494,7 @@ parse :: [C.Extensions]
       -> Q a
 parse exts typenames p s = do
     loc <- location
-    case P.parse exts typenames P.ParseQuasiQuote p (B.pack s) (locToPos loc) of
+    case P.parse (C.Antiquotation : exts) typenames p (B.pack s) (locToPos loc) of
       Left err -> fail (show err)
       Right x  -> return x
   where

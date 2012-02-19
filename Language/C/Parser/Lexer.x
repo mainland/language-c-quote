@@ -101,7 +101,7 @@ $whitechar = [\ \t\n\r\f\v]
 
 c :-
 
-<qq> {
+<0> {
  "typename"  / { allowAnti } { token Ttypename }
 
  "$id:"      / { allowAnti } { lexAnti Tanti_id }
@@ -137,7 +137,7 @@ c :-
  "$"         / { allowAnti } { lexAnti Tanti_exp }
 }
 
-<0, qq> {
+<0> {
  ^ "#line" $whitechar+ $digit+ $whitechar+ \" [^\"]* \" .* { setLineFromPragma }
  ^ "#" $whitechar+ $digit+ $whitechar+ \" [^\"]* \" .*     { setLineFromPragma }
 
