@@ -1,9 +1,9 @@
 name:          language-c-quote
-version:       0.3.1.0
+version:       0.3.1.1
 cabal-version: >= 1.10
 license:       BSD3
 license-file:  LICENSE
-copyright:     (c) 2006-2011 Harvard University
+copyright:     (c) 2006-2012 Harvard University
 author:        Geoffrey Mainland <mainland@eecs.harvard.edu>
 maintainer:    mainland@eecs.harvard.edu
 stability:     alpha
@@ -31,16 +31,16 @@ library
     filepath >=1.2 && <1.4,
     haskell-src-meta >= 0.4 && < 0.6,
     mainland-pretty >=0.1 && <0.2,
-    mtl >=2.0 && <2.1,
+    mtl >=2.0 && <3,
     srcloc >=0.1 && <0.2,
     syb >=0.3 && <0.4,
     symbol >=0.1 && <0.2
 
-  if impl(ghc >= 7.0) &&  impl(ghc < 7.2)
+  if impl(ghc >= 7.0) && impl(ghc < 7.2)
     build-depends:
       template-haskell >=2.5 && <2.6
 
-  if impl(ghc >= 7.4) &&  impl(ghc < 7.6)
+  if impl(ghc >= 7.4) && impl(ghc < 7.6)
     build-depends:
       template-haskell >=2.7 && <2.8
 
