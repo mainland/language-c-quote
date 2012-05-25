@@ -1,5 +1,5 @@
 name:          language-c-quote
-version:       0.3.1.1
+version:       0.3.1.2
 cabal-version: >= 1.10
 license:       BSD3
 license-file:  LICENSE
@@ -43,6 +43,16 @@ library
   if impl(ghc >= 7.4) && impl(ghc < 7.6)
     build-depends:
       template-haskell >=2.7 && <2.8
+
+  if impl(ghc < 7.4)
+    build-tools:
+      alex,
+      happy
+
+  if impl(ghc >= 7.4)
+    build-tools:
+      alex >=3,
+      happy
 
   exposed-modules:
     Language.C
