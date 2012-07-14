@@ -499,7 +499,7 @@ parse exts typenames p s = do
       Right x  -> return x
   where
     locToPos :: Language.Haskell.TH.Loc -> Pos
-    locToPos loc = Pos ((intern . loc_filename) loc)
+    locToPos loc = Pos (loc_filename loc)
                        ((fst . loc_start) loc)
                        ((snd . loc_start) loc)
                        0

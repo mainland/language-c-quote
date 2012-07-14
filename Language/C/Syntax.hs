@@ -1,4 +1,4 @@
--- Copyright (c) 2006-2011
+-- Copyright (c) 2006-2012
 --         The President and Fellows of Harvard College.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Language.C.Syntax
--- Copyright   :  (c) Harvard University 2006-2011
+-- Copyright   :  (c) Harvard University 2006-2012
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 --
@@ -215,7 +215,9 @@ data Stm  = Label Id Stm !SrcLoc
           | Continue !SrcLoc
           | Break !SrcLoc
           | Return (Maybe Exp) !SrcLoc
-          | Asm Bool [Attr] [String] [(String, Exp)] [(String, Exp)] [String] !SrcLoc
+          | Asm Bool [Attr] [String]
+                     [(String, Exp)] [(String, Exp)]
+                     [String] !SrcLoc
           | AntiStm String !SrcLoc
           | AntiStms String !SrcLoc
     deriving (Eq, Ord, Data, Typeable)
@@ -228,15 +230,16 @@ data BlockItem = BlockDecl InitGroup
 
 funcProto :: Func -> InitGroup
 funcProto f@(Func decl_spec id decl params _ _) =
-    InitGroup decl_spec [] [Init id (Proto decl params loc) Nothing Nothing [] loc] loc
+    InitGroup decl_spec []
+      [Init id (Proto decl params l) Nothing Nothing [] l] l
   where
-    loc = locOf f
+    l = srclocOf f
 
 funcProto f@(OldFunc decl_spec id decl params _ _ _) =
-    InitGroup decl_spec [] [Init id (OldProto decl params loc) Nothing Nothing [] loc]
-              loc
+    InitGroup decl_spec []
+      [Init id (OldProto decl params l) Nothing Nothing [] l] l
   where
-    loc = locOf f
+    l = srclocOf f
 
 isPtr :: Type -> Bool
 isPtr  (Type _ decl _)  = go decl
@@ -349,228 +352,228 @@ data UnOp = AddrOf
     deriving (Eq, Ord, Data, Typeable)
 
 instance Located Id where
-    getLoc (Id _ loc)      = getLoc loc
-    getLoc (AntiId _ loc)  = getLoc loc
+    locOf (Id _ loc)      = locOf loc
+    locOf (AntiId _ loc)  = locOf loc
 
 instance Located Storage where
-    getLoc (Tauto loc)      = getLoc loc
-    getLoc (Tregister loc)  = getLoc loc
-    getLoc (Tstatic loc)    = getLoc loc
-    getLoc (Textern loc)    = getLoc loc
-    getLoc (TexternL _ loc) = getLoc loc
-    getLoc (Ttypedef loc)   = getLoc loc
+    locOf (Tauto loc)      = locOf loc
+    locOf (Tregister loc)  = locOf loc
+    locOf (Tstatic loc)    = locOf loc
+    locOf (Textern loc)    = locOf loc
+    locOf (TexternL _ loc) = locOf loc
+    locOf (Ttypedef loc)   = locOf loc
 
 instance Located TypeQual where
-    getLoc (Tconst loc)     = getLoc loc
-    getLoc (Tvolatile loc)  = getLoc loc
-    getLoc (Tinline loc)    = getLoc loc
+    locOf (Tconst loc)     = locOf loc
+    locOf (Tvolatile loc)  = locOf loc
+    locOf (Tinline loc)    = locOf loc
 
-    getLoc (Trestrict loc)  = getLoc loc
+    locOf (Trestrict loc)  = locOf loc
 
-    getLoc (TCUDAdevice loc)    = getLoc loc
-    getLoc (TCUDAglobal loc)    = getLoc loc
-    getLoc (TCUDAhost loc)      = getLoc loc
-    getLoc (TCUDAconstant loc)  = getLoc loc
-    getLoc (TCUDAshared loc)    = getLoc loc
-    getLoc (TCUDAnoinline loc)  = getLoc loc
+    locOf (TCUDAdevice loc)    = locOf loc
+    locOf (TCUDAglobal loc)    = locOf loc
+    locOf (TCUDAhost loc)      = locOf loc
+    locOf (TCUDAconstant loc)  = locOf loc
+    locOf (TCUDAshared loc)    = locOf loc
+    locOf (TCUDAnoinline loc)  = locOf loc
 
-    getLoc (TCLprivate loc)   = getLoc loc
-    getLoc (TCLlocal loc)     = getLoc loc
-    getLoc (TCLglobal loc)    = getLoc loc
-    getLoc (TCLconstant loc)  = getLoc loc
-    getLoc (TCLreadonly loc)  = getLoc loc
-    getLoc (TCLwriteonly loc) = getLoc loc
-    getLoc (TCLkernel loc)    = getLoc loc
+    locOf (TCLprivate loc)   = locOf loc
+    locOf (TCLlocal loc)     = locOf loc
+    locOf (TCLglobal loc)    = locOf loc
+    locOf (TCLconstant loc)  = locOf loc
+    locOf (TCLreadonly loc)  = locOf loc
+    locOf (TCLwriteonly loc) = locOf loc
+    locOf (TCLkernel loc)    = locOf loc
 
 instance Located Sign where
-    getLoc (Tsigned loc)    = getLoc loc
-    getLoc (Tunsigned loc)  = getLoc loc
+    locOf (Tsigned loc)    = locOf loc
+    locOf (Tunsigned loc)  = locOf loc
 
 instance Located TypeSpec where
-    getLoc (Tvoid loc)          = getLoc loc
-    getLoc (Tchar _ loc)        = getLoc loc
-    getLoc (Tshort _ loc)       = getLoc loc
-    getLoc (Tint _ loc)         = getLoc loc
-    getLoc (Tlong _ loc)        = getLoc loc
-    getLoc (Tlong_long _ loc)   = getLoc loc
-    getLoc (Tfloat loc)         = getLoc loc
-    getLoc (Tdouble loc)        = getLoc loc
-    getLoc (Tlong_double loc)   = getLoc loc
-    getLoc (Tstruct _ _ _ loc)  = getLoc loc
-    getLoc (Tunion _ _ _ loc)   = getLoc loc
-    getLoc (Tenum _ _ _ loc)    = getLoc loc
-    getLoc (Tnamed _ loc)       = getLoc loc
-    getLoc (TtypeofExp _ loc)   = getLoc loc
-    getLoc (TtypeofType _ loc)  = getLoc loc
-    getLoc (Tva_list loc)       = getLoc loc
+    locOf (Tvoid loc)          = locOf loc
+    locOf (Tchar _ loc)        = locOf loc
+    locOf (Tshort _ loc)       = locOf loc
+    locOf (Tint _ loc)         = locOf loc
+    locOf (Tlong _ loc)        = locOf loc
+    locOf (Tlong_long _ loc)   = locOf loc
+    locOf (Tfloat loc)         = locOf loc
+    locOf (Tdouble loc)        = locOf loc
+    locOf (Tlong_double loc)   = locOf loc
+    locOf (Tstruct _ _ _ loc)  = locOf loc
+    locOf (Tunion _ _ _ loc)   = locOf loc
+    locOf (Tenum _ _ _ loc)    = locOf loc
+    locOf (Tnamed _ loc)       = locOf loc
+    locOf (TtypeofExp _ loc)   = locOf loc
+    locOf (TtypeofType _ loc)  = locOf loc
+    locOf (Tva_list loc)       = locOf loc
 
 instance Located DeclSpec where
-    getLoc (DeclSpec _ _ _ loc)          = getLoc loc
-    getLoc (AntiDeclSpec _ loc)          = getLoc loc
-    getLoc (AntiTypeDeclSpec _ _ _ loc)  = getLoc loc
+    locOf (DeclSpec _ _ _ loc)          = locOf loc
+    locOf (AntiDeclSpec _ loc)          = locOf loc
+    locOf (AntiTypeDeclSpec _ _ _ loc)  = locOf loc
 
 instance Located ArraySize where
-    getLoc (ArraySize _ _ loc)     = getLoc loc
-    getLoc (VariableArraySize loc) = getLoc loc
-    getLoc (NoArraySize loc)       = getLoc loc
+    locOf (ArraySize _ _ loc)     = locOf loc
+    locOf (VariableArraySize loc) = locOf loc
+    locOf (NoArraySize loc)       = locOf loc
 
 instance Located Decl where
-    getLoc (DeclRoot loc)        = getLoc loc
-    getLoc (Ptr _ _ loc)         = getLoc loc
-    getLoc (Array _ _ _ loc)     = getLoc loc
-    getLoc (Proto _ _ loc)       = getLoc loc
-    getLoc (OldProto _ _ loc)    = getLoc loc
-    getLoc (AntiTypeDecl _ loc)  = getLoc loc
+    locOf (DeclRoot loc)        = locOf loc
+    locOf (Ptr _ _ loc)         = locOf loc
+    locOf (Array _ _ _ loc)     = locOf loc
+    locOf (Proto _ _ loc)       = locOf loc
+    locOf (OldProto _ _ loc)    = locOf loc
+    locOf (AntiTypeDecl _ loc)  = locOf loc
 
 instance Located Type where
-    getLoc (Type _ _ loc)    = getLoc loc
-    getLoc (AntiType _ loc)  = getLoc loc
+    locOf (Type _ _ loc)    = locOf loc
+    locOf (AntiType _ loc)  = locOf loc
 
 instance Located Designator where
-    getLoc (IndexDesignator _ loc)   = getLoc loc
-    getLoc (MemberDesignator _ loc)  = getLoc loc
+    locOf (IndexDesignator _ loc)   = locOf loc
+    locOf (MemberDesignator _ loc)  = locOf loc
 
 instance Located Designation where
-    getLoc (Designation _ loc)   = getLoc loc
+    locOf (Designation _ loc)   = locOf loc
 
 instance Located Initializer where
-    getLoc (ExpInitializer _ loc)       = getLoc loc
-    getLoc (CompoundInitializer _ loc)  = getLoc loc
+    locOf (ExpInitializer _ loc)       = locOf loc
+    locOf (CompoundInitializer _ loc)  = locOf loc
 
 instance Located Init where
-    getLoc (Init _ _ _ _ _ loc) = getLoc loc
+    locOf (Init _ _ _ _ _ loc) = locOf loc
 
 instance Located Typedef where
-    getLoc (Typedef _ _ _ loc) = getLoc loc
+    locOf (Typedef _ _ _ loc) = locOf loc
 
 instance Located InitGroup where
-    getLoc (InitGroup _ _ _ loc)     = getLoc loc
-    getLoc (TypedefGroup _ _ _ loc)  = getLoc loc
-    getLoc (AntiDecl _ loc)          = getLoc loc
-    getLoc (AntiDecls _ loc)         = getLoc loc
+    locOf (InitGroup _ _ _ loc)     = locOf loc
+    locOf (TypedefGroup _ _ _ loc)  = locOf loc
+    locOf (AntiDecl _ loc)          = locOf loc
+    locOf (AntiDecls _ loc)         = locOf loc
 
 instance Located Field where
-    getLoc (Field _ _ _ loc) = getLoc loc
+    locOf (Field _ _ _ loc) = locOf loc
 
 instance Located FieldGroup where
-    getLoc (FieldGroup _ _ loc)  = getLoc loc
-    getLoc (AntiSdecl _ loc)     = getLoc loc
-    getLoc (AntiSdecls _ loc)    = getLoc loc
+    locOf (FieldGroup _ _ loc)  = locOf loc
+    locOf (AntiSdecl _ loc)     = locOf loc
+    locOf (AntiSdecls _ loc)    = locOf loc
 
 instance Located CEnum where
-    getLoc (CEnum _ _ loc)    = getLoc loc
-    getLoc (AntiEnum _ loc)   = getLoc loc
-    getLoc (AntiEnums _ loc)  = getLoc loc
+    locOf (CEnum _ _ loc)    = locOf loc
+    locOf (AntiEnum _ loc)   = locOf loc
+    locOf (AntiEnums _ loc)  = locOf loc
 
 instance Located Attr where
-    getLoc (Attr _ _ loc) = getLoc loc
+    locOf (Attr _ _ loc) = locOf loc
 
 instance Located Param where
-    getLoc (Param _ _ _ loc)   = getLoc loc
-    getLoc (AntiParam _ loc)   = getLoc loc
-    getLoc (AntiParams _ loc)  = getLoc loc
+    locOf (Param _ _ _ loc)   = locOf loc
+    locOf (AntiParam _ loc)   = locOf loc
+    locOf (AntiParams _ loc)  = locOf loc
 
 instance Located Params where
-    getLoc (Params _ _ loc) = getLoc loc
+    locOf (Params _ _ loc) = locOf loc
 
 instance Located Func where
-    getLoc (Func _ _ _ _ _ loc)      = getLoc loc
-    getLoc (OldFunc _ _ _ _ _ _ loc) = getLoc loc
+    locOf (Func _ _ _ _ _ loc)      = locOf loc
+    locOf (OldFunc _ _ _ _ _ _ loc) = locOf loc
 
 instance Located Definition where
-    getLoc (FuncDef _ loc)     = getLoc loc
-    getLoc (DecDef _ loc)      = getLoc loc
-    getLoc (EscDef _ loc)      = getLoc loc
-    getLoc (AntiFunc _ loc)    = getLoc loc
-    getLoc (AntiEsc _ loc)     = getLoc loc
-    getLoc (AntiEdecl _ loc)   = getLoc loc
-    getLoc (AntiEdecls _ loc)  = getLoc loc
+    locOf (FuncDef _ loc)     = locOf loc
+    locOf (DecDef _ loc)      = locOf loc
+    locOf (EscDef _ loc)      = locOf loc
+    locOf (AntiFunc _ loc)    = locOf loc
+    locOf (AntiEsc _ loc)     = locOf loc
+    locOf (AntiEdecl _ loc)   = locOf loc
+    locOf (AntiEdecls _ loc)  = locOf loc
 
 instance Located Stm where
-    getLoc (Label _ _ loc)       = getLoc loc
-    getLoc (Case _ _ loc)        = getLoc loc
-    getLoc (Default _ loc)       = getLoc loc
-    getLoc (Exp _ loc)           = getLoc loc
-    getLoc (Block _ loc)         = getLoc loc
-    getLoc (If _ _ _ loc)        = getLoc loc
-    getLoc (Switch _ _ loc)      = getLoc loc
-    getLoc (While _ _ loc)       = getLoc loc
-    getLoc (DoWhile _ _ loc)     = getLoc loc
-    getLoc (For _ _ _ _ loc)     = getLoc loc
-    getLoc (Goto _ loc)          = getLoc loc
-    getLoc (Continue loc)        = getLoc loc
-    getLoc (Break loc)           = getLoc loc
-    getLoc (Return _ loc)        = getLoc loc
-    getLoc (Asm _ _ _ _ _ _ loc) = getLoc loc
-    getLoc (AntiStm _ loc)       = getLoc loc
-    getLoc (AntiStms _ loc)      = getLoc loc
+    locOf (Label _ _ loc)       = locOf loc
+    locOf (Case _ _ loc)        = locOf loc
+    locOf (Default _ loc)       = locOf loc
+    locOf (Exp _ loc)           = locOf loc
+    locOf (Block _ loc)         = locOf loc
+    locOf (If _ _ _ loc)        = locOf loc
+    locOf (Switch _ _ loc)      = locOf loc
+    locOf (While _ _ loc)       = locOf loc
+    locOf (DoWhile _ _ loc)     = locOf loc
+    locOf (For _ _ _ _ loc)     = locOf loc
+    locOf (Goto _ loc)          = locOf loc
+    locOf (Continue loc)        = locOf loc
+    locOf (Break loc)           = locOf loc
+    locOf (Return _ loc)        = locOf loc
+    locOf (Asm _ _ _ _ _ _ loc) = locOf loc
+    locOf (AntiStm _ loc)       = locOf loc
+    locOf (AntiStms _ loc)      = locOf loc
 
 instance Located BlockItem where
-    getLoc (BlockDecl decl)       = getLoc decl
-    getLoc (BlockStm stm)         = getLoc stm
-    getLoc (AntiBlockItem _ loc)  = getLoc loc
-    getLoc (AntiBlockItems _ loc) = getLoc loc
+    locOf (BlockDecl decl)       = locOf decl
+    locOf (BlockStm stm)         = locOf stm
+    locOf (AntiBlockItem _ loc)  = locOf loc
+    locOf (AntiBlockItems _ loc) = locOf loc
 
 instance Located Const where
-    getLoc (IntConst _ _ _ loc)          = getLoc loc
-    getLoc (LongIntConst _ _ _ loc)      = getLoc loc
-    getLoc (LongLongIntConst _ _ _ loc)  = getLoc loc
-    getLoc (FloatConst _ _ loc)          = getLoc loc
-    getLoc (DoubleConst _ _ loc)         = getLoc loc
-    getLoc (LongDoubleConst _ _ loc)     = getLoc loc
-    getLoc (CharConst _ _ loc)           = getLoc loc
-    getLoc (StringConst _ _ loc)         = getLoc loc
-    getLoc (AntiInt _ loc)               = getLoc loc
-    getLoc (AntiUInt _ loc)              = getLoc loc
-    getLoc (AntiLInt _ loc)              = getLoc loc
-    getLoc (AntiULInt _ loc)             = getLoc loc
-    getLoc (AntiFloat _ loc)             = getLoc loc
-    getLoc (AntiDouble _ loc)            = getLoc loc
-    getLoc (AntiLongDouble _ loc)        = getLoc loc
-    getLoc (AntiChar _ loc)              = getLoc loc
-    getLoc (AntiString _ loc)            = getLoc loc
+    locOf (IntConst _ _ _ loc)          = locOf loc
+    locOf (LongIntConst _ _ _ loc)      = locOf loc
+    locOf (LongLongIntConst _ _ _ loc)  = locOf loc
+    locOf (FloatConst _ _ loc)          = locOf loc
+    locOf (DoubleConst _ _ loc)         = locOf loc
+    locOf (LongDoubleConst _ _ loc)     = locOf loc
+    locOf (CharConst _ _ loc)           = locOf loc
+    locOf (StringConst _ _ loc)         = locOf loc
+    locOf (AntiInt _ loc)               = locOf loc
+    locOf (AntiUInt _ loc)              = locOf loc
+    locOf (AntiLInt _ loc)              = locOf loc
+    locOf (AntiULInt _ loc)             = locOf loc
+    locOf (AntiFloat _ loc)             = locOf loc
+    locOf (AntiDouble _ loc)            = locOf loc
+    locOf (AntiLongDouble _ loc)        = locOf loc
+    locOf (AntiChar _ loc)              = locOf loc
+    locOf (AntiString _ loc)            = locOf loc
 
 instance Located ExeConfig where
-    getLoc conf = getLoc (exeLoc conf)
+    locOf conf = locOf (exeLoc conf)
 
 instance Located Exp where
-    getLoc (Var _ loc)             = getLoc loc
-    getLoc (Const _ loc)           = getLoc loc
-    getLoc (BinOp _ _ _ loc)       = getLoc loc
-    getLoc (Assign _ _ _ loc)      = getLoc loc
-    getLoc (PreInc _ loc)          = getLoc loc
-    getLoc (PostInc _ loc)         = getLoc loc
-    getLoc (PreDec _ loc)          = getLoc loc
-    getLoc (PostDec _ loc)         = getLoc loc
-    getLoc (UnOp _ _ loc)          = getLoc loc
-    getLoc (SizeofExp _ loc)       = getLoc loc
-    getLoc (SizeofType _ loc)      = getLoc loc
-    getLoc (Cast _ _ loc)          = getLoc loc
-    getLoc (Cond _ _ _ loc)        = getLoc loc
-    getLoc (Member _ _ loc)        = getLoc loc
-    getLoc (PtrMember _ _ loc)     = getLoc loc
-    getLoc (Index _ _ loc)         = getLoc loc
-    getLoc (FnCall _ _ loc)        = getLoc loc
-    getLoc (CudaCall _ _ _ loc)    = getLoc loc
-    getLoc (Seq _ _ loc)           = getLoc loc
-    getLoc (CompoundLit _ _ loc)   = getLoc loc
-    getLoc (StmExpr _ loc)         = getLoc loc
-    getLoc (BuiltinVaArg _ _ loc)  = getLoc loc
-    getLoc (AntiExp _ loc)         = getLoc loc
-    getLoc (AntiArgs _ loc)        = getLoc loc
+    locOf (Var _ loc)             = locOf loc
+    locOf (Const _ loc)           = locOf loc
+    locOf (BinOp _ _ _ loc)       = locOf loc
+    locOf (Assign _ _ _ loc)      = locOf loc
+    locOf (PreInc _ loc)          = locOf loc
+    locOf (PostInc _ loc)         = locOf loc
+    locOf (PreDec _ loc)          = locOf loc
+    locOf (PostDec _ loc)         = locOf loc
+    locOf (UnOp _ _ loc)          = locOf loc
+    locOf (SizeofExp _ loc)       = locOf loc
+    locOf (SizeofType _ loc)      = locOf loc
+    locOf (Cast _ _ loc)          = locOf loc
+    locOf (Cond _ _ _ loc)        = locOf loc
+    locOf (Member _ _ loc)        = locOf loc
+    locOf (PtrMember _ _ loc)     = locOf loc
+    locOf (Index _ _ loc)         = locOf loc
+    locOf (FnCall _ _ loc)        = locOf loc
+    locOf (CudaCall _ _ _ loc)    = locOf loc
+    locOf (Seq _ _ loc)           = locOf loc
+    locOf (CompoundLit _ _ loc)   = locOf loc
+    locOf (StmExpr _ loc)         = locOf loc
+    locOf (BuiltinVaArg _ _ loc)  = locOf loc
+    locOf (AntiExp _ loc)         = locOf loc
+    locOf (AntiArgs _ loc)        = locOf loc
 
 ctypedef :: Id -> Decl -> [Attr] -> Typedef
 ctypedef id decl attrs =
-    Typedef id decl attrs ((id <--> decl :: Loc) <--> attrs)
+    Typedef id decl attrs (id `srcspan` decl `srcspan` attrs)
 
 cdeclSpec :: [Storage] -> [TypeQual] -> TypeSpec -> DeclSpec
 cdeclSpec storage quals spec =
-    DeclSpec storage quals spec ((storage <--> quals :: Loc) <--> spec)
+    DeclSpec storage quals spec (storage `srcspan` quals `srcspan` spec)
 
 cinitGroup :: DeclSpec -> [Attr] -> [Init] -> InitGroup
 cinitGroup dspec attrs inis =
-    InitGroup dspec attrs inis ((dspec <--> attrs :: Loc) <--> inis)
+    InitGroup dspec attrs inis (dspec `srcspan` attrs `srcspan` inis)
 
 ctypedefGroup :: DeclSpec -> [Attr] -> [Typedef] -> InitGroup
 ctypedefGroup dspec attrs typedefs =
-    TypedefGroup dspec attrs typedefs ((dspec <--> attrs :: Loc) <--> typedefs)
+    TypedefGroup dspec attrs typedefs (dspec `srcspan` attrs `srcspan` typedefs)

@@ -2,7 +2,7 @@
 {-# OPTIONS -w #-}
 {-# LANGUAGE CPP #-}
 
--- Copyright (c) 2006-2011
+-- Copyright (c) 2006-2012
 --         The President and Fellows of Harvard College.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Language.C.Parser.Lexer
--- Copyright   :  (c) Harvard University 2006-2011
+-- Copyright   :  (c) Harvard University 2006-2012
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 --
@@ -242,7 +242,7 @@ setLineFromPragma beg end = do
     filename = (takeWhile (/= '\"') . drop 1 . concat . intersperse " ") ws
 
     pos' :: Pos
-    pos' = Pos (intern filename) line 1 (posCoff (alexPos beg))
+    pos' = Pos filename line 1 (posCoff (alexPos beg))
 
 identifier :: Action
 identifier beg end =

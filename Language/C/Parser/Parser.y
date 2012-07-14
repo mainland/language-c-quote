@@ -1,7 +1,7 @@
 {
 {-# OPTIONS -w #-}
 
--- Copyright (c) 2006-2011
+-- Copyright (c) 2006-2012
 --         The President and Fellows of Harvard College.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Language.C.Parser.Parser
--- Copyright   :  (c) Harvard University 2006-2011
+-- Copyright   :  (c) Harvard University 2006-2012
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 --
@@ -254,13 +254,13 @@ import qualified Language.C.Syntax as C
 
 identifier :: { Id }
 identifier :
-    ID       { Id (getID $1) (locOf $1) }
-  | ANTI_ID  { AntiId (getANTI_ID $1) (locOf $1) }
+    ID       { Id (getID $1) (srclocOf $1) }
+  | ANTI_ID  { AntiId (getANTI_ID $1) (srclocOf $1) }
 
 identifier_or_typedef :: { Id }
 identifier_or_typedef :
     identifier  { $1 }
-  | NAMED       { Id (getNAMED $1) (locOf $1) }
+  | NAMED       { Id (getNAMED $1) (srclocOf $1) }
 
 {------------------------------------------------------------------------------
  -
@@ -272,41 +272,41 @@ constant :: {  Const }
 constant :
     INT               { let (s, sign, n) = getINT $1
                         in
-                          IntConst s sign n (locOf $1)
+                          IntConst s sign n (srclocOf $1)
                       }
   | LONG              { let (s, sign, n) = getLONG $1
                         in
-                          LongIntConst s sign n (locOf $1)
+                          LongIntConst s sign n (srclocOf $1)
                       }
   | LONG_LONG         { let (s, sign, n) = getLONG_LONG $1
                         in
-                          LongLongIntConst s sign n (locOf $1)
+                          LongLongIntConst s sign n (srclocOf $1)
                       }
   | FLOAT             { let (s, n) = getFLOAT $1
                         in
-                          FloatConst s n (locOf $1)
+                          FloatConst s n (srclocOf $1)
                       }
   | DOUBLE            { let (s, n) = getDOUBLE $1
                         in
-                          DoubleConst s n (locOf $1)
+                          DoubleConst s n (srclocOf $1)
                       }
   | LONG_DOUBLE       { let (s, n) = getLONG_DOUBLE $1
                         in
-                          LongDoubleConst s n (locOf $1)
+                          LongDoubleConst s n (srclocOf $1)
                       }
   | CHAR              { let (s, c) = getCHAR $1
                         in
-                          CharConst s c (locOf $1)
+                          CharConst s c (srclocOf $1)
                       }
-  | ANTI_INT          { AntiInt (getANTI_INT $1) (locOf $1) }
-  | ANTI_UINT         { AntiUInt (getANTI_UINT $1) (locOf $1) }
-  | ANTI_LINT         { AntiLInt (getANTI_LINT $1) (locOf $1) }
-  | ANTI_ULINT        { AntiULInt (getANTI_ULINT $1) (locOf $1) }
-  | ANTI_FLOAT        { AntiFloat (getANTI_FLOAT $1) (locOf $1) }
-  | ANTI_DOUBLE       { AntiDouble (getANTI_DOUBLE $1) (locOf $1) }
-  | ANTI_LONG_DOUBLE  { AntiLongDouble (getANTI_LONG_DOUBLE $1) (locOf $1) }
-  | ANTI_CHAR         { AntiChar (getANTI_CHAR $1) (locOf $1) }
-  | ANTI_STRING       { AntiString (getANTI_STRING $1) (locOf $1) }
+  | ANTI_INT          { AntiInt (getANTI_INT $1) (srclocOf $1) }
+  | ANTI_UINT         { AntiUInt (getANTI_UINT $1) (srclocOf $1) }
+  | ANTI_LINT         { AntiLInt (getANTI_LINT $1) (srclocOf $1) }
+  | ANTI_ULINT        { AntiULInt (getANTI_ULINT $1) (srclocOf $1) }
+  | ANTI_FLOAT        { AntiFloat (getANTI_FLOAT $1) (srclocOf $1) }
+  | ANTI_DOUBLE       { AntiDouble (getANTI_DOUBLE $1) (srclocOf $1) }
+  | ANTI_LONG_DOUBLE  { AntiLongDouble (getANTI_LONG_DOUBLE $1) (srclocOf $1) }
+  | ANTI_CHAR         { AntiChar (getANTI_CHAR $1) (srclocOf $1) }
+  | ANTI_STRING       { AntiString (getANTI_STRING $1) (srclocOf $1) }
 
 
 {------------------------------------------------------------------------------
@@ -318,17 +318,17 @@ constant :
 primary_expression :: { Exp }
 primary_expression :
     identifier
-      { Var $1 (locOf $1) }
+      { Var $1 (srclocOf $1) }
   | constant
-      { Const $1 (locOf $1) }
+      { Const $1 (srclocOf $1) }
   | string_constant
       { let  {  ss   = rev $1
-             ;  loc  = locOf ss
+             ;  l    = srclocOf ss
              ;  raw  = map (fst . unLoc) ss
              ;  s    = (concat . intersperse " " . map (snd . unLoc)) ss
              }
         in
-          Const (StringConst raw s loc) loc
+          Const (StringConst raw s l) l
       }
   | '(' expression ')'
       { $2 }
@@ -337,16 +337,16 @@ primary_expression :
   | '(' compound_statement ')'
       { let Block items _ = $2
         in
-          StmExpr items ($1 <--> $3)
+          StmExpr items ($1 `srcspan` $3)
       }
   | ANTI_EXP
-      { AntiExp (getANTI_EXP $1) (locOf $1) }
+      { AntiExp (getANTI_EXP $1) (srclocOf $1) }
 
 string_constant :: { RevList (L (String, String)) }
 string_constant :
-    STRING                  { rsingleton (L (getLoc $1) (getSTRING $1)) }
+    STRING                  { rsingleton (L (locOf $1) (getSTRING $1)) }
     {- Extension: GCC -}
-  | string_constant STRING  { rcons (L (getLoc $2) (getSTRING $2)) $1 }
+  | string_constant STRING  { rcons (L (locOf $2) (getSTRING $2)) $1 }
 
 postfix_expression :: { Exp }
 postfix_expression :
@@ -355,43 +355,43 @@ postfix_expression :
   | postfix_expression '[' error
       {% unclosed (locOf $1) "[" }
   | postfix_expression '[' expression ']'
-      { Index $1 $3 ($1 <--> $4) }
+      { Index $1 $3 ($1 `srcspan` $4) }
 
   | postfix_expression '(' error
       {% unclosed (locOf $2) "(" }
   | postfix_expression '(' ')'
-      { FnCall $1 [] ($1 <--> $3) }
+      { FnCall $1 [] ($1 `srcspan` $3) }
   | postfix_expression '(' argument_expression_list error
       {% unclosed ($2 <--> rev $3) "(" }
   | postfix_expression '(' argument_expression_list ')'
-      { FnCall $1 (rev $3) ($1 <--> $4) }
+      { FnCall $1 (rev $3) ($1 `srcspan` $4) }
 
   | postfix_expression '<<<' execution_configuration error
       {% unclosed ($2 <--> $3) "<<<" }
   | postfix_expression '<<<' execution_configuration '>>>' '(' ')'
-      { CudaCall $1 $3 [] ($1 <--> $6) }
+      { CudaCall $1 $3 [] ($1 `srcspan` $6) }
   | postfix_expression '<<<' execution_configuration '>>>'
                        '(' argument_expression_list error
       {% unclosed ($5 <--> rev $6) "(" }
   | postfix_expression '<<<' execution_configuration '>>>'
                        '(' argument_expression_list ')'
-      { CudaCall $1 $3 (rev $6) ($1 <--> $7) }
+      { CudaCall $1 $3 (rev $6) ($1 `srcspan` $7) }
 
   | postfix_expression '.' identifier_or_typedef
-      { Member $1 $3 ($1 <--> $3) }
+      { Member $1 $3 ($1 `srcspan` $3) }
   | postfix_expression '->' identifier_or_typedef
-      { PtrMember $1 $3 ($1 <--> $3) }
+      { PtrMember $1 $3 ($1 `srcspan` $3) }
   | postfix_expression '++'
-      { PostInc $1 ($1 <--> $2) }
+      { PostInc $1 ($1 `srcspan` $2) }
   | postfix_expression '--'
-      { PostDec $1 ($1 <--> $2) }
+      { PostDec $1 ($1 `srcspan` $2) }
   | '(' type_name ')' '{' initializer_list '}'
-      { CompoundLit ($2 :: Type) (rev $5) ($1 <--> $6) }
+      { CompoundLit ($2 :: Type) (rev $5) ($1 `srcspan` $6) }
   | '(' type_name ')' '{' initializer_list ',' '}'
-      { CompoundLit $2 (rev $5) ($1 <--> $7) }
+      { CompoundLit $2 (rev $5) ($1 `srcspan` $7) }
   {- Extension: GCC -}
   | '__builtin_va_arg' '(' assignment_expression ',' type_declaration ')'
-      { BuiltinVaArg $3 $5 ($1 <--> $6) }
+      { BuiltinVaArg $3 $5 ($1 `srcspan` $6) }
 
 {- Extension: CUDA -}
 execution_configuration :: { ExeConfig }
@@ -407,15 +407,15 @@ execution_configuration :
               [gridDim, blockDim] ->
                   ExeConfig  gridDim blockDim
                              Nothing Nothing
-                             (locOf args)
+                             (srclocOf args)
               [gridDim, blockDim, sharedSize] ->
                   ExeConfig  gridDim blockDim
                              (Just sharedSize) Nothing
-                             (locOf args)
+                             (srclocOf args)
               [gridDim, blockDim, sharedSize, exeStream] ->
                   ExeConfig  gridDim blockDim
                              (Just sharedSize) (Just exeStream)
-                             (locOf args)
+                             (srclocOf args)
          }
     }
 
@@ -424,31 +424,31 @@ argument_expression_list :
     assignment_expression
       { rsingleton $1 }
   | ANTI_ARGS
-      { rsingleton (AntiArgs (getANTI_ARGS $1) (locOf $1)) }
+      { rsingleton (AntiArgs (getANTI_ARGS $1) (srclocOf $1)) }
   | argument_expression_list ',' assignment_expression
       { rcons $3 $1}
   | argument_expression_list ',' ANTI_ARGS
-      { rcons (AntiArgs (getANTI_ARGS $3) (locOf $3)) $1 }
+      { rcons (AntiArgs (getANTI_ARGS $3) (srclocOf $3)) $1 }
 
 unary_expression :: { Exp }
 unary_expression :
     postfix_expression            { $1 }
-  | '++' unary_expression         { PreInc $2 ($1 <--> $2) }
-  | '--' unary_expression         { PreDec $2 ($1 <--> $2) }
-  | '&' cast_expression           { UnOp AddrOf $2 ($1 <--> $2) }
-  | '*' cast_expression           { UnOp Deref $2 ($1 <--> $2) }
-  | '+' cast_expression           { UnOp Positive $2 ($1 <--> $2) }
-  | '-' cast_expression           { UnOp Negate $2 ($1 <--> $2) }
-  | '~' cast_expression           { UnOp Not $2 ($1 <--> $2) }
-  | '!' cast_expression           { UnOp Lnot $2 ($1 <--> $2) }
-  | 'sizeof' unary_expression     { SizeofExp $2 ($1 <--> $2) }
-  | 'sizeof' '(' type_name ')'    { SizeofType $3 ($1 <--> $4) }
+  | '++' unary_expression         { PreInc $2 ($1 `srcspan` $2) }
+  | '--' unary_expression         { PreDec $2 ($1 `srcspan` $2) }
+  | '&' cast_expression           { UnOp AddrOf $2 ($1 `srcspan` $2) }
+  | '*' cast_expression           { UnOp Deref $2 ($1 `srcspan` $2) }
+  | '+' cast_expression           { UnOp Positive $2 ($1 `srcspan` $2) }
+  | '-' cast_expression           { UnOp Negate $2 ($1 `srcspan` $2) }
+  | '~' cast_expression           { UnOp Not $2 ($1 `srcspan` $2) }
+  | '!' cast_expression           { UnOp Lnot $2 ($1 `srcspan` $2) }
+  | 'sizeof' unary_expression     { SizeofExp $2 ($1 `srcspan` $2) }
+  | 'sizeof' '(' type_name ')'    { SizeofType $3 ($1 `srcspan` $4) }
   | 'sizeof' '(' type_name error  {% unclosed ($2 <--> $3) "(" }
 
 cast_expression :: { Exp }
 cast_expression :
     unary_expression                   { $1 }
-  | '(' type_name ')' cast_expression  { Cast $2 $4 ($1 <--> $4) }
+  | '(' type_name ')' cast_expression  { Cast $2 $4 ($1 `srcspan` $4) }
   | '(' type_name error                {% unclosed ($1 <--> $2) "(" }
 
 multiplicative_expression :: { Exp }
@@ -456,125 +456,125 @@ multiplicative_expression :
     cast_expression
       { $1 }
   | multiplicative_expression '*' cast_expression
-      { BinOp Mul $1 $3 ($1 <--> $3) }
+      { BinOp Mul $1 $3 ($1 `srcspan` $3) }
   | multiplicative_expression '/' cast_expression
-      { BinOp Div $1 $3 ($1 <--> $3) }
+      { BinOp Div $1 $3 ($1 `srcspan` $3) }
   | multiplicative_expression '%' cast_expression
-      { BinOp Mod $1 $3 ($1 <--> $3) }
+      { BinOp Mod $1 $3 ($1 `srcspan` $3) }
 
 additive_expression :: { Exp }
 additive_expression :
     multiplicative_expression
       { $1 }
   | additive_expression '+' multiplicative_expression
-      { BinOp Add $1 $3 ($1 <--> $3) }
+      { BinOp Add $1 $3 ($1 `srcspan` $3) }
   | additive_expression '-' multiplicative_expression
-      { BinOp Sub $1 $3 ($1 <--> $3) }
+      { BinOp Sub $1 $3 ($1 `srcspan` $3) }
 
 shift_expression :: { Exp }
 shift_expression :
     additive_expression
       { $1 }
   | shift_expression '<<' additive_expression
-      { BinOp Lsh $1 $3 ($1 <--> $3) }
+      { BinOp Lsh $1 $3 ($1 `srcspan` $3) }
   | shift_expression '>>' additive_expression
-      { BinOp Rsh $1 $3 ($1 <--> $3) }
+      { BinOp Rsh $1 $3 ($1 `srcspan` $3) }
 
 relational_expression :: { Exp }
 relational_expression :
     shift_expression
       { $1 }
   | relational_expression '<' shift_expression
-      { BinOp Lt $1 $3 ($1 <--> $3) }
+      { BinOp Lt $1 $3 ($1 `srcspan` $3) }
   | relational_expression '>' shift_expression
-      { BinOp Gt $1 $3 ($1 <--> $3) }
+      { BinOp Gt $1 $3 ($1 `srcspan` $3) }
   | relational_expression '<=' shift_expression
-      { BinOp Le $1 $3 ($1 <--> $3) }
+      { BinOp Le $1 $3 ($1 `srcspan` $3) }
   | relational_expression '>=' shift_expression
-      { BinOp Ge $1 $3 ($1 <--> $3) }
+      { BinOp Ge $1 $3 ($1 `srcspan` $3) }
 
 equality_expression :: { Exp }
 equality_expression :
     relational_expression
       { $1 }
   | equality_expression '==' relational_expression
-      { BinOp Eq $1 $3 ($1 <--> $3) }
+      { BinOp Eq $1 $3 ($1 `srcspan` $3) }
   | equality_expression '!=' relational_expression
-      { BinOp Ne $1 $3 ($1 <--> $3) }
+      { BinOp Ne $1 $3 ($1 `srcspan` $3) }
 
 and_expression :: { Exp }
 and_expression :
     equality_expression
       { $1 }
   | and_expression '&' equality_expression
-      { BinOp And $1 $3 ($1 <--> $3) }
+      { BinOp And $1 $3 ($1 `srcspan` $3) }
 
 exclusive_or_expression :: { Exp }
 exclusive_or_expression :
     and_expression
       { $1 }
   | exclusive_or_expression '^' and_expression
-      { BinOp Xor $1 $3 ($1 <--> $3) }
+      { BinOp Xor $1 $3 ($1 `srcspan` $3) }
 
 inclusive_or_expression :: { Exp }
 inclusive_or_expression :
     exclusive_or_expression
       { $1 }
   | inclusive_or_expression '|' exclusive_or_expression
-      { BinOp Or $1 $3 ($1 <--> $3) }
+      { BinOp Or $1 $3 ($1 `srcspan` $3) }
 
 logical_and_expression :: { Exp }
 logical_and_expression :
     inclusive_or_expression
       { $1 }
   | logical_and_expression '&&' inclusive_or_expression
-      { BinOp Land $1 $3 ($1 <--> $3) }
+      { BinOp Land $1 $3 ($1 `srcspan` $3) }
 
 logical_or_expression :: { Exp }
 logical_or_expression :
     logical_and_expression
       { $1 }
   | logical_or_expression '||' logical_and_expression
-      { BinOp Lor $1 $3 ($1 <--> $3) }
+      { BinOp Lor $1 $3 ($1 `srcspan` $3) }
 
 conditional_expression :: { Exp }
 conditional_expression :
     logical_or_expression
       { $1 }
   | logical_or_expression '?' expression ':' conditional_expression
-      { Cond $1 $3 $5 ($1 <--> $5) }
+      { Cond $1 $3 $5 ($1 `srcspan` $5) }
 
 assignment_expression :: { Exp }
 assignment_expression :
     conditional_expression
       { $1 }
   | unary_expression '=' assignment_expression
-      { Assign $1 JustAssign $3 ($1 <--> $3) }
+      { Assign $1 JustAssign $3 ($1 `srcspan` $3) }
   | unary_expression '*=' assignment_expression
-      { Assign $1 MulAssign $3 ($1 <--> $3) }
+      { Assign $1 MulAssign $3 ($1 `srcspan` $3) }
   | unary_expression '/=' assignment_expression
-      { Assign $1 DivAssign $3 ($1 <--> $3) }
+      { Assign $1 DivAssign $3 ($1 `srcspan` $3) }
   | unary_expression '%=' assignment_expression
-      { Assign $1 ModAssign $3 ($1 <--> $3) }
+      { Assign $1 ModAssign $3 ($1 `srcspan` $3) }
   | unary_expression '+=' assignment_expression
-      { Assign $1 AddAssign $3 ($1 <--> $3) }
+      { Assign $1 AddAssign $3 ($1 `srcspan` $3) }
   | unary_expression '-=' assignment_expression
-      { Assign $1 SubAssign $3 ($1 <--> $3) }
+      { Assign $1 SubAssign $3 ($1 `srcspan` $3) }
   | unary_expression '<<=' assignment_expression
-      { Assign $1 LshAssign $3 ($1 <--> $3) }
+      { Assign $1 LshAssign $3 ($1 `srcspan` $3) }
   | unary_expression '>>=' assignment_expression
-      { Assign $1 RshAssign $3 ($1 <--> $3) }
+      { Assign $1 RshAssign $3 ($1 `srcspan` $3) }
   | unary_expression '&=' assignment_expression
-      { Assign $1 AndAssign $3 ($1 <--> $3) }
+      { Assign $1 AndAssign $3 ($1 `srcspan` $3) }
   | unary_expression '^=' assignment_expression
-      { Assign $1 XorAssign $3 ($1 <--> $3) }
+      { Assign $1 XorAssign $3 ($1 `srcspan` $3) }
   | unary_expression '|=' assignment_expression
-      { Assign $1 OrAssign $3 ($1 <--> $3) }
+      { Assign $1 OrAssign $3 ($1 `srcspan` $3) }
 
 expression :: { Exp }
 expression :
     assignment_expression                 { $1 }
-  | expression ',' assignment_expression  { Seq $1 $3 ($1 <--> $3) }
+  | expression ',' assignment_expression  { Seq $1 $3 ($1 `srcspan` $3) }
 
 maybe_expression :: { Maybe Exp  }
 maybe_expression:
@@ -633,25 +633,25 @@ declaration_ :
            }
       }
   | ANTI_DECL
-      { AntiDecl (getANTI_DECL $1) (locOf $1) }
+      { AntiDecl (getANTI_DECL $1) (srclocOf $1) }
 
 declaration_specifiers :: { (DeclSpec, Decl) }
 declaration_specifiers :
     ANTI_TYPE
-      { let  {  v    = getANTI_TYPE $1
-             ;  loc  = locOf $1
+      { let  {  v  = getANTI_TYPE $1
+             ;  l  = srclocOf $1
              }
         in
-          (AntiTypeDeclSpec [] [] v loc, AntiTypeDecl v loc)
+          (AntiTypeDeclSpec [] [] v l, AntiTypeDecl v l)
       }
   | storage_qualifier_specifiers ANTI_TYPE
       { let { storage   = mkStorage $1
             ; typeQuals = mkTypeQuals $1
             ; v         = getANTI_TYPE $2
-            ; loc       = $1 <--> $2
+            ; l         = $1 `srcspan` $2
             }
         in
-          (AntiTypeDeclSpec storage typeQuals v loc, AntiTypeDecl v loc)
+          (AntiTypeDeclSpec storage typeQuals v l, AntiTypeDecl v l)
       }
   | nontypedef_declaration_specifiers
       { $1 }
@@ -661,33 +661,33 @@ declaration_specifiers :
 nontypedef_declaration_specifiers :: { (DeclSpec, Decl) }
 nontypedef_declaration_specifiers :
     ANTI_SPEC
-      { let dspec = AntiDeclSpec (getANTI_SPEC $1) (locOf $1)
+      { let dspec = AntiDeclSpec (getANTI_SPEC $1) (srclocOf $1)
         in
-          (dspec, DeclRoot (locOf $1))
+          (dspec, DeclRoot (srclocOf $1))
       }
   | storage_qualifier_specifiers %prec NAMED
       {% do{ dspec <- mkDeclSpec $1
-           ; return (dspec, DeclRoot (locOf $1))
+           ; return (dspec, DeclRoot (srclocOf $1))
            }
       }
   | type_specifier
       {% do{ dspec <- mkDeclSpec [$1]
-           ; return (dspec, DeclRoot (locOf $1) )
+           ; return (dspec, DeclRoot (srclocOf $1) )
            }
       }
   | type_specifier declaration_specifiers_
       {% do{ dspec <- mkDeclSpec ($1 : $2)
-           ; return (dspec, DeclRoot ($1 <--> $2))
+           ; return (dspec, DeclRoot ($1 `srcspan` $2))
            }
       }
   | storage_qualifier_specifiers type_specifier
       {% do{ dspec <- mkDeclSpec ($1 ++ [$2])
-           ; return $(dspec, DeclRoot ($1 <--> $2))
+           ; return $(dspec, DeclRoot ($1 `srcspan` $2))
            }
       }
   | storage_qualifier_specifiers type_specifier declaration_specifiers_
       {% do{ dspec <- mkDeclSpec ($1 ++ $2 : $3)
-           ; return (dspec, DeclRoot ($1 <--> $3))
+           ; return (dspec, DeclRoot ($1 `srcspan` $3))
            }
       }
 
@@ -695,22 +695,22 @@ typedef_declaration_specifiers :: { (DeclSpec, Decl) }
 typedef_declaration_specifiers :
     typedef_name
       {% do{ dspec <- mkDeclSpec [$1]
-           ; return (dspec, DeclRoot (locOf $1))
+           ; return (dspec, DeclRoot (srclocOf $1))
            }
       }
   | typedef_name storage_qualifier_specifiers
       {% do{ dspec <- mkDeclSpec ($1 : $2)
-           ; return (dspec, DeclRoot ($1 <--> $2))
+           ; return (dspec, DeclRoot ($1 `srcspan` $2))
            }
       }
   | storage_qualifier_specifiers typedef_name
       {% do{ dspec <- mkDeclSpec ($1 ++ [$2])
-           ; return (dspec, DeclRoot ($1 <--> $2))
+           ; return (dspec, DeclRoot ($1 `srcspan` $2))
            }
       }
   | storage_qualifier_specifiers typedef_name storage_qualifier_specifiers
       {% do{ dspec <- mkDeclSpec ($1 ++ $2 : $3)
-           ; return (dspec, DeclRoot ($1 <--> $3))
+           ; return (dspec, DeclRoot ($1 `srcspan` $3))
            }
       }
 
@@ -750,28 +750,28 @@ init_declarator :
              ;  decl                = declToDecl (declRoot ident)
              }
         in
-          Init ident decl $2 Nothing [] (ident <--> decl)
+          Init ident decl $2 Nothing [] (ident `srcspan` decl)
       }
   | declarator attributes maybe_asmlabel
       { let  { (ident, declToDecl) = $1
              ;  decl               = declToDecl (declRoot ident)
              }
         in
-          Init ident decl $3 Nothing $2 (ident <--> decl)
+          Init ident decl $3 Nothing $2 (ident `srcspan` decl)
       }
   | declarator maybe_asmlabel '=' initializer
       { let  {  (ident, declToDecl) = $1
              ;  decl                = declToDecl (declRoot ident)
              }
         in
-          Init ident decl $2 (Just $4) [] (ident <--> $4)
+          Init ident decl $2 (Just $4) [] (ident `srcspan` $4)
       }
   | declarator maybe_asmlabel '=' attributes initializer
       { let  {  (ident, declToDecl) = $1
              ;  decl                = declToDecl (declRoot ident)
              }
         in
-          Init ident decl $2 (Just $5) $4 (ident <--> $5)
+          Init ident decl $2 (Just $5) $4 (ident `srcspan` $5)
       }
   | declarator error
       {% do{  let (ident, declToDecl) = $1
@@ -782,87 +782,87 @@ init_declarator :
 
 storage_class_specifier :: { TySpec }
 storage_class_specifier :
-    'auto'           { TSauto (locOf $1) }
-  | 'register'       { TSregister (locOf $1) }
-  | 'static'         { TSstatic (locOf $1) }
-  | 'extern'         { TSextern (locOf $1) }
-  | 'extern' STRING  { TSexternL ((snd . getSTRING) $2) (locOf $1) }
-  | 'typedef'        { TStypedef (locOf $1) }
+    'auto'           { TSauto (srclocOf $1) }
+  | 'register'       { TSregister (srclocOf $1) }
+  | 'static'         { TSstatic (srclocOf $1) }
+  | 'extern'         { TSextern (srclocOf $1) }
+  | 'extern' STRING  { TSexternL ((snd . getSTRING) $2) (srclocOf $1) }
+  | 'typedef'        { TStypedef (srclocOf $1) }
 
 type_specifier :: { TySpec }
 type_specifier :
-    'void'                    { TSvoid (locOf $1) }
-  | 'char'                    { TSchar (locOf $1) }
-  | 'short'                   { TSshort (locOf $1) }
-  | 'int'                     { TSint (locOf $1) }
-  | 'long'                    { TSlong (locOf $1) }
-  | 'float'                   { TSfloat (locOf $1) }
-  | 'double'                  { TSdouble (locOf $1) }
-  | 'signed'                  { TSsigned (locOf $1) }
-  | 'unsigned'                { TSunsigned (locOf $1) }
+    'void'                    { TSvoid (srclocOf $1) }
+  | 'char'                    { TSchar (srclocOf $1) }
+  | 'short'                   { TSshort (srclocOf $1) }
+  | 'int'                     { TSint (srclocOf $1) }
+  | 'long'                    { TSlong (srclocOf $1) }
+  | 'float'                   { TSfloat (srclocOf $1) }
+  | 'double'                  { TSdouble (srclocOf $1) }
+  | 'signed'                  { TSsigned (srclocOf $1) }
+  | 'unsigned'                { TSunsigned (srclocOf $1) }
   | struct_or_union_specifier { $1 }
   | enum_specifier            { $1 }
 
   {- Extension: GCC -}
-  | '__builtin_va_list' { TSva_list (locOf $1) }
+  | '__builtin_va_list' { TSva_list (srclocOf $1) }
 
 struct_or_union_specifier :: { TySpec }
 struct_or_union_specifier :
     struct_or_union identifier_or_typedef
-      { (unLoc $1) (Just $2) Nothing [] ($1 <--> $2) }
+      { (unLoc $1) (Just $2) Nothing [] ($1 `srcspan` $2) }
   | struct_or_union attributes identifier_or_typedef
-      { (unLoc $1) (Just $3) Nothing $2 ($1 <--> $3) }
+      { (unLoc $1) (Just $3) Nothing $2 ($1 `srcspan` $3) }
   | struct_or_union '{' struct_declaration_list '}'
-      { (unLoc $1) Nothing (Just (rev $3)) [] ($1 <--> $4) }
+      { (unLoc $1) Nothing (Just (rev $3)) [] ($1 `srcspan` $4) }
   | struct_or_union '{' struct_declaration_list error
       {% unclosed ($1 <--> rev $3) "{" }
   | struct_or_union identifier_or_typedef '{' struct_declaration_list '}'
-      { (unLoc $1) (Just $2) (Just (rev $4)) [] ($1 <--> $5) }
+      { (unLoc $1) (Just $2) (Just (rev $4)) [] ($1 `srcspan` $5) }
   | struct_or_union identifier_or_typedef '{' struct_declaration_list error
       {% unclosed ($1 <--> rev $4) "{" }
   | struct_or_union attributes identifier_or_typedef '{' struct_declaration_list '}'
-      { (unLoc $1) (Just $3) (Just (rev $5)) $2 ($1 <--> $6) }
+      { (unLoc $1) (Just $3) (Just (rev $5)) $2 ($1 `srcspan` $6) }
   | struct_or_union attributes identifier_or_typedef '{' struct_declaration_list error
       {% unclosed ($1 <--> rev $5) "{" }
 
 struct_or_union :: { L (Maybe Id -> Maybe [FieldGroup] -> [Attr] -> SrcLoc -> TySpec) }
 struct_or_union :
-    'struct' { L (getLoc $1) TSstruct }
-  | 'union'  { L (getLoc $1) TSunion }
+    'struct' { L (locOf $1) TSstruct }
+  | 'union'  { L (locOf $1) TSunion }
 
 struct_declaration_list :: { RevList FieldGroup }
 struct_declaration_list :
     struct_declaration
       { rsingleton $1 }
   | ANTI_SDECLS
-      { rsingleton (AntiSdecls (getANTI_SDECLS $1) (locOf $1)) }
+      { rsingleton (AntiSdecls (getANTI_SDECLS $1) (srclocOf $1)) }
   | struct_declaration_list struct_declaration
       { rcons $2 $1 }
   | struct_declaration_list ANTI_SDECLS
-      { rcons (AntiSdecls (getANTI_SDECLS $2) (locOf $2)) $1 }
+      { rcons (AntiSdecls (getANTI_SDECLS $2) (srclocOf $2)) $1 }
 
 struct_declaration :: { FieldGroup }
 struct_declaration :
     ANTI_SPEC struct_declarator_list ';'
-      { let dspec = AntiDeclSpec (getANTI_SPEC $1) (locOf $1)
+      { let dspec = AntiDeclSpec (getANTI_SPEC $1) (srclocOf $1)
         in
-          FieldGroup dspec (rev $2) ($1 <--> $3)
+          FieldGroup dspec (rev $2) ($1 `srcspan` $3)
       }
   | specifier_qualifier_list struct_declarator_list ';'
       {%  do{ dspec <- mkDeclSpec $1
-            ; return $ FieldGroup dspec (rev $2) ($1 <--> $3)
+            ; return $ FieldGroup dspec (rev $2) ($1 `srcspan` $3)
             }
       }
   | ANTI_TYPE identifier_or_typedef ';'
       {%  do{ let v     = getANTI_TYPE $1
-            ; let dspec = AntiTypeDeclSpec [] [] v (locOf $1)
-            ; let decl  = AntiTypeDecl v (locOf $1)
-            ; let field = Field (Just $2) (Just decl) Nothing ($1 <--> $2)
-            ; return $ FieldGroup dspec [field] ($1 <--> $3)
+            ; let dspec = AntiTypeDeclSpec [] [] v (srclocOf $1)
+            ; let decl  = AntiTypeDecl v (srclocOf $1)
+            ; let field = Field (Just $2) (Just decl) Nothing ($1 `srcspan` $2)
+            ; return $ FieldGroup dspec [field] ($1 `srcspan` $3)
             }
       }
   | ANTI_SDECL
-      { AntiSdecl (getANTI_SDECL $1) (locOf $1) }
+      { AntiSdecl (getANTI_SDECL $1) (srclocOf $1) }
 
 specifier_qualifier_list :: { [TySpec] }
 specifier_qualifier_list :
@@ -899,88 +899,88 @@ struct_declarator :
               ; decl                = declToDecl (declRoot ident)
               }
           in
-            Field (Just ident) (Just decl) Nothing (locOf decl)
+            Field (Just ident) (Just decl) Nothing (srclocOf decl)
         }
   | declarator attributes
         { let { (ident, declToDecl) = $1
               ; decl                = declToDecl (declRoot ident)
               }
           in
-            Field (Just ident) (Just decl) Nothing (locOf decl)
+            Field (Just ident) (Just decl) Nothing (srclocOf decl)
         }
   | ':' constant_expression
-        { Field Nothing Nothing (Just $2) ($1 <--> $2) }
+        { Field Nothing Nothing (Just $2) ($1 `srcspan` $2) }
   | declarator ':' constant_expression
         { let { (ident, declToDecl) = $1
               ; decl                = declToDecl (declRoot ident)
               }
           in
-            Field (Just ident) (Just decl) (Just $3) (locOf decl)
+            Field (Just ident) (Just decl) (Just $3) (srclocOf decl)
         }
 
 enum_specifier :: { TySpec }
 enum_specifier :
     'enum' identifier_or_typedef
-      { TSenum (Just $2) [] [] ($1 <--> $2) }
+      { TSenum (Just $2) [] [] ($1 `srcspan` $2) }
   | 'enum' attributes identifier_or_typedef
-      { TSenum (Just $3) [] $2 ($1 <--> $3) }
+      { TSenum (Just $3) [] $2 ($1 `srcspan` $3) }
   | 'enum' '{' enumerator_list '}'
-      { TSenum Nothing (rev $3) [] ($1 <--> $4) }
+      { TSenum Nothing (rev $3) [] ($1 `srcspan` $4) }
   | 'enum' identifier_or_typedef '{' enumerator_list '}'
-      { TSenum (Just $2) (rev $4) [] ($1 <--> $5)}
+      { TSenum (Just $2) (rev $4) [] ($1 `srcspan` $5)}
 
 enumerator_list :: { RevList CEnum }
 enumerator_list :
     enumerator
       { rsingleton $1 }
   | ANTI_ENUMS
-      { rsingleton (AntiEnums (getANTI_ENUMS $1) (locOf $1)) }
+      { rsingleton (AntiEnums (getANTI_ENUMS $1) (srclocOf $1)) }
   | enumerator_list ','
       { $1 }
   | enumerator_list ',' enumerator
       { rcons $3 $1 }
   | enumerator_list ',' ANTI_ENUMS
-      { rcons (AntiEnums (getANTI_ENUMS $3) (locOf $3)) $1 }
+      { rcons (AntiEnums (getANTI_ENUMS $3) (srclocOf $3)) $1 }
 
 enumerator :: { CEnum }
 enumerator:
     identifier
-      { CEnum $1 Nothing (locOf $1)}
+      { CEnum $1 Nothing (srclocOf $1)}
   | identifier '=' constant_expression
-      { CEnum $1 (Just $3) ($1 <--> $3) }
+      { CEnum $1 (Just $3) ($1 `srcspan` $3) }
   | ANTI_ENUM
-      { AntiEnum (getANTI_ENUM $1) (locOf $1) }
+      { AntiEnum (getANTI_ENUM $1) (srclocOf $1) }
 
 type_qualifier :: { TySpec }
 type_qualifier :
-    'const'    { TSconst (locOf $1) }
-  | 'inline'   { TSinline (locOf $1) }
-  | 'restrict' { TSrestrict (locOf $1) }
-  | 'volatile' { TSvolatile (locOf $1) }
+    'const'    { TSconst (srclocOf $1) }
+  | 'inline'   { TSinline (srclocOf $1) }
+  | 'restrict' { TSrestrict (srclocOf $1) }
+  | 'volatile' { TSvolatile (srclocOf $1) }
 
   {- Extension: CUDA -}
-  | '__device__'   { TSCUDAdevice (locOf $1) }
-  | '__global__'   { TSCUDAglobal (locOf $1) }
-  | '__host__'     { TSCUDAhost (locOf $1) }
-  | '__constant__' { TSCUDAconstant (locOf $1) }
-  | '__shared__'   { TSCUDAshared (locOf $1) }
-  | '__noinline__' { TSCUDAnoinline (locOf $1) }
+  | '__device__'   { TSCUDAdevice (srclocOf $1) }
+  | '__global__'   { TSCUDAglobal (srclocOf $1) }
+  | '__host__'     { TSCUDAhost (srclocOf $1) }
+  | '__constant__' { TSCUDAconstant (srclocOf $1) }
+  | '__shared__'   { TSCUDAshared (srclocOf $1) }
+  | '__noinline__' { TSCUDAnoinline (srclocOf $1) }
 
   {- Extension: OpenCL -}
-  | 'private'      { TSCLprivate (locOf $1) }
-  | '__private'    { TSCLprivate (locOf $1) }
-  | 'local'        { TSCLlocal (locOf $1) }
-  | '__local'      { TSCLlocal (locOf $1) }
-  | 'global'       { TSCLglobal (locOf $1) }
-  | '__global'     { TSCLglobal (locOf $1) }
-  | 'constant'     { TSCLconstant (locOf $1) }
-  | '__constant'   { TSCLconstant (locOf $1) }
-  | 'read_only'    { TSCLreadonly (locOf $1) }
-  | '__read_only'  { TSCLreadonly (locOf $1) }
-  | 'write_only'   { TSCLwriteonly (locOf $1) }
-  | '__write_only' { TSCLwriteonly (locOf $1) }
-  | 'kernel'       { TSCLkernel (locOf $1) }
-  | '__kernel'     { TSCLkernel (locOf $1) }
+  | 'private'      { TSCLprivate (srclocOf $1) }
+  | '__private'    { TSCLprivate (srclocOf $1) }
+  | 'local'        { TSCLlocal (srclocOf $1) }
+  | '__local'      { TSCLlocal (srclocOf $1) }
+  | 'global'       { TSCLglobal (srclocOf $1) }
+  | '__global'     { TSCLglobal (srclocOf $1) }
+  | 'constant'     { TSCLconstant (srclocOf $1) }
+  | '__constant'   { TSCLconstant (srclocOf $1) }
+  | 'read_only'    { TSCLreadonly (srclocOf $1) }
+  | '__read_only'  { TSCLreadonly (srclocOf $1) }
+  | 'write_only'   { TSCLwriteonly (srclocOf $1) }
+  | '__write_only' { TSCLwriteonly (srclocOf $1) }
+  | 'kernel'       { TSCLkernel (srclocOf $1) }
+  | '__kernel'     { TSCLkernel (srclocOf $1) }
 
 -- Consider the following C program:
 --
@@ -1064,7 +1064,7 @@ typedef_declarator :
 typedef_direct_declarator :: { (Id, Decl -> Decl) }
 typedef_direct_declarator :
     NAMED
-      { (Id (getNAMED $1) (locOf $1), id) }
+      { (Id (getNAMED $1) (srclocOf $1), id) }
   | '(' typedef_declarator ')'
       { $2 }
   | '(' typedef_declarator error
@@ -1120,7 +1120,7 @@ parameter_typedef_declarator :
 parameter_typedef_direct_declarator :: { (Id, Decl -> Decl) }
 parameter_typedef_direct_declarator :
     NAMED
-      { (Id (getNAMED $1) (locOf $1), id) }
+      { (Id (getNAMED $1) (srclocOf $1), id) }
   | '(' pointer parameter_typedef_direct_declarator ')'
       { let (ident, dirDecl) = $3
         in
@@ -1163,25 +1163,25 @@ parameter_declarator :
 array_declarator :: { Decl -> Decl }
 array_declarator :
     '[' ']'
-      { mkArray [] (NoArraySize ($1 <--> $2)) }
+      { mkArray [] (NoArraySize ($1 `srcspan` $2)) }
   | '[' error
-      {% unclosed (getLoc $1) "[" }
+      {% unclosed (locOf $1) "[" }
   | '[' type_qualifier_list ']'
-      { mkArray (rev $2) (NoArraySize ($1 <--> $3)) }
+      { mkArray (rev $2) (NoArraySize ($1 `srcspan` $3)) }
   | '[' assignment_expression ']'
-      { mkArray [] (ArraySize False $2 (locOf $2)) }
+      { mkArray [] (ArraySize False $2 (srclocOf $2)) }
   | '[' type_qualifier_list assignment_expression ']'
-      { mkArray (rev $2) (ArraySize False $3 (locOf $3)) }
+      { mkArray (rev $2) (ArraySize False $3 (srclocOf $3)) }
   | '[' 'static' assignment_expression ']'
-      { mkArray [] (ArraySize True $3 (locOf $3)) }
+      { mkArray [] (ArraySize True $3 (srclocOf $3)) }
   | '[' 'static' type_qualifier_list assignment_expression ']'
-      { mkArray (rev $3) (ArraySize True $4 (locOf $4)) }
+      { mkArray (rev $3) (ArraySize True $4 (srclocOf $4)) }
   | '[' type_qualifier_list 'static' assignment_expression ']'
-      { mkArray (rev $2) (ArraySize True $4 (locOf $4)) }
+      { mkArray (rev $2) (ArraySize True $4 (srclocOf $4)) }
   | '[' '*' ']'
-      { mkArray [] (VariableArraySize ($1 <--> $3)) }
+      { mkArray [] (VariableArraySize ($1 `srcspan` $3)) }
   | '[' type_qualifier_list  '*' ']'
-      { mkArray (rev $2) (VariableArraySize ($1 <--> $4)) }
+      { mkArray (rev $2) (VariableArraySize ($1 `srcspan` $4)) }
 
 pointer :: { Decl -> Decl }
 pointer :
@@ -1200,12 +1200,12 @@ parameter_type_list :
     parameter_list
       { let params = rev $1
         in
-          Params params False (locOf params)
+          Params params False (srclocOf params)
       }
   | parameter_list ',' '...'
       { let params = rev $1
         in
-          Params params True (params <--> $3)
+          Params params True (params `srcspan` $3)
       }
 
 parameter_list :: { RevList Param }
@@ -1213,18 +1213,18 @@ parameter_list:
     parameter_declaration
       { rsingleton $1 }
   | ANTI_PARAMS
-      { rsingleton (AntiParams (getANTI_PARAMS $1) (locOf $1)) }
+      { rsingleton (AntiParams (getANTI_PARAMS $1) (srclocOf $1)) }
   | parameter_list ',' parameter_declaration
       { rcons $3 $1 }
   | parameter_list ',' ANTI_PARAMS
-      { rcons (AntiParams (getANTI_PARAMS $3) (locOf $3))  $1 }
+      { rcons (AntiParams (getANTI_PARAMS $3) (srclocOf $3))  $1 }
 
 parameter_declaration :: { Param }
 parameter_declaration:
     declaration_specifiers
       { let (dspec, decl) = $1
         in
-          Param Nothing dspec decl (dspec <--> decl)
+          Param Nothing dspec decl (dspec `srcspan` decl)
       }
   | declaration_specifiers parameter_declarator
       { let  {  (dspec, declRoot)   = $1
@@ -1232,17 +1232,17 @@ parameter_declaration:
              ;  decl                = declToDecl declRoot
              }
         in
-          Param (Just ident) dspec decl (ident <--> decl)
+          Param (Just ident) dspec decl (ident `srcspan` decl)
       }
   | declaration_specifiers abstract_declarator
       { let  {  (dspec, declRoot)  = $1
-             ;  decl                  = $2 declRoot
+             ;  decl               = $2 declRoot
              }
         in
-          Param Nothing dspec decl (dspec <--> decl)
+          Param Nothing dspec decl (dspec `srcspan` decl)
       }
   | ANTI_PARAM
-      { AntiParam (getANTI_PARAM $1) (locOf $1) }
+      { AntiParam (getANTI_PARAM $1) (srclocOf $1) }
 
 -- The type_declaration rule is the parameter_declaration rule without the
 -- ANTI_PARAM option. This allows us to parse type declarations easily for later
@@ -1253,7 +1253,7 @@ type_declaration:
     declaration_specifiers
       { let (dspec, decl) = $1
         in
-          Type dspec decl (dspec <--> decl)
+          Type dspec decl (dspec `srcspan` decl)
       }
   | declaration_specifiers parameter_declarator
       { let  {  (dspec, declRoot)   = $1
@@ -1261,14 +1261,14 @@ type_declaration:
              ;  decl                = declToDecl declRoot
              }
         in
-          Type dspec decl (dspec <--> decl)
+          Type dspec decl (dspec `srcspan` decl)
       }
   | declaration_specifiers abstract_declarator
       { let  {  (dspec, declRoot)  = $1
-             ;  decl                  = $2 declRoot
+             ;  decl               = $2 declRoot
              }
         in
-          Type dspec decl (dspec <--> decl)
+          Type dspec decl (dspec `srcspan` decl)
       }
 
 identifier_list :: { RevList Id }
@@ -1279,36 +1279,36 @@ identifier_list :
 type_name :: { Type }
 type_name :
     ANTI_SPEC
-      { let dspec = AntiDeclSpec (getANTI_SPEC $1) (locOf $1)
+      { let dspec = AntiDeclSpec (getANTI_SPEC $1) (srclocOf $1)
         in
-          Type dspec (declRoot $1) (locOf $1)
+          Type dspec (declRoot $1) (srclocOf $1)
       }
   | specifier_qualifier_list
       {% do{ dspec <- mkDeclSpec $1
-           ; return $ Type dspec (declRoot $1) (locOf $1)
+           ; return $ Type dspec (declRoot $1) (srclocOf $1)
            }
       }
   | ANTI_SPEC abstract_declarator
-      { let { dspec = AntiDeclSpec (getANTI_SPEC $1) (locOf $1)
+      { let { dspec = AntiDeclSpec (getANTI_SPEC $1) (srclocOf $1)
             ; decl = $2 (declRoot $1)
             }
         in
-          Type dspec decl (dspec <--> decl)
+          Type dspec decl (dspec `srcspan` decl)
       }
   | specifier_qualifier_list abstract_declarator
       {% do{ let decl = $2 (declRoot $1)
            ; dspec <- mkDeclSpec $1
-           ; return $ Type dspec decl (dspec <--> decl)
+           ; return $ Type dspec decl (dspec `srcspan` decl)
            }
       }
   | ANTI_TYPE
-      { AntiType (getANTI_TYPE $1) (locOf $1) }
+      { AntiType (getANTI_TYPE $1) (srclocOf $1) }
   | ANTI_TYPE abstract_declarator
       { let  {  v     = getANTI_TYPE $1
-             ;  decl  = $2 (AntiTypeDecl v (locOf $1))
+             ;  decl  = $2 (AntiTypeDecl v (srclocOf $1))
              }
         in
-          Type (AntiTypeDeclSpec [] [] v (locOf $1)) decl ($1 <--> decl)
+          Type (AntiTypeDeclSpec [] [] v (srclocOf $1)) decl ($1 `srcspan` decl)
       }
 
 abstract_declarator :: { Decl -> Decl }
@@ -1342,31 +1342,31 @@ direct_abstract_declarator :
 typedef_name :: { TySpec }
 typedef_name :
     NAMED
-      { TSnamed (Id (getNAMED $1) (locOf $1)) (locOf $1) }
+      { TSnamed (Id (getNAMED $1) (srclocOf $1)) (srclocOf $1) }
   | 'typename' identifier
-      { TSnamed $2 ($1 <--> $2) }
+      { TSnamed $2 ($1 `srcspan` $2) }
   | 'typename' error
       {% expected ["identifier"] }
   | '__typeof__' '(' unary_expression ')'
-      { TStypeofExp $3 ($1 <--> $4) }
+      { TStypeofExp $3 ($1 `srcspan` $4) }
   | '__typeof__' '(' type_name ')'
-      { TStypeofType $3 ($1 <--> $4) }
+      { TStypeofType $3 ($1 `srcspan` $4) }
   | '__typeof__' '(' type_name error
       {% unclosed ($2 <--> $3) "(" }
 
 initializer :: { Initializer }
 initializer :
     assignment_expression
-      { ExpInitializer $1 (locOf $1) }
+      { ExpInitializer $1 (srclocOf $1) }
   | '{' initializer_list '}'
-      { CompoundInitializer (rev $2) ($1 <--> $3) }
+      { CompoundInitializer (rev $2) ($1 `srcspan` $3) }
   | '{' initializer_list error
       {% do{  let (_, inits) = unzip (rev $2)
            ;  unclosed ($1 <--> inits) "{"
            }
       }
   | '{' initializer_list ',' '}'
-      { CompoundInitializer (rev $2) ($1 <--> $4) }
+      { CompoundInitializer (rev $2) ($1 `srcspan` $4) }
   | '{' initializer_list ',' error
       {% unclosed ($1 <--> $3) "{" }
 
@@ -1386,7 +1386,7 @@ designation :
     designator_list '='
       { let designators = rev $1
         in
-          Designation designators (designators <--> $2)
+          Designation designators (designators `srcspan` $2)
       }
 
 designator_list :: { RevList Designator }
@@ -1397,9 +1397,9 @@ designator_list :
 designator :: { Designator }
 designator :
     '[' constant_expression ']'
-      { IndexDesignator $2 ($1 <--> $3) }
+      { IndexDesignator $2 ($1 `srcspan` $3) }
   | '.' identifier
-      { MemberDesignator $2 ($1 <--> $2) }
+      { MemberDesignator $2 ($1 `srcspan` $2) }
 
 {------------------------------------------------------------------------------
  -
@@ -1416,22 +1416,22 @@ statement :
   | iteration_statement  { $1 }
   | jump_statement       { $1 }
   | asm_statement        { $1 }
-  | ANTI_STM             { AntiStm (getANTI_STM $1) (locOf $1) }
+  | ANTI_STM             { AntiStm (getANTI_STM $1) (srclocOf $1) }
 
 labeled_statement :: { Stm }
 labeled_statement :
-    identifier ':' statement                  { Label $1 $3 ($1 <--> $3) }
-  | 'case' constant_expression ':' statement  { Case $2 $4 ($1 <--> $4) }
-  | 'default' ':' statement                   { Default $3 ($1 <--> $3) }
+    identifier ':' statement                  { Label $1 $3 ($1 `srcspan` $3) }
+  | 'case' constant_expression ':' statement  { Case $2 $4 ($1 `srcspan` $4) }
+  | 'default' ':' statement                   { Default $3 ($1 `srcspan` $3) }
 
 compound_statement :: { Stm }
 compound_statement:
     '{' begin_scope end_scope '}'
-      { Block [] ($1 <--> $4) }
+      { Block [] ($1 `srcspan` $4) }
   | '{' begin_scope error
       {% unclosed (locOf $3) "{" }
   | '{' begin_scope block_item_list end_scope '}'
-      { Block (rev $3) ($1 <--> $5) }
+      { Block (rev $3) ($1 `srcspan` $5) }
 
 block_item_list :: { RevList BlockItem }
 block_item_list :
@@ -1442,10 +1442,10 @@ block_item  :: { BlockItem }
 block_item :
      declaration { BlockDecl $1 }
   |  statement   { BlockStm $1 }
-  |  ANTI_DECLS  { BlockDecl (AntiDecls (getANTI_DECLS $1) (locOf $1)) }
-  |  ANTI_STMS   { BlockStm (AntiStms (getANTI_STMS $1) (locOf $1)) }
-  |  ANTI_ITEM   { AntiBlockItem (getANTI_ITEM $1) (locOf $1) }
-  |  ANTI_ITEMS  { AntiBlockItems (getANTI_ITEMS $1)  (locOf $1) }
+  |  ANTI_DECLS  { BlockDecl (AntiDecls (getANTI_DECLS $1) (srclocOf $1)) }
+  |  ANTI_STMS   { BlockStm (AntiStms (getANTI_STMS $1) (srclocOf $1)) }
+  |  ANTI_ITEM   { AntiBlockItem (getANTI_ITEM $1) (srclocOf $1) }
+  |  ANTI_ITEMS  { AntiBlockItems (getANTI_ITEMS $1)  (srclocOf $1) }
 
 begin_scope :: { () }
 begin_scope : {% pushScope }
@@ -1458,68 +1458,68 @@ declaration_list :
     declaration
       { rsingleton $1 }
   | ANTI_DECLS
-      { rsingleton (AntiDecls (getANTI_DECLS $1) (locOf $1)) }
+      { rsingleton (AntiDecls (getANTI_DECLS $1) (srclocOf $1)) }
   | declaration_list declaration
       { rcons $2 $1 }
   | declaration_list ANTI_DECLS
-      { rcons (AntiDecls (getANTI_DECLS $2) (locOf $2)) $1 }
+      { rcons (AntiDecls (getANTI_DECLS $2) (srclocOf $2)) $1 }
 
 expression_statement :: { Stm }
 expression_statement:
-    ';'               { Exp Nothing (locOf $1) }
-  | expression ';'    { Exp (Just $1) ($1 <--> $2) }
+    ';'               { Exp Nothing (srclocOf $1) }
+  | expression ';'    { Exp (Just $1) ($1 `srcspan` $2) }
   | expression error  {% expected ["';'"] }
 
 selection_statement :: { Stm }
 selection_statement :
     'if' '(' expression ')' statement
-      { If $3 $5 Nothing ($1 <--> $5) }
+      { If $3 $5 Nothing ($1 `srcspan` $5) }
   | 'if' '(' expression ')' statement 'else' statement
-      { If $3 $5 (Just $7) ($1 <--> $7) }
+      { If $3 $5 (Just $7) ($1 `srcspan` $7) }
   | 'if' '(' expression error
       {% unclosed ($2 <--> $3) "(" }
   | 'switch' '(' expression ')' statement
-      { Switch $3 $5 ($1 <--> $5) }
+      { Switch $3 $5 ($1 `srcspan` $5) }
   | 'switch' '(' expression error
       {% unclosed ($2 <--> $3) "(" }
 
 iteration_statement :: { Stm }
 iteration_statement :
     'while' '(' expression ')' statement
-      { While $3 $5 ($1 <--> $5) }
+      { While $3 $5 ($1 `srcspan` $5) }
   | 'while' '(' expression error
       {% unclosed ($2 <--> $3) "(" }
   | 'do' statement 'while' '(' expression ')' ';'
-      { DoWhile $2 $5 ($1 <--> $7) }
+      { DoWhile $2 $5 ($1 `srcspan` $7) }
   | 'do' statement 'while' '(' expression error
       {% unclosed ($4 <--> $5) "(" }
   | 'for' '(' error
       {% expected ["expression", "declaration"] }
   | 'for' '(' declaration maybe_expression ';' ')' statement
-      { For (Left $3) $4 Nothing $7 ($1 <--> $7) }
+      { For (Left $3) $4 Nothing $7 ($1 `srcspan` $7) }
   | 'for' '(' maybe_expression ';' maybe_expression ';' ')' statement
-      { For (Right $3) $5 Nothing $8 ($1 <--> $8) }
+      { For (Right $3) $5 Nothing $8 ($1 `srcspan` $8) }
   | 'for' '(' maybe_expression ';' maybe_expression ';' error
       {% unclosed ($2 <--> $6) "(" }
   | 'for' '(' declaration maybe_expression ';' expression ')' statement
-      { For (Left $3) $4 (Just $6) $8 ($1 <--> $8) }
+      { For (Left $3) $4 (Just $6) $8 ($1 `srcspan` $8) }
   | 'for' '(' maybe_expression ';' maybe_expression ';' expression ')' statement
-      { For (Right $3) $5 (Just $7) $9 ($1 <--> $9) }
+      { For (Right $3) $5 (Just $7) $9 ($1 `srcspan` $9) }
   | 'for' '(' maybe_expression ';' maybe_expression ';' expression error
       {% unclosed ($2 <--> $7) "(" }
 
 jump_statement :: { Stm }
 jump_statement :
-    'goto' identifier ';'      { Goto $2 ($1 <--> $3) }
+    'goto' identifier ';'      { Goto $2 ($1 `srcspan` $3) }
   | 'goto' error               {% expected ["identifier"] }
   | 'goto' identifier error    {% expected ["';'"] }
-  | 'continue' ';'             { Continue ($1 <--> $2) }
+  | 'continue' ';'             { Continue ($1 `srcspan` $2) }
   | 'continue' error           {% expected ["';'"] }
-  | 'break' ';'                { Break ($1 <--> $2) }
+  | 'break' ';'                { Break ($1 `srcspan` $2) }
   | 'break' error              {% expected ["';'"] }
-  | 'return' ';'               { Return Nothing ($1 <--> $2) }
+  | 'return' ';'               { Return Nothing ($1 `srcspan` $2) }
   | 'return' error             {% expected ["';'"] }
-  | 'return' expression ';'    { Return (Just $2) ($1 <--> $3) }
+  | 'return' expression ';'    { Return (Just $2) ($1 `srcspan` $3) }
   | 'return' expression error  {% expected ["';'"] }
 
 {------------------------------------------------------------------------------
@@ -1538,24 +1538,24 @@ translation_unit_ :
     external_declaration
       { rsingleton $1 }
   | ANTI_EDECLS
-      { rsingleton (AntiEdecls (getANTI_EDECLS $1) (locOf $1)) }
+      { rsingleton (AntiEdecls (getANTI_EDECLS $1) (srclocOf $1)) }
   | translation_unit_ external_declaration
       { rcons $2 $1 }
   | translation_unit_ ANTI_EDECLS
-      { rcons (AntiEdecls (getANTI_EDECLS $2) (locOf $2)) $1 }
+      { rcons (AntiEdecls (getANTI_EDECLS $2) (srclocOf $2)) $1 }
 
 external_declaration :: { Definition }
 external_declaration :
     function_definition
-      { FuncDef $1 (locOf $1) }
+      { FuncDef $1 (srclocOf $1) }
   | declaration
-      { DecDef $1 (locOf $1) }
+      { DecDef $1 (srclocOf $1) }
   | ANTI_FUNC
-      { AntiFunc (getANTI_FUNC $1) (locOf $1) }
+      { AntiFunc (getANTI_FUNC $1) (srclocOf $1) }
   | ANTI_ESC
-      { AntiEsc (getANTI_ESC $1) (locOf $1) }
+      { AntiEsc (getANTI_ESC $1) (srclocOf $1) }
   | ANTI_EDECL
-      { AntiEdecl (getANTI_EDECL $1) (locOf $1) }
+      { AntiEdecl (getANTI_EDECL $1) (srclocOf $1) }
 
 function_definition :: { Func }
 function_definition :
@@ -1568,12 +1568,12 @@ function_definition :
                { Proto protoDecl args _ -> return $
                      Func dspec ident protoDecl args
                           blockItems
-                          (decl <--> blockItems)
+                          (decl `srcspan` blockItems)
                ; OldProto protoDecl args _ -> return $
                      OldFunc dspec ident protoDecl args Nothing
                              blockItems
-                             (decl <--> blockItems)
-               ; _ -> parserError (decl <--> blockItems :: Loc)
+                             (decl `srcspan` blockItems)
+               ; _ -> parserError (decl <--> blockItems)
                                   (text "bad function declaration")
                }
            }
@@ -1588,8 +1588,8 @@ function_definition :
                { OldProto protoDecl args _ -> return $
                      OldFunc dspec ident protoDecl args (Just (rev argDecls))
                              blockItems
-                             (decl <--> blockItems)
-               ; _ -> parserError (decl <--> blockItems :: Loc)
+                             (decl `srcspan` blockItems)
+               ; _ -> parserError (decl <--> blockItems)
                                   (text "bad function declaration")
                }
            }
@@ -1618,30 +1618,30 @@ attribute_list :
 attrib :: { Attr }
 attrib :
     attrib_name
-      { Attr $1 [] (locOf $1)}
+      { Attr $1 [] (srclocOf $1)}
   | attrib_name '(' argument_expression_list ')'
-      { Attr $1 (rev $3) ($1 <--> $4) }
+      { Attr $1 (rev $3) ($1 `srcspan` $4) }
 
 attrib_name :: { Id }
 attrib_name :
     identifier_or_typedef { $1 }
-  | 'static'              { Id "static" (locOf $1) }
-  | 'extern'              { Id "extern" (locOf $1) }
-  | 'register'            { Id "register" (locOf $1) }
-  | 'typedef'             { Id "typedef" (locOf $1) }
-  | 'inline'              { Id "inline" (locOf $1) }
-  | 'auto'                { Id "auto" (locOf $1) }
-  | 'const'               { Id "const" (locOf $1) }
-  | 'volatile'            { Id "volatile" (locOf $1) }
-  | 'unsigned'            { Id "unsigned" (locOf $1) }
-  | 'long'                { Id "long" (locOf $1) }
-  | 'short'               { Id "short" (locOf $1) }
-  | 'signed'              { Id "signed" (locOf $1) }
-  | 'int'                 { Id "int" (locOf $1) }
-  | 'char'                { Id "char" (locOf $1) }
-  | 'float'               { Id "float" (locOf $1) }
-  | 'double'              { Id "double" (locOf $1) }
-  | 'void'                { Id "void" (locOf $1) }
+  | 'static'              { Id "static" (srclocOf $1) }
+  | 'extern'              { Id "extern" (srclocOf $1) }
+  | 'register'            { Id "register" (srclocOf $1) }
+  | 'typedef'             { Id "typedef" (srclocOf $1) }
+  | 'inline'              { Id "inline" (srclocOf $1) }
+  | 'auto'                { Id "auto" (srclocOf $1) }
+  | 'const'               { Id "const" (srclocOf $1) }
+  | 'volatile'            { Id "volatile" (srclocOf $1) }
+  | 'unsigned'            { Id "unsigned" (srclocOf $1) }
+  | 'long'                { Id "long" (srclocOf $1) }
+  | 'short'               { Id "short" (srclocOf $1) }
+  | 'signed'              { Id "signed" (srclocOf $1) }
+  | 'int'                 { Id "int" (srclocOf $1) }
+  | 'char'                { Id "char" (srclocOf $1) }
+  | 'float'               { Id "float" (srclocOf $1) }
+  | 'double'              { Id "double" (srclocOf $1) }
+  | 'void'                { Id "void" (srclocOf $1) }
 
 maybe_volatile :: { Bool }
 maybe_volatile :
@@ -1651,16 +1651,16 @@ maybe_volatile :
 asm_statement :: { Stm }
 asm_statement :
     '__asm__' maybe_volatile '(' asm_template ')' ';'
-      { Asm $2 [] (rev $4) [] [] [] ($1 <--> $5) }
+      { Asm $2 [] (rev $4) [] [] [] ($1 `srcspan` $5) }
   | '__asm__' maybe_volatile '(' asm_template ':' asm_inouts ')' ';'
-      { Asm $2 [] (rev $4) $6 [] [] ($1 <--> $7) }
+      { Asm $2 [] (rev $4) $6 [] [] ($1 `srcspan` $7) }
   | '__asm__' maybe_volatile '(' asm_template ':' asm_inouts
                                               ':' asm_inouts ')' ';'
-      { Asm $2 [] (rev $4) $6 $8 [] ($1 <--> $9) }
+      { Asm $2 [] (rev $4) $6 $8 [] ($1 `srcspan` $9) }
   | '__asm__' maybe_volatile '(' asm_template ':' asm_inouts
                                               ':' asm_inouts
                                               ':' asm_clobbers ')' ';'
-      { Asm $2 [] (rev $4) $6 $8 $10 ($1 <--> $11) }
+      { Asm $2 [] (rev $4) $6 $8 $10 ($1 `srcspan` $11) }
 
 asm_template :: { RevList String }
 asm_template :
@@ -1806,57 +1806,57 @@ data TySpec = TSauto !SrcLoc
             | TSCLkernel !SrcLoc
 
 instance Located DeclTySpec where
-    getLoc (DeclTySpec _ loc)      = getLoc loc
-    getLoc (AntiDeclTySpec _ loc)  = getLoc loc
+    locOf (DeclTySpec _ loc)      = locOf loc
+    locOf (AntiDeclTySpec _ loc)  = locOf loc
 
 instance Located TySpec where
-    getLoc (TSauto loc)          = getLoc loc
-    getLoc (TSregister loc)      = getLoc loc
-    getLoc (TSstatic loc)        = getLoc loc
-    getLoc (TSextern loc)        = getLoc loc
-    getLoc (TSexternL _ loc)     = getLoc loc
-    getLoc (TStypedef loc)       = getLoc loc
+    locOf (TSauto loc)          = locOf loc
+    locOf (TSregister loc)      = locOf loc
+    locOf (TSstatic loc)        = locOf loc
+    locOf (TSextern loc)        = locOf loc
+    locOf (TSexternL _ loc)     = locOf loc
+    locOf (TStypedef loc)       = locOf loc
 
-    getLoc (TSconst loc)         = getLoc loc
-    getLoc (TSvolatile loc)      = getLoc loc
-    getLoc (TSinline loc)        = getLoc loc
+    locOf (TSconst loc)         = locOf loc
+    locOf (TSvolatile loc)      = locOf loc
+    locOf (TSinline loc)        = locOf loc
 
-    getLoc (TSsigned loc)        = getLoc loc
-    getLoc (TSunsigned loc)      = getLoc loc
+    locOf (TSsigned loc)        = locOf loc
+    locOf (TSunsigned loc)      = locOf loc
 
-    getLoc (TSvoid loc)          = getLoc loc
-    getLoc (TSchar loc)          = getLoc loc
-    getLoc (TSshort loc)         = getLoc loc
-    getLoc (TSint loc)           = getLoc loc
-    getLoc (TSlong loc)          = getLoc loc
-    getLoc (TSfloat loc)         = getLoc loc
-    getLoc (TSdouble loc)        = getLoc loc
+    locOf (TSvoid loc)          = locOf loc
+    locOf (TSchar loc)          = locOf loc
+    locOf (TSshort loc)         = locOf loc
+    locOf (TSint loc)           = locOf loc
+    locOf (TSlong loc)          = locOf loc
+    locOf (TSfloat loc)         = locOf loc
+    locOf (TSdouble loc)        = locOf loc
 
-    getLoc (TSstruct _ _ _ loc)  = getLoc loc
-    getLoc (TSunion _ _ _ loc)   = getLoc loc
-    getLoc (TSenum _ _ _ loc)    = getLoc loc
-    getLoc (TSnamed _ loc)       = getLoc loc
+    locOf (TSstruct _ _ _ loc)  = locOf loc
+    locOf (TSunion _ _ _ loc)   = locOf loc
+    locOf (TSenum _ _ _ loc)    = locOf loc
+    locOf (TSnamed _ loc)       = locOf loc
 
-    getLoc (TStypeofExp _ loc)   = getLoc loc
-    getLoc (TStypeofType _ loc)  = getLoc loc
-    getLoc (TSva_list loc)       = getLoc loc
+    locOf (TStypeofExp _ loc)   = locOf loc
+    locOf (TStypeofType _ loc)  = locOf loc
+    locOf (TSva_list loc)       = locOf loc
 
-    getLoc (TSrestrict loc)      = getLoc loc
+    locOf (TSrestrict loc)      = locOf loc
 
-    getLoc (TSCUDAdevice loc)    = getLoc loc
-    getLoc (TSCUDAglobal loc)    = getLoc loc
-    getLoc (TSCUDAhost loc)      = getLoc loc
-    getLoc (TSCUDAconstant loc)  = getLoc loc
-    getLoc (TSCUDAshared loc)    = getLoc loc
-    getLoc (TSCUDAnoinline loc)  = getLoc loc
+    locOf (TSCUDAdevice loc)    = locOf loc
+    locOf (TSCUDAglobal loc)    = locOf loc
+    locOf (TSCUDAhost loc)      = locOf loc
+    locOf (TSCUDAconstant loc)  = locOf loc
+    locOf (TSCUDAshared loc)    = locOf loc
+    locOf (TSCUDAnoinline loc)  = locOf loc
 
-    getLoc (TSCLprivate loc)     = getLoc loc
-    getLoc (TSCLlocal loc)       = getLoc loc
-    getLoc (TSCLglobal loc)      = getLoc loc
-    getLoc (TSCLconstant loc)    = getLoc loc
-    getLoc (TSCLreadonly loc)    = getLoc loc
-    getLoc (TSCLwriteonly loc)   = getLoc loc
-    getLoc (TSCLkernel loc)      = getLoc loc
+    locOf (TSCLprivate loc)     = locOf loc
+    locOf (TSCLlocal loc)       = locOf loc
+    locOf (TSCLglobal loc)      = locOf loc
+    locOf (TSCLconstant loc)    = locOf loc
+    locOf (TSCLreadonly loc)    = locOf loc
+    locOf (TSCLwriteonly loc)   = locOf loc
+    locOf (TSCLkernel loc)      = locOf loc
 
 instance Pretty TySpec where
     ppr (TSauto _)       = text "auto"
@@ -2028,57 +2028,57 @@ mkDeclSpec specs =
                ,  not (isStorage x) && not (isTypeQual x) && not (isSign x)]
 
     go :: [TySpec] -> P DeclSpec
-    go [TSvoid loc] = do
+    go [TSvoid l] = do
         checkNoSign specs "sign specified for void type"
-        return $ cdeclSpec storage quals (Tvoid loc)
+        return $ cdeclSpec storage quals (Tvoid l)
 
-    go [TSchar loc] = do
+    go [TSchar l] = do
         sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tchar sign loc)
+        return $ cdeclSpec storage quals (Tchar sign l)
 
-    go [TSshort loc] = do
+    go [TSshort l] = do
         sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tshort sign loc)
+        return $ cdeclSpec storage quals (Tshort sign l)
 
     go [TSshort _, TSint _] = do
         sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tshort sign (locOf rest))
+        return $ cdeclSpec storage quals (Tshort sign (srclocOf rest))
 
     go [TSint _, TSshort _] = do
         sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tshort sign (locOf rest))
+        return $ cdeclSpec storage quals (Tshort sign (srclocOf rest))
 
-    go [TSint loc] = do
+    go [TSint l] = do
         sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tint sign loc)
+        return $ cdeclSpec storage quals (Tint sign l)
 
-    go [TSlong loc] = do
+    go [TSlong l] = do
         sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tlong sign loc)
+        return $ cdeclSpec storage quals (Tlong sign l)
 
     go [TSlong _, TSint _] = do
         sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tlong sign (locOf rest))
+        return $ cdeclSpec storage quals (Tlong sign (srclocOf rest))
 
     go [TSint _, TSlong _] = do
         sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tlong sign (locOf rest))
+        return $ cdeclSpec storage quals (Tlong sign (srclocOf rest))
 
     go [TSlong _, TSlong _] = do
         sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tlong_long sign (locOf rest))
+        return $ cdeclSpec storage quals (Tlong_long sign (srclocOf rest))
 
     go [TSlong _, TSlong _, TSint _] = do
         sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tlong_long sign (locOf rest))
+        return $ cdeclSpec storage quals (Tlong_long sign (srclocOf rest))
 
     go [TSlong _, TSint _, TSlong _] = do
         sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tlong_long sign (locOf rest))
+        return $ cdeclSpec storage quals (Tlong_long sign (srclocOf rest))
 
     go [TSint _, TSlong _, TSlong _] = do
         sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tlong_long sign (locOf rest))
+        return $ cdeclSpec storage quals (Tlong_long sign (srclocOf rest))
 
     go [TSfloat loc] = do
         checkNoSign specs "sign specified for float type"
@@ -2090,11 +2090,11 @@ mkDeclSpec specs =
 
     go [TSlong _, TSdouble _] = do
         checkNoSign specs "sign specified for long double type"
-        return $ cdeclSpec storage quals (Tlong_double (locOf rest))
+        return $ cdeclSpec storage quals (Tlong_double (srclocOf rest))
 
     go [TSdouble _, TSlong _] = do
         checkNoSign specs "sign specified for long double type"
-        return $ cdeclSpec storage quals (Tlong_double (locOf rest))
+        return $ cdeclSpec storage quals (Tlong_double (srclocOf rest))
 
     go [TSstruct ident fields attrs loc] = do
         checkNoSign specs "sign specified for struct type"
@@ -2120,35 +2120,33 @@ mkDeclSpec specs =
         checkNoSign specs "sign specified for typeof"
         return $ cdeclSpec storage quals (TtypeofType ty loc)
 
-    go [TSva_list loc] = do
+    go [TSva_list l] = do
         checkNoSign specs "sign specified for __builtin_va_list"
-        return $ cdeclSpec storage quals (Tva_list loc)
+        return $ cdeclSpec storage quals (Tva_list l)
 
     go [] = do
         sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tint sign (storage <--> quals))
+        return $ cdeclSpec storage quals (Tint sign (storage `srcspan` quals))
 
     go tyspecs =
-        throw $ ParserException loc
+        throw $ ParserException (locOf tyspecs)
             (text "bad type:" <+> spread (map ppr tyspecs))
-      where
-        loc = getLoc tyspecs
 
 mkPtr :: [TySpec] -> Decl -> Decl
-mkPtr specs decl = C.Ptr quals decl (specs <--> decl)
+mkPtr specs decl = C.Ptr quals decl (specs `srcspan` decl)
   where
     quals = mkTypeQuals specs
 
 mkArray :: [TySpec] -> ArraySize -> Decl -> Decl
-mkArray specs size decl = Array quals size decl (specs <--> decl)
+mkArray specs size decl = Array quals size decl (specs `srcspan` decl)
   where
     quals = mkTypeQuals specs
 
 mkProto :: Params -> Decl -> Decl
-mkProto args decl = Proto decl args (args <--> decl)
+mkProto args decl = Proto decl args (args `srcspan` decl)
 
 mkOldProto :: [Id] -> Decl -> Decl
-mkOldProto args decl = OldProto decl args (args <--> decl)
+mkOldProto args decl = OldProto decl args (args `srcspan` decl)
 
 checkInitGroup :: DeclSpec -> Decl -> [Attr] -> [Init] -> P InitGroup
 checkInitGroup dspec decl attrs inits =
@@ -2169,7 +2167,7 @@ checkInitGroup dspec decl attrs inits =
 
         checkInit :: Init -> P Typedef
         checkInit init@(Init ident _  _ (Just _) _ _)=
-            throw $ ParserException (getLoc init) $
+            throw $ ParserException (locOf init) $
                 text "typedef" <+>
                 squotes (ppr ident) <+>
                 text "is illegaly initialized"
@@ -2196,10 +2194,10 @@ checkInitGroup dspec decl attrs inits =
     inits' = map (composeInitDecl decl) inits
 
     loc :: Loc
-    loc = (dspec <--> attrs :: Loc) <--> inits
+    loc = dspec <--> attrs <--> inits
 
 declRoot :: Located a => a -> Decl
-declRoot x = DeclRoot (locOf x)
+declRoot x = DeclRoot (srclocOf x)
 
 data RevList a  =  RNil
                 |  RCons a (RevList a)
