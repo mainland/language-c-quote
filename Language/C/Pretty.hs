@@ -495,15 +495,16 @@ instance Show Definition where
 instance Pretty Stm where
     ppr (Label ident stm sloc) =
         srcloc sloc <>
-        nest (-2) (line <> ppr ident <+> colon </> ppr stm)
+        indent (-2) (line <> ppr ident <> colon) </> ppr stm
 
     ppr (Case e stm sloc) =
         srcloc sloc <>
-        nest (-2) (line <> text "case" <+> ppr e <> colon) </> ppr stm
+        line <>
+        indent (-2) (line <> text "case" <+> ppr e <> colon) </> ppr stm
 
     ppr (Default stm sloc) =
         srcloc sloc <>
-        nest (-2) (line <> text "default:") </> ppr stm
+        indent (-2) (line <> text "default:" <> colon) </> ppr stm
 
     ppr (Exp Nothing sloc) =
         srcloc sloc <> semi
