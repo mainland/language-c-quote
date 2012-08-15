@@ -160,6 +160,8 @@
 --
 -- [@params@] A list of function parameters. The argument must have type
 -- @['Param']@.
+--
+-- [@pragma@] A pragma statement. The argument must have type @'String'@.
 --------------------------------------------------------------------------------
 
 module Language.C.Quote where

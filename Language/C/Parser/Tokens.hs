@@ -51,6 +51,7 @@ import Language.C.Syntax (Extensions(..),
                           Signed(..))
 
 data Token = Teof
+           | Tpragma String
            | TintConst (String, Signed, Integer)
            | TlongIntConst (String, Signed, Integer)
            | TlongLongIntConst (String, Signed, Integer)
@@ -210,10 +211,12 @@ data Token = Teof
            | Tanti_spec String
            | Tanti_param String
            | Tanti_params String
+           | Tanti_pragma String
     deriving (Ord, Eq)
 
 instance Show Token where
     show Teof                           = "EOF"
+    show (Tpragma s)                    = "#pragma " ++ s
     show (TintConst (s, _, _))          = s
     show (TlongIntConst (s, _, _))      = s
     show (TlongLongIntConst (s, _, _))  = s

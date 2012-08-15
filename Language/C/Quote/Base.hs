@@ -254,8 +254,9 @@ qqExpListE (exp : exps) =
     Just [|$(dataToExpQ qqExp exp) : $(dataToExpQ qqExp exps)|]
 
 qqStmE :: C.Stm -> Maybe (Q Exp)
-qqStmE (C.AntiStm v _) = Just $ antiVarE v
-qqStmE _               = Nothing
+qqStmE (C.AntiPragma v loc) = Just [|C.Pragma $(antiVarE v) $(qqLocE loc)|]
+qqStmE (C.AntiStm v _)      = Just $ antiVarE v
+qqStmE _                    = Nothing
 
 qqStmListE :: [C.Stm] -> Maybe (Q Exp)
 qqStmListE [] = Just [|[]|]

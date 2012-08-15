@@ -156,6 +156,8 @@ import qualified Language.C.Syntax as C
  '_Complex'   { L _ T.TComplex }
  '_Imaginary' { L _ T.TImaginary }
 
+ '#pragma'    { L _ (T.Tpragma _) }
+
  '__asm__'           { L _ T.Tasm }
  '__attribute__'     { L _ T.Tattribute }
  '__extension__'     { L _ T.Textension }
@@ -219,6 +221,7 @@ import qualified Language.C.Syntax as C
  ANTI_TYPE        { L _ (T.Tanti_type _) }
  ANTI_PARAM       { L _ (T.Tanti_param _) }
  ANTI_PARAMS      { L _ (T.Tanti_params _) }
+ ANTI_PRAGMA      { L _ (T.Tanti_pragma _) }
 
 %expect 1
 
@@ -1416,6 +1419,8 @@ statement :
   | iteration_statement  { $1 }
   | jump_statement       { $1 }
   | asm_statement        { $1 }
+  | '#pragma'            { Pragma (getPRAGMA $1) (srclocOf $1) }
+  | ANTI_PRAGMA          { AntiPragma (getANTI_PRAGMA $1) (srclocOf $1) }
   | ANTI_STM             { AntiStm (getANTI_STM $1) (srclocOf $1) }
 
 labeled_statement :: { Stm }
@@ -1711,6 +1716,8 @@ getLONG_DOUBLE (L _ (T.TlongDoubleConst x))  = x
 getID          (L _ (T.Tidentifier ident))   = ident
 getNAMED       (L _ (T.Tnamed ident))        = ident
 
+getPRAGMA      (L _ (T.Tpragma pragma))      = pragma
+
 getANTI_ID          (L _ (T.Tanti_id v))          = v
 getANTI_INT         (L _ (T.Tanti_int v))         = v
 getANTI_UINT        (L _ (T.Tanti_uint v))        = v
@@ -1733,14 +1740,15 @@ getANTI_ENUMS       (L _ (T.Tanti_enums v))       = v
 getANTI_ESC         (L _ (T.Tanti_esc v))         = v
 getANTI_EDECL       (L _ (T.Tanti_edecl v))       = v
 getANTI_EDECLS      (L _ (T.Tanti_edecls v))      = v
-getANTI_ITEM        (L _ (T.Tanti_item v))         = v
-getANTI_ITEMS       (L _ (T.Tanti_items v))        = v
+getANTI_ITEM        (L _ (T.Tanti_item v))        = v
+getANTI_ITEMS       (L _ (T.Tanti_items v))       = v
 getANTI_STM         (L _ (T.Tanti_stm v))         = v
 getANTI_STMS        (L _ (T.Tanti_stms v))        = v
 getANTI_TYPE        (L _ (T.Tanti_type v))        = v
 getANTI_SPEC        (L _ (T.Tanti_spec v))        = v
 getANTI_PARAM       (L _ (T.Tanti_param v))       = v
 getANTI_PARAMS      (L _ (T.Tanti_params v))      = v
+getANTI_PRAGMA      (L _ (T.Tanti_pragma v))      = v
 
 lexer :: (L T.Token -> P a) -> P a
 lexer cont = do

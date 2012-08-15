@@ -215,9 +215,11 @@ data Stm  = Label Id Stm !SrcLoc
           | Continue !SrcLoc
           | Break !SrcLoc
           | Return (Maybe Exp) !SrcLoc
+          | Pragma String !SrcLoc
           | Asm Bool [Attr] [String]
                      [(String, Exp)] [(String, Exp)]
                      [String] !SrcLoc
+          | AntiPragma String !SrcLoc
           | AntiStm String !SrcLoc
           | AntiStms String !SrcLoc
     deriving (Eq, Ord, Data, Typeable)
@@ -504,7 +506,9 @@ instance Located Stm where
     locOf (Continue loc)        = locOf loc
     locOf (Break loc)           = locOf loc
     locOf (Return _ loc)        = locOf loc
+    locOf (Pragma _ loc)        = locOf loc
     locOf (Asm _ _ _ _ _ _ loc) = locOf loc
+    locOf (AntiPragma _ loc)    = locOf loc
     locOf (AntiStm _ loc)       = locOf loc
     locOf (AntiStms _ loc)      = locOf loc
 

@@ -134,19 +134,22 @@ c :-
  "$spec:"    / { allowAnti } { lexAnti Tanti_spec }
  "$param:"   / { allowAnti } { lexAnti Tanti_param }
  "$params:"  / { allowAnti } { lexAnti Tanti_params }
+ "$pragma:"  / { allowAnti } { lexAnti Tanti_pragma }
  "$"         / { allowAnti } { lexAnti Tanti_exp }
 }
 
 <0> {
- ^ "#line" $whitechar+ $digit+ $whitechar+ \" [^\"]* \" .* { setLineFromPragma }
- ^ "#" $whitechar+ $digit+ $whitechar+ \" [^\"]* \" .*     { setLineFromPragma }
+ ^ $whitechar* "#line" $whitechar+ $digit+ $whitechar+ \" [^\"]* \" .* { setLineFromPragma }
+ ^ $whitechar* "#" $whitechar+ $digit+ $whitechar+ \" [^\"]* \" .*     { setLineFromPragma }
+
+ ^ $whitechar* "#" $whitechar* "pragma" $whitechar+ { lexPragmaTok }
 
  "//" .* ;
  "/*" ([^\*]|[\r\n]|("*"+([^\*\/]|[\r\n])))* "*"+ "/" ;
 
- ^ "#" .*        ;
- $whitechar+     ;
- "__extension__" ;
+ ^ $whitechar* "#" .* ;
+ $whitechar+          ;
+ "__extension__"      ;
 
  $nondigit ($nondigit | $digit)* { identifier }
 
@@ -308,6 +311,19 @@ lexAnti antiTok beg end = do
     isIdChar '_'  = True
     isIdChar '\'' = True
     isIdChar c    = isAlphaNum c
+
+lexPragmaTok :: Action
+lexPragmaTok beg _ = do
+    s    <- lexPragma ""
+    end  <- getInput
+    return $ locateTok beg end (Tpragma (inputString beg end))
+  where
+    lexPragma :: String -> P String
+    lexPragma s = do
+        c <- nextChar
+        case c of
+          '\n'  -> return (reverse s)
+          _    -> lexPragma (c : s)
 
 lexCharTok :: Action
 lexCharTok beg cur = do

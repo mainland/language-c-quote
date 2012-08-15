@@ -564,6 +564,9 @@ instance Pretty Stm where
     ppr (Return (Just e) sloc) =
         srcloc sloc <> nest 4 (text "return" <+> ppr e) <> semi
 
+    ppr (Pragma pragma sloc) =
+        srcloc sloc <> text "#pragma" <+> text pragma
+
     ppr (Asm isVolatile _ template outputs inputs clobbered sloc) =
         srcloc sloc <>
         text "__asm__"
@@ -595,8 +598,9 @@ instance Pretty Stm where
         pprReg :: (String, Exp) -> Doc
         pprReg (reg, e) = text reg <+> parens (ppr e)
 
-    ppr (AntiStm v _)  = text $ "$stm:" ++ v ++ "$"
-    ppr (AntiStms v _) = text $ "$stms:" ++ v ++ "$"
+    ppr (AntiPragma v _) = text $ "$pragma:" ++ v ++ "$"
+    ppr (AntiStm v _)    = text $ "$stm:" ++ v ++ "$"
+    ppr (AntiStms v _)   = text $ "$stms:" ++ v ++ "$"
 
 instance Show Stm where
     showsPrec p = shows . pprPrec p
