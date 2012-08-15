@@ -167,8 +167,10 @@ instance Monad P where
 
     return a = P $ \s -> Right (a, s)
 
-    fail msg = do  inp <- getInput
-                   throw (ParserException (Loc (alexPos inp) (alexPos inp)) (ppr (alexPos inp)))
+    fail msg = do
+        inp <- getInput
+        throw $ ParserException (Loc (alexPos inp) (alexPos inp))
+                                (ppr (alexPos inp) <> colon <+> text msg)
 
 instance MonadState PState P where
     get    = P $ \s -> Right (s, s)
