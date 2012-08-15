@@ -41,6 +41,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -w #-}
 
 module Language.C.Quote.Base (
     ToExp(..),
@@ -48,11 +49,9 @@ module Language.C.Quote.Base (
   ) where
 
 import Control.Monad ((>=>))
-import Data.Bits
 import qualified Data.ByteString.Char8 as B
 import Data.Generics
 import Data.Loc
-import Data.Symbol
 import Language.Haskell.Meta (parseExp, parsePat)
 import Language.Haskell.TH
 #if MIN_VERSION_template_haskell(2,7,0)
@@ -510,8 +509,10 @@ quasiquote :: Data a
            -> P.P a
            -> QuasiQuoter
 quasiquote exts typenames p =
-    QuasiQuoter { quoteExp = parse exts typenames p >=> dataToExpQ qqExp
-                , quotePat = parse exts typenames p >=> dataToPatQ qqPat
+    QuasiQuoter { quoteExp  = parse exts typenames p >=> dataToExpQ qqExp
+                , quotePat  = parse exts typenames p >=> dataToPatQ qqPat
+                , quoteType = fail "C type quasiquoter undefined"
+                , quoteDec  = fail "C declaration quasiquoter undefined"
                 }
 
 #if !MIN_VERSION_template_haskell(2,7,0)
