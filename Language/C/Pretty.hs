@@ -40,6 +40,8 @@
 
 module Language.C.Pretty where
 
+import Data.Char (isAlphaNum,
+                  isLower)
 import Data.Loc
 import Language.C.Syntax
 import Text.PrettyPrint.Mainland
@@ -89,6 +91,19 @@ bracesList = encloseSep lbrace rbrace comma
 bracesSemiList :: [Doc] -> Doc
 bracesSemiList = encloseSep lbrace rbrace semi
 
+pprAnti :: String -> String -> Doc
+pprAnti anti s = char '$' <> text anti <> colon <>
+                 if isIdentifier s then text s else parens (text s)
+  where
+    isIdentifier :: String -> Bool
+    isIdentifier []       = False
+    isIdentifier ('_':cs) = all isIdChar cs
+    isIdentifier (c:cs)   = isLower c && all isIdChar cs
+
+    isIdChar :: Char -> Bool
+    isIdChar '_' = True
+    isIdChar c   = isAlphaNum c
+
 class CFixity a where
     fixity :: a -> Fixity
 
@@ -122,7 +137,7 @@ instance CFixity UnOp where
 
 instance Pretty Id where
     ppr (Id ident _)  = text ident
-    ppr (AntiId v _)  = ppr "$id:" <> ppr v
+    ppr (AntiId v _)  = pprAnti "id" v
 
 instance Show Id where
     showsPrec p = shows . pprPrec p
@@ -253,11 +268,11 @@ instance Pretty DeclSpec where
           docs -> spread docs <+/> ppr spec
 
     ppr (AntiDeclSpec v _) =
-        ppr "$spec:" <> ppr v
+        pprAnti "spec" v
 
     ppr (AntiTypeDeclSpec storage quals v _) =
         spread (map ppr storage ++ map ppr quals) <+/>
-        ppr "$ty:" <> ppr v
+        pprAnti "ty" v
 
 instance Show DeclSpec where
     showsPrec p = shows . pprPrec p
@@ -315,7 +330,7 @@ pprDeclarator maybe_ident declarator =
 
 instance Pretty Type where
     ppr (Type spec decl _)  = ppr spec <> pprDeclarator Nothing decl
-    ppr (AntiType v _)      = ppr "$ty:" <> ppr v
+    ppr (AntiType v _)      = pprAnti "ty" v
 
 instance Show Type where
     showsPrec p = shows . pprPrec p
@@ -388,8 +403,8 @@ instance Pretty InitGroup where
              [] -> empty
              _ ->  commasep (map ppr typedefs)
 
-    ppr (AntiDecls v _)  = ppr "$decls:" <> ppr v
-    ppr (AntiDecl v _)   = ppr "$decl:" <> ppr v
+    ppr (AntiDecls v _)  = pprAnti "decls" v
+    ppr (AntiDecl v _)   = pprAnti "decl" v
 
 instance Show InitGroup where
     showsPrec p = shows . pprPrec p
@@ -410,8 +425,8 @@ instance Pretty FieldGroup where
     ppr (FieldGroup spec fields _) =
         ppr spec <> commasep (map ppr fields)
 
-    ppr (AntiSdecls v _)  = ppr "$sdecls:"  <> ppr v
-    ppr (AntiSdecl v _)   = ppr "$sdecl:"   <> ppr v
+    ppr (AntiSdecls v _)  = pprAnti "sdecls" v
+    ppr (AntiSdecl v _)   = pprAnti "sdecl" v
 
 instance Show FieldGroup where
     showsPrec p = shows . pprPrec p
@@ -423,8 +438,8 @@ instance Pretty CEnum where
              Nothing -> empty
              Just e ->  space <> text "=" <+/> ppr e
 
-    ppr (AntiEnums v _)  = ppr "$enums:"  <> ppr v
-    ppr (AntiEnum v _)   = ppr "$enum:"   <> ppr v
+    ppr (AntiEnums v _)  = pprAnti "enums" v
+    ppr (AntiEnum v _)   = pprAnti "enum" v
 
 instance Show CEnum where
     showsPrec p = shows . pprPrec p
@@ -445,8 +460,8 @@ instance Pretty Param where
     ppr (Param maybe_ident spec decl _) =
         ppr spec <> pprDeclarator maybe_ident decl
 
-    ppr (AntiParams v _)  = ppr "$params:"  <> ppr v
-    ppr (AntiParam v _)   = ppr "$param:"   <> ppr v
+    ppr (AntiParams v _)  = pprAnti "params" v
+    ppr (AntiParam v _)   = pprAnti "param" v
 
 instance Show Param where
     showsPrec p = shows . pprPrec p
@@ -482,10 +497,10 @@ instance Pretty Definition where
     ppr (DecDef initgroup loc) = srcloc loc <> ppr initgroup <> semi
     ppr (EscDef s loc)         = srcloc loc <> text s
 
-    ppr (AntiFunc v _)    = ppr "$func:"    <> ppr v
-    ppr (AntiEsc v _)     = ppr "$esc:"     <> ppr v
-    ppr (AntiEdecls v _)  = ppr "$edecls:"  <> ppr v
-    ppr (AntiEdecl v _)   = ppr "$edecl:"   <> ppr v
+    ppr (AntiFunc v _)    = pprAnti "func" v
+    ppr (AntiEsc v _)     = pprAnti "esc" v
+    ppr (AntiEdecls v _)  = pprAnti "edecls" v
+    ppr (AntiEdecl v _)   = pprAnti "edecl" v
 
     pprList ds = stack (map ppr ds) <> line
 
@@ -598,9 +613,9 @@ instance Pretty Stm where
         pprReg :: (String, Exp) -> Doc
         pprReg (reg, e) = text reg <+> parens (ppr e)
 
-    ppr (AntiPragma v _) = text $ "$pragma:" ++ v ++ "$"
-    ppr (AntiStm v _)    = text $ "$stm:" ++ v ++ "$"
-    ppr (AntiStms v _)   = text $ "$stms:" ++ v ++ "$"
+    ppr (AntiPragma v _) = pprAnti "pragma" v
+    ppr (AntiStm v _)    = pprAnti "stm" v
+    ppr (AntiStms v _)   = pprAnti "stms" v
 
 instance Show Stm where
     showsPrec p = shows . pprPrec p
@@ -609,8 +624,8 @@ instance Pretty BlockItem where
     ppr (BlockDecl decl) = ppr decl <> semi
     ppr (BlockStm stm)   = ppr stm
 
-    ppr (AntiBlockItem v _)  = text $ "$item:" ++ v ++ "$"
-    ppr (AntiBlockItems v _) = text $ "$items:" ++ v ++ "$"
+    ppr (AntiBlockItem v _)  = pprAnti "item" v
+    ppr (AntiBlockItems v _) = pprAnti "items" v
 
     pprList = embrace . loop
       where
@@ -645,15 +660,15 @@ instance Pretty Const where
     ppr (CharConst s _ _)           = text s
     ppr (StringConst ss _ _)        = sep (map string ss)
 
-    ppr (AntiString v _)      = ppr "$string:"   <> ppr v
-    ppr (AntiChar v _)        = ppr "$char:"     <> ppr v
-    ppr (AntiLongDouble v _)  = ppr "$ldouble:"  <> ppr v
-    ppr (AntiDouble v _)      = ppr "$double:"   <> ppr v
-    ppr (AntiFloat v _)       = ppr "$float:"    <> ppr v
-    ppr (AntiULInt v _)       = ppr "$ulint:"    <> ppr v
-    ppr (AntiLInt v _)        = ppr "$lint:"     <> ppr v
-    ppr (AntiUInt v _)        = ppr "$uint:"     <> ppr v
-    ppr (AntiInt v _)         = ppr "$int:"      <> ppr v
+    ppr (AntiString v _)      = pprAnti "string"  v
+    ppr (AntiChar v _)        = pprAnti "char"    v
+    ppr (AntiLongDouble v _)  = pprAnti "ldouble" v
+    ppr (AntiDouble v _)      = pprAnti "double"  v
+    ppr (AntiFloat v _)       = pprAnti "float"   v
+    ppr (AntiULInt v _)       = pprAnti "ulint"   v
+    ppr (AntiLInt v _)        = pprAnti "lint"    v
+    ppr (AntiUInt v _)        = pprAnti "uint"    v
+    ppr (AntiInt v _)         = pprAnti "int"     v
 
 instance Show Const where
     showsPrec p = shows . pprPrec p
@@ -777,9 +792,9 @@ instance Pretty Exp where
         pprLoc loc $
         text "__builtin_va_arg(" <> ppr e <> comma <+> ppr ty <> rparen
 
-    pprPrec _ (AntiArgs v _)  = text "$args:" <> text v
+    pprPrec _ (AntiArgs v _)  = pprAnti "args"  v
 
-    pprPrec _ (AntiExp v _)   = text "$var:" <> text v
+    pprPrec _ (AntiExp v _)   = pprAnti "var"  v
 
 instance Show Exp where
     showsPrec p = shows . pprPrec p
