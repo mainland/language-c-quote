@@ -212,6 +212,18 @@ qqConstE = go
                                (fromIntegral $(antiVarE v))
                                $(qqLocE loc)|]
 
+    go (C.AntiLLInt v loc) =
+        Just [|C.LongIntConst  ($(intConst (antiVarE v)) ++ "LL") C.Signed
+                               (fromIntegral $(antiVarE v))
+                               $(qqLocE loc)|]
+
+    go (C.AntiULLInt v loc) =
+        Just [|C.LongIntConst  ($(intConst (antiVarE v)) ++ "ULL") C.Unsigned
+                               (fromIntegral $(antiVarE v))
+                               $(qqLocE loc)|]
+
+
+
     go (C.AntiFloat v loc) =
         Just [|C.FloatConst  ($(floatConst (antiVarE v)) ++ "F")
                              (fromRational $(antiVarE v))

@@ -196,6 +196,8 @@ import qualified Language.C.Syntax as C
  ANTI_UINT        { L _ (T.Tanti_uint _) }
  ANTI_LINT        { L _ (T.Tanti_lint _) }
  ANTI_ULINT       { L _ (T.Tanti_ulint _) }
+ ANTI_LLINT       { L _ (T.Tanti_llint _) }
+ ANTI_ULLINT      { L _ (T.Tanti_ullint _) }
  ANTI_FLOAT       { L _ (T.Tanti_float _) }
  ANTI_DOUBLE      { L _ (T.Tanti_double _) }
  ANTI_LONG_DOUBLE { L _ (T.Tanti_long_double _) }
@@ -305,6 +307,8 @@ constant :
   | ANTI_UINT         { AntiUInt (getANTI_UINT $1) (srclocOf $1) }
   | ANTI_LINT         { AntiLInt (getANTI_LINT $1) (srclocOf $1) }
   | ANTI_ULINT        { AntiULInt (getANTI_ULINT $1) (srclocOf $1) }
+  | ANTI_LLINT        { AntiLLInt (getANTI_LLINT $1) (srclocOf $1) }
+  | ANTI_ULLINT       { AntiULLInt (getANTI_ULLINT $1) (srclocOf $1) }
   | ANTI_FLOAT        { AntiFloat (getANTI_FLOAT $1) (srclocOf $1) }
   | ANTI_DOUBLE       { AntiDouble (getANTI_DOUBLE $1) (srclocOf $1) }
   | ANTI_LONG_DOUBLE  { AntiLongDouble (getANTI_LONG_DOUBLE $1) (srclocOf $1) }
@@ -769,12 +773,12 @@ init_declarator :
         in
           Init ident decl $2 (Just $4) [] (ident `srcspan` $4)
       }
-  | declarator maybe_asmlabel '=' attributes initializer
+  | declarator attributes maybe_asmlabel '=' initializer
       { let  {  (ident, declToDecl) = $1
              ;  decl                = declToDecl (declRoot ident)
              }
         in
-          Init ident decl $2 (Just $5) $4 (ident `srcspan` $5)
+          Init ident decl $3 (Just $5) $2 (ident `srcspan` $5)
       }
   | declarator error
       {% do{  let (ident, declToDecl) = $1
@@ -825,6 +829,8 @@ struct_or_union_specifier :
       {% unclosed ($1 <--> rev $4) "{" }
   | struct_or_union attributes identifier_or_typedef '{' struct_declaration_list '}'
       { (unLoc $1) (Just $3) (Just (rev $5)) $2 ($1 `srcspan` $6) }
+  | struct_or_union attributes '{' struct_declaration_list '}'
+      { (unLoc $1) Nothing (Just (rev $4)) $2 ($1 `srcspan` $5) }
   | struct_or_union attributes identifier_or_typedef '{' struct_declaration_list error
       {% unclosed ($1 <--> rev $5) "{" }
 
@@ -1723,6 +1729,8 @@ getANTI_INT         (L _ (T.Tanti_int v))         = v
 getANTI_UINT        (L _ (T.Tanti_uint v))        = v
 getANTI_LINT        (L _ (T.Tanti_lint v))        = v
 getANTI_ULINT       (L _ (T.Tanti_ulint v))       = v
+getANTI_LLINT       (L _ (T.Tanti_llint v))       = v
+getANTI_ULLINT      (L _ (T.Tanti_ullint v))      = v
 getANTI_FLOAT       (L _ (T.Tanti_float v))       = v
 getANTI_DOUBLE      (L _ (T.Tanti_double v))      = v
 getANTI_LONG_DOUBLE (L _ (T.Tanti_long_double v)) = v

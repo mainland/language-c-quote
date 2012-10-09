@@ -63,6 +63,8 @@
 --
 -- [@cexp@] Expression, of type @'Exp'@.
 --
+-- [@cstm@] Statemnt, of type @'Stm'@.
+--
 -- [@cfun@] Function definition, of type @'Func'@.
 --
 -- [@cinit@] Initializer, of type @'Initializer'@.
@@ -82,7 +84,7 @@
 -- Haskell variable identifier, or in the form @$ANTI:(EXP)@, where @EXP@ is a
 -- Haskell expressions (the parentheses must appear in this case). The Haskell
 -- expression may itself contain a quasiquote, but in that case the final @|]@
--- must be escaped as @\|\]@. Additionally, @$VARID@ is shorthand for
+-- must be escaped as @\\|\\]@. Additionally, @$VARID@ is shorthand for
 -- @$exp:VARID@ and @$(EXP)@ is shorthand for @$exp:(EXP)@, i.e., @exp@ is the
 -- default antiquote specifier. Valid antiquote specifiers are:
 --
@@ -98,6 +100,12 @@
 -- @'Integral'@.
 --
 -- [@ulint@] An @unsigned long integer@ constant. The argument must be an
+-- instance of @'Integral'@.
+--
+-- [@llint@] A @long long integer@ constant. The argument must be an instance of
+-- @'Integral'@.
+--
+-- [@ullint@] An @unsigned long long integer@ constant. The argument must be an
 -- instance of @'Integral'@.
 --
 -- [@float@] A @float@ constant. The argument must be an instance of

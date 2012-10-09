@@ -270,6 +270,8 @@ data Const = IntConst String Signed Integer !SrcLoc
            | AntiUInt String !SrcLoc
            | AntiLInt String !SrcLoc
            | AntiULInt String !SrcLoc
+           | AntiLLInt String !SrcLoc
+           | AntiULLInt String !SrcLoc
            | AntiFloat String !SrcLoc
            | AntiDouble String !SrcLoc
            | AntiLongDouble String !SrcLoc
@@ -531,6 +533,8 @@ instance Located Const where
     locOf (AntiUInt _ loc)              = locOf loc
     locOf (AntiLInt _ loc)              = locOf loc
     locOf (AntiULInt _ loc)             = locOf loc
+    locOf (AntiLLInt _ loc)             = locOf loc
+    locOf (AntiULLInt _ loc)            = locOf loc
     locOf (AntiFloat _ loc)             = locOf loc
     locOf (AntiDouble _ loc)            = locOf loc
     locOf (AntiLongDouble _ loc)        = locOf loc
