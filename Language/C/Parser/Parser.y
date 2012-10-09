@@ -769,12 +769,12 @@ init_declarator :
         in
           Init ident decl $2 (Just $4) [] (ident `srcspan` $4)
       }
-  | declarator maybe_asmlabel '=' attributes initializer
+  | declarator attributes maybe_asmlabel '=' initializer
       { let  {  (ident, declToDecl) = $1
              ;  decl                = declToDecl (declRoot ident)
              }
         in
-          Init ident decl $2 (Just $5) $4 (ident `srcspan` $5)
+          Init ident decl $3 (Just $5) $2 (ident `srcspan` $5)
       }
   | declarator error
       {% do{  let (ident, declToDecl) = $1
