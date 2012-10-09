@@ -102,6 +102,12 @@
 -- [@ulint@] An @unsigned long integer@ constant. The argument must be an
 -- instance of @'Integral'@.
 --
+-- [@llint@] A @long long integer@ constant. The argument must be an instance of
+-- @'Integral'@.
+--
+-- [@ullint@] An @unsigned long long integer@ constant. The argument must be an
+-- instance of @'Integral'@.
+--
 -- [@float@] A @float@ constant. The argument must be an instance of
 -- @'Fractional'@.
 --
