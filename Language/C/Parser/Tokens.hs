@@ -186,6 +186,8 @@ data Token = Teof
            | Tanti_uint String
            | Tanti_lint String
            | Tanti_ulint String
+           | Tanti_llint String
+           | Tanti_ullint String
            | Tanti_float String
            | Tanti_double String
            | Tanti_long_double String
