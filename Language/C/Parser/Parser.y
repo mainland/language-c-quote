@@ -825,6 +825,8 @@ struct_or_union_specifier :
       {% unclosed ($1 <--> rev $4) "{" }
   | struct_or_union attributes identifier_or_typedef '{' struct_declaration_list '}'
       { (unLoc $1) (Just $3) (Just (rev $5)) $2 ($1 `srcspan` $6) }
+  | struct_or_union attributes '{' struct_declaration_list '}'
+      { (unLoc $1) Nothing (Just (rev $4)) $2 ($1 `srcspan` $5) }
   | struct_or_union attributes identifier_or_typedef '{' struct_declaration_list error
       {% unclosed ($1 <--> rev $5) "{" }
 
