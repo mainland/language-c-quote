@@ -1,3 +1,5 @@
+-- -*- mode: literate-haskell -*-
+
 {
 {-# OPTIONS -w #-}
 {-# LANGUAGE CPP #-}
