@@ -335,15 +335,15 @@ instance Show Initializer where
 instance Pretty Init where
     ppr (Init ident decl maybe_asmlabel maybe_e attrs _) =
         pprDeclarator (Just ident) decl
+        <> case attrs of
+             [] -> empty
+             _ ->  softline <> ppr attrs
         <> case maybe_asmlabel of
              Nothing -> empty
              Just l ->  space <> text "asm" <+> parens (text l)
         <> case maybe_e of
              Nothing -> empty
              Just e ->  space <> text "=" <+/> ppr e
-        <> case attrs of
-             [] -> empty
-             _ ->  softline <> ppr attrs
 
 instance Show Init where
     showsPrec p = shows . pprPrec p
