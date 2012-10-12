@@ -490,7 +490,7 @@ instance Pretty Stm where
 
     ppr (Default stm sloc) =
         srcloc sloc <>
-        indent (-2) (line <> text "default:" <> colon) </> ppr stm
+        indent (-2) (line <> text "default" <> colon) </> ppr stm
 
     ppr (Exp Nothing sloc) =
         srcloc sloc <> semi
