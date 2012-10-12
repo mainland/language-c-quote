@@ -249,7 +249,7 @@ lexAnti antiTok beg end = do
     s <- case c of
            '('                 -> lexExpression 0 ""
            _ | isIdStartChar c -> lexIdChars [c]
-             | otherwise       -> lexerError beg (text "Illegal anitquotation")
+             | otherwise       -> lexerError beg (text "illegal anitquotation")
     return $ locateTok beg end (antiTok s)
   where
     lexIdChars :: String -> P String
@@ -265,7 +265,7 @@ lexAnti antiTok beg end = do
         case maybe_c of
           Nothing               -> do end <- getInput
                                       parserError (Loc (alexPos beg) (alexPos end))
-                                                  (text "Unterminated antiquotation")
+                                                  (text "unterminated antiquotation")
           Just '('              -> skipChar >> lexExpression (depth+1) ('(' : s)
           Just ')' | depth == 0 -> skipChar >> return (unescape (reverse s))
                    | otherwise  -> skipChar >> lexExpression (depth-1) (')' : s)

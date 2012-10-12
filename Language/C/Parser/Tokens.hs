@@ -17,6 +17,7 @@ import Data.List (foldl')
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
 import Data.Word
+import Text.PrettyPrint.Mainland
 
 import Language.C.Syntax (Extensions(..),
                           Signed(..))
@@ -186,6 +187,9 @@ data Token = Teof
            | Tanti_params String
            | Tanti_pragma String
     deriving (Ord, Eq)
+
+instance Pretty Token where
+    ppr = text . show
 
 instance Show Token where
     show Teof                           = "EOF"

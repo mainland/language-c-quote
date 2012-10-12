@@ -1679,8 +1679,8 @@ asm_clobber :
 
 {
 happyError :: L T.Token -> P a
-happyError (L loc _) =
-    parserError (locStart loc) (text "parse error")
+happyError (L loc t) =
+    parserError (locStart loc) (text "parse error on" <+> quoteTok (ppr t))
 
 getCHAR        (L _ (T.TcharConst x))        = x
 getSTRING      (L _ (T.TstringConst x))      = x
@@ -2156,7 +2156,7 @@ checkInitGroup dspec decl attrs inits =
         checkInit init@(Init ident _  _ (Just _) _ _)=
             throw $ ParserException (locOf init) $
                 text "typedef" <+>
-                squotes (ppr ident) <+>
+                quoteTok (ppr ident) <+>
                 text "is illegaly initialized"
 
         checkInit (Init ident@(Id name _) decl _ _ attrs _) = do

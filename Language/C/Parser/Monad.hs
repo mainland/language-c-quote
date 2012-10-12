@@ -44,6 +44,7 @@ module Language.C.Parser.Monad (
 
     LexerException(..),
     ParserException(..),
+    quoteTok,
     failAt,
     lexerError,
     unexpectedEOF,
@@ -256,17 +257,20 @@ instance Show ParserException where
     show (ParserException loc msg) =
         show $ nest 4 $ ppr loc <> text ":" </> msg
 
+quoteTok :: Doc -> Doc
+quoteTok = enclose (char '`') (char '\'')
+
 failAt :: Loc -> String -> P a
 failAt loc msg =
     throw $ ParserException loc (text msg)
 
 lexerError :: AlexInput -> Doc -> P a
 lexerError inp s =
-    throw $ LexerException (alexPos inp) (text "lexer error on" <+> squotes s)
+    throw $ LexerException (alexPos inp) (text "lexer error on" <+> s)
 
 unexpectedEOF :: AlexInput -> P a
 unexpectedEOF inp =
-    lexerError inp  (text "unexpected end of file")
+    lexerError inp (text "unexpected end of file")
 
 emptyCharacterLiteral :: AlexInput -> P a
 emptyCharacterLiteral inp =
@@ -286,7 +290,7 @@ parserError loc msg =
 
 unclosed :: Loc -> String -> P a
 unclosed loc x =
-    parserError (locEnd loc) (text "unclosed" <+> squotes (text x))
+    parserError (locEnd loc) (text "unclosed" <+> quoteTok (text x))
 
 expected :: [String] -> P b
 expected alts = do
@@ -301,7 +305,7 @@ expected alts = do
 
     pprGot :: L Token -> Doc
     pprGot (L _ Teof)  = text "but reached end of file"
-    pprGot (L _ t)     = text "but got" <+> text (show t)
+    pprGot (L _ t)     = text "but got" <+> quoteTok (ppr t)
 
 data AlexInput = AlexInput
   {  alexPos      :: {-#UNPACK#-} !Pos
