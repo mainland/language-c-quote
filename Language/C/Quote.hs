@@ -59,7 +59,16 @@
 -- expression may itself contain a quasiquote, but in that case the final @|]@
 -- must be escaped as @\\|\\]@. Additionally, @$VARID@ is shorthand for
 -- @$exp:VARID@ and @$(EXP)@ is shorthand for @$exp:(EXP)@, i.e., @exp@ is the
--- default antiquote specifier. Valid antiquote specifiers are:
+-- default antiquote specifier.
+--
+-- It is often useful to use typedefs that aren't in scope when quasiquoting,
+-- e.g., @[cdecl|uint32_t foo;|]@. The quasiquoter will complain when it sees
+-- this because it thinks @uint32_t@ is an identifier. The solution is to use
+-- the @typename@ keyword, borrowed from C++, to tell the parser that the
+-- identifier is actually a type name. That is, we can write @[cdecl|typename
+-- uint32_t foo;|]@ to get the desired behavior.
+--
+-- Valid antiquote specifiers are:
 --
 -- [@id@] A C identifier. The argument must have type @'String'@.
 --
