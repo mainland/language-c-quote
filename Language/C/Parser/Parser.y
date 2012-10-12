@@ -1402,8 +1402,13 @@ statement :
 
 labeled_statement :: { Stm }
 labeled_statement :
-    identifier ':' statement                  { Label $1 $3 ($1 `srcspan` $3) }
+    identifier ':' error                      {% expected ["statement"] }
+  | identifier ':' statement                  { Label $1 $3 ($1 `srcspan` $3) }
+  | 'case' constant_expression error          {% expected ["`:'"] }
+  | 'case' constant_expression ':' error      {% expected ["statement"] }
   | 'case' constant_expression ':' statement  { Case $2 $4 ($1 `srcspan` $4) }
+  | 'default' error                           {% expected ["`:'"] }
+  | 'default' ':' error                       {% expected ["statement"] }
   | 'default' ':' statement                   { Default $3 ($1 `srcspan` $3) }
 
 compound_statement :: { Stm }
