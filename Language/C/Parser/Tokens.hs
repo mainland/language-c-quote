@@ -139,6 +139,7 @@ data Token = Teof
            | TCUDAhost
            | TCUDAconstant
            | TCUDAshared
+           | TCUDArestrict
            | TCUDAnoinline
 
            -- OpenCL
@@ -313,6 +314,7 @@ tokenStrings = [(Tlparen,     "("),
                 (TCUDAhost,     "__host__"),
                 (TCUDAconstant, "__constant__"),
                 (TCUDAshared,   "__shared__"),
+                (TCUDArestrict, "__restrict__"),
                 (TCUDAnoinline, "__noinline__"),
 
                 --
@@ -389,6 +391,7 @@ keywords = [("auto",       Tauto,      Nothing),
             ("__host__",     TCUDAhost,     Just [CUDA]),
             ("__constant__", TCUDAconstant, Just [CUDA]),
             ("__shared__",   TCUDAshared,   Just [CUDA]),
+            ("__restrict__", TCUDArestrict, Just [CUDA]),
             ("__noinline__", TCUDAnoinline, Just [CUDA]),
 
             ("private",      TCLprivate,   Just [OpenCL]),
