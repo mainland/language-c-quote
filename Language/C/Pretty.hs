@@ -270,7 +270,7 @@ pprDeclarator maybe_ident declarator =
           text "*" <> post
       pprPtr (Ptr quals decl _) post =
           pprPtr decl $
-          text "*" <+> spread (map ppr quals) <+> post
+          text "*" <+> spread (map ppr quals) <> post
       pprPtr decl post = (decl, post)
 
       pprDirDecl :: Decl -> Doc -> (Decl, Doc)
