@@ -31,8 +31,8 @@ typenames :: [String]
 typenames =
   concatMap (typeN 4) ["char", "uchar", "short", "ushort",
                        "int",  "uint",  "long",  "ulong",
-                       "float"] ++
-  concatMap (typeN 2) ["longlong", "double"] ++
+                       "float", "double"] ++
+  typeN 2 "longlong" ++
   ["dim3"]
 
 typeN :: Int -> String -> [String]
