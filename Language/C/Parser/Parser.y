@@ -145,6 +145,7 @@ import qualified Language.C.Syntax as C
  '__host__'      { L _ T.TCUDAhost }
  '__constant__'  { L _ T.TCUDAconstant }
  '__shared__'    { L _ T.TCUDAshared }
+ '__restrict__'  { L _ T.TCUDArestrict }
  '__noinline__'  { L _ T.TCUDAnoinline }
 
  'private'      { L _ T.TCLprivate }
@@ -946,6 +947,7 @@ type_qualifier :
   | '__host__'     { TSCUDAhost (srclocOf $1) }
   | '__constant__' { TSCUDAconstant (srclocOf $1) }
   | '__shared__'   { TSCUDAshared (srclocOf $1) }
+  | '__restrict__' { TSCUDArestrict (srclocOf $1) }
   | '__noinline__' { TSCUDAnoinline (srclocOf $1) }
 
   {- Extension: OpenCL -}
@@ -1788,6 +1790,7 @@ data TySpec = TSauto !SrcLoc
             | TSCUDAhost !SrcLoc
             | TSCUDAconstant !SrcLoc
             | TSCUDAshared !SrcLoc
+            | TSCUDArestrict !SrcLoc
             | TSCUDAnoinline !SrcLoc
 
             -- OpenCL
@@ -1842,6 +1845,7 @@ instance Located TySpec where
     locOf (TSCUDAhost loc)      = locOf loc
     locOf (TSCUDAconstant loc)  = locOf loc
     locOf (TSCUDAshared loc)    = locOf loc
+    locOf (TSCUDArestrict loc)  = locOf loc
     locOf (TSCUDAnoinline loc)  = locOf loc
 
     locOf (TSCLprivate loc)     = locOf loc
@@ -1896,6 +1900,7 @@ instance Pretty TySpec where
     ppr (TSCUDAhost _)      = text "__host__"
     ppr (TSCUDAconstant _)  = text "__constant__"
     ppr (TSCUDAshared _)    = text "__shared__"
+    ppr (TSCUDArestrict _)  = text "__restrict__"
     ppr (TSCUDAnoinline _)  = text "__noinline__"
 
     ppr (TSCLprivate _)     = text "__private"
@@ -1937,6 +1942,7 @@ isTypeQual (TSCUDAglobal _)   = True
 isTypeQual (TSCUDAhost _)     = True
 isTypeQual (TSCUDAconstant _) = True
 isTypeQual (TSCUDAshared _)   = True
+isTypeQual (TSCUDArestrict _) = True
 isTypeQual (TSCUDAnoinline _) = True
 isTypeQual (TSCLprivate _)    = True
 isTypeQual (TSCLlocal _)      = True
@@ -1960,6 +1966,7 @@ mkTypeQuals specs = map mk (filter isTypeQual specs)
       mk (TSCUDAhost loc)     = TCUDAhost loc
       mk (TSCUDAconstant loc) = TCUDAconstant loc
       mk (TSCUDAshared loc)   = TCUDAshared loc
+      mk (TSCUDArestrict loc) = TCUDArestrict loc
       mk (TSCUDAnoinline loc) = TCUDAnoinline loc
       mk (TSCLprivate loc)    = TCLprivate loc
       mk (TSCLlocal loc)      = TCLlocal loc

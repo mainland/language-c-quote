@@ -136,6 +136,7 @@ instance Pretty TypeQual where
     ppr (TCUDAhost _)     = text "__host__"
     ppr (TCUDAconstant _) = text "__constant__"
     ppr (TCUDAshared _)   = text "__shared__"
+    ppr (TCUDArestrict _) = text "__restrict__"
     ppr (TCUDAnoinline _) = text "__noinline__"
 
     ppr (TCLprivate _)    = text "__private"
@@ -269,7 +270,7 @@ pprDeclarator maybe_ident declarator =
           text "*" <> post
       pprPtr (Ptr quals decl _) post =
           pprPtr decl $
-          text "*" <> spread (map ppr quals) <+> post
+          text "*" <+> spread (map ppr quals) <> post
       pprPtr decl post = (decl, post)
 
       pprDirDecl :: Decl -> Doc -> (Decl, Doc)

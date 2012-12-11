@@ -46,6 +46,7 @@ data TypeQual = Tconst !SrcLoc
               | TCUDAhost !SrcLoc
               | TCUDAconstant !SrcLoc
               | TCUDAshared !SrcLoc
+              | TCUDArestrict !SrcLoc
               | TCUDAnoinline !SrcLoc
 
               -- OpenCL
@@ -350,6 +351,7 @@ instance Located TypeQual where
     locOf (TCUDAhost loc)      = locOf loc
     locOf (TCUDAconstant loc)  = locOf loc
     locOf (TCUDAshared loc)    = locOf loc
+    locOf (TCUDArestrict loc)  = locOf loc
     locOf (TCUDAnoinline loc)  = locOf loc
 
     locOf (TCLprivate loc)   = locOf loc
