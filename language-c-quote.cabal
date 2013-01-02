@@ -4,7 +4,7 @@ cabal-version: >= 1.10
 license:       BSD3
 license-file:  LICENSE
 copyright:     (c) 2006-2011 Harvard University
-	       (c) 2011-2012 Geoffrey Mainland
+               (c) 2011-2013 Geoffrey Mainland
 author:        Geoffrey Mainland <mainland@eecs.harvard.edu>	       
 maintainer:    mainland@eecs.harvard.edu
 stability:     alpha

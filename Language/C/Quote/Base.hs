@@ -1,7 +1,7 @@
 -- |
 -- Module      :  Language.C.Quote
 -- Copyright   :  (c) Harvard University 2006-2011
---                (c) Geoffrey Mainland 2011-2012
+--                (c) Geoffrey Mainland 2011-2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 
@@ -21,8 +21,10 @@ module Language.C.Quote.Base (
 
 import Control.Monad ((>=>))
 import qualified Data.ByteString.Char8 as B
-import Data.Generics
+import Data.Data (Data(..))
+import Data.Generics (extQ)
 import Data.Loc
+import Data.Typeable (Typeable(..))
 import Language.Haskell.Meta (parseExp, parsePat)
 import Language.Haskell.TH
 #if MIN_VERSION_template_haskell(2,7,0)

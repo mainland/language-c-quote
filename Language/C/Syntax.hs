@@ -1,7 +1,7 @@
 -- |
 -- Module      :  Language.C.Syntax
 -- Copyright   :  (c) Harvard University 2006-2011
---                (c) Geoffrey Mainland 2011-2012
+--                (c) Geoffrey Mainland 2011-2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 
@@ -11,9 +11,9 @@
 
 module Language.C.Syntax where
 
-import Data.Generics
-
+import Data.Data (Data(..))
 import Data.Loc
+import Data.Typeable (Typeable(..))
 
 data Extensions = Antiquotation
                 | Gcc
