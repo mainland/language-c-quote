@@ -23,7 +23,7 @@ data Extensions = Antiquotation
 
 data Id = Id String !SrcLoc
         | AntiId String !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Storage = Tauto !SrcLoc
              | Tregister !SrcLoc
@@ -31,7 +31,7 @@ data Storage = Tauto !SrcLoc
              | Textern !SrcLoc
              | TexternL String !SrcLoc
              | Ttypedef !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data TypeQual = Tconst !SrcLoc
               | Tvolatile !SrcLoc
@@ -57,11 +57,11 @@ data TypeQual = Tconst !SrcLoc
               | TCLreadonly !SrcLoc
               | TCLwriteonly !SrcLoc
               | TCLkernel !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Sign = Tsigned !SrcLoc
           | Tunsigned !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data TypeSpec = Tvoid !SrcLoc
               | Tchar (Maybe Sign) !SrcLoc
@@ -79,12 +79,12 @@ data TypeSpec = Tvoid !SrcLoc
               | TtypeofExp Exp !SrcLoc
               | TtypeofType Type !SrcLoc
               | Tva_list !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data DeclSpec = DeclSpec [Storage] [TypeQual] TypeSpec !SrcLoc
               | AntiDeclSpec String !SrcLoc
               | AntiTypeDeclSpec [Storage] [TypeQual] String !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 -- | There are two types of declarators in C, regular declarators and abstract
 -- declarators. The former is for declaring variables, function parameters,
@@ -96,7 +96,7 @@ data DeclSpec = DeclSpec [Storage] [TypeQual] TypeSpec !SrcLoc
 data ArraySize = ArraySize Bool Exp !SrcLoc
                | VariableArraySize !SrcLoc
                | NoArraySize !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Decl = DeclRoot !SrcLoc
           | Ptr [TypeQual] Decl !SrcLoc
@@ -104,64 +104,64 @@ data Decl = DeclRoot !SrcLoc
           | Proto Decl Params !SrcLoc
           | OldProto Decl [Id] !SrcLoc
           | AntiTypeDecl String !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Type = Type DeclSpec Decl !SrcLoc
           | AntiType String !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Designator = IndexDesignator Exp !SrcLoc
                 | MemberDesignator Id !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Designation = Designation [Designator] !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Initializer = ExpInitializer Exp !SrcLoc
                  | CompoundInitializer [(Maybe Designation, Initializer)] !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 type AsmLabel = String
 
 data Init = Init Id Decl (Maybe AsmLabel) (Maybe Initializer) [Attr] !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Typedef = Typedef Id Decl [Attr] !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data InitGroup = InitGroup DeclSpec [Attr] [Init] !SrcLoc
                | TypedefGroup DeclSpec [Attr] [Typedef] !SrcLoc
                | AntiDecl String !SrcLoc
                | AntiDecls String !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Field = Field (Maybe Id) (Maybe Decl) (Maybe Exp) !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data FieldGroup  =  FieldGroup DeclSpec [Field] !SrcLoc
                  |  AntiSdecl String !SrcLoc
                  |  AntiSdecls String !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data CEnum  =  CEnum Id (Maybe Exp) !SrcLoc
             |  AntiEnum String !SrcLoc
             |  AntiEnums String !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Attr  =  Attr Id [Exp] !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Param  =  Param (Maybe Id) DeclSpec Decl !SrcLoc
             |  AntiParam String !SrcLoc
             |  AntiParams String !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Params = Params [Param] Bool !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Func  =  Func DeclSpec Id Decl Params [BlockItem] !SrcLoc
            |  OldFunc DeclSpec Id Decl [Id] (Maybe [InitGroup]) [BlockItem] !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Definition  =  FuncDef Func !SrcLoc
                  |  DecDef InitGroup !SrcLoc
@@ -170,7 +170,7 @@ data Definition  =  FuncDef Func !SrcLoc
                  |  AntiEsc String !SrcLoc
                  |  AntiEdecl String !SrcLoc
                  |  AntiEdecls String !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Stm  = Label Id Stm !SrcLoc
           | Case Exp Stm !SrcLoc
@@ -194,13 +194,13 @@ data Stm  = Label Id Stm !SrcLoc
           | AntiPragma String !SrcLoc
           | AntiStm String !SrcLoc
           | AntiStms String !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data BlockItem = BlockDecl InitGroup
                | BlockStm Stm
                | AntiBlockItem String !SrcLoc
                | AntiBlockItems String !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 funcProto :: Func -> InitGroup
 funcProto f@(Func decl_spec id decl params _ _) =
@@ -228,7 +228,7 @@ isPtr  (AntiType _ _)       = error "isPtr: encountered antiquoted type"
 
 data Signed = Signed
             | Unsigned
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Const = IntConst String Signed Integer !SrcLoc
            | LongIntConst String Signed Integer !SrcLoc
@@ -249,7 +249,7 @@ data Const = IntConst String Signed Integer !SrcLoc
            | AntiLongDouble String !SrcLoc
            | AntiChar String !SrcLoc
            | AntiString String !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data ExeConfig = ExeConfig
     {  exeGridDim    :: Exp
@@ -258,7 +258,7 @@ data ExeConfig = ExeConfig
     ,  exeStream     :: Maybe Exp
     ,  exeLoc        :: !SrcLoc
     }
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data Exp = Var Id !SrcLoc
          | Const Const !SrcLoc
@@ -284,7 +284,7 @@ data Exp = Var Id !SrcLoc
          | BuiltinVaArg Exp Type !SrcLoc
          | AntiExp String !SrcLoc
          | AntiArgs String !SrcLoc
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data BinOp = Add
            | Sub
@@ -304,7 +304,7 @@ data BinOp = Add
            | Xor
            | Lsh
            | Rsh
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data AssignOp = JustAssign
               | AddAssign
@@ -317,7 +317,7 @@ data AssignOp = JustAssign
               | AndAssign
               | XorAssign
               | OrAssign
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 data UnOp = AddrOf
           | Deref
@@ -325,7 +325,7 @@ data UnOp = AddrOf
           | Negate
           | Not
           | Lnot
-    deriving (Eq, Ord, Data, Typeable)
+    deriving (Eq, Ord, Show, Data, Typeable)
 
 instance Located Id where
     locOf (Id _ loc)      = locOf loc

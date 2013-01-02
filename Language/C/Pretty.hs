@@ -5,7 +5,7 @@
 -- |
 -- Module      :  Language.C.Pretty
 -- Copyright   :  (c) Harvard University 2006-2011
---                (c) Geoffrey Mainland 2011-2012
+--                (c) Geoffrey Mainland 2011-2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 
@@ -110,9 +110,6 @@ instance Pretty Id where
     ppr (Id ident _)  = text ident
     ppr (AntiId v _)  = pprAnti "id" v
 
-instance Show Id where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty Storage where
     ppr (Tauto _)      = text "auto"
     ppr (Tregister _)  = text "register"
@@ -120,9 +117,6 @@ instance Pretty Storage where
     ppr (Textern _)    = text "extern"
     ppr (TexternL l _) = text "extern" <+> ppr l
     ppr (Ttypedef _)   = text "typedef"
-
-instance Show Storage where
-    showsPrec p = shows . pprPrec p
 
 instance Pretty TypeQual where
     ppr (Tconst _)        = text "const"
@@ -147,15 +141,9 @@ instance Pretty TypeQual where
     ppr (TCLwriteonly _)  = text "write_only"
     ppr (TCLkernel _)     = text "__kernel"
 
-instance Show TypeQual where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty Sign where
     ppr (Tsigned _)    = text "signed"
     ppr (Tunsigned _)  = text "unsigned"
-
-instance Show Sign where
-    showsPrec p = shows . pprPrec p
 
 pprSign :: Maybe Sign -> Doc
 pprSign Nothing     = empty
@@ -192,9 +180,6 @@ instance Pretty TypeSpec where
 
     ppr (Tva_list _) =
         text "__builtin_va_list"
-
-instance Show TypeSpec where
-    showsPrec p = shows . pprPrec p
 
 pprStructOrUnion :: String
                  -> Maybe Id
@@ -246,17 +231,11 @@ instance Pretty DeclSpec where
         spread (map ppr storage ++ map ppr quals) <+/>
         pprAnti "ty" v
 
-instance Show DeclSpec where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty ArraySize where
     ppr (ArraySize True e _)  = text "static" <+> ppr e
     ppr (ArraySize False e _) = ppr e
     ppr (VariableArraySize _) = text "*"
     ppr (NoArraySize _)       = empty
-
-instance Show ArraySize where
-    showsPrec p = shows . pprPrec p
 
 pprDeclarator :: Maybe Id -> Decl -> Doc
 pprDeclarator maybe_ident declarator =
@@ -304,21 +283,12 @@ instance Pretty Type where
     ppr (Type spec decl _)  = ppr spec <> pprDeclarator Nothing decl
     ppr (AntiType v _)      = pprAnti "ty" v
 
-instance Show Type where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty Designator where
     ppr (IndexDesignator e _)       = brackets $ ppr e
     ppr (MemberDesignator ident _)  = dot <> ppr ident
 
-instance Show Designator where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty Designation where
     ppr (Designation ds _) = folddoc (<>) (map ppr ds)
-
-instance Show Designation where
-    showsPrec p = shows . pprPrec p
 
 instance Pretty Initializer where
     ppr (ExpInitializer e _) = ppr e
@@ -329,9 +299,6 @@ instance Pretty Initializer where
         pprInit :: (Maybe Designation, Initializer) -> Doc
         pprInit (Nothing, init) = ppr init
         pprInit (Just d, init)  = ppr d <+> text "=" <//> ppr init
-
-instance Show Initializer where
-    showsPrec p = shows . pprPrec p
 
 instance Pretty Init where
     ppr (Init ident decl maybe_asmlabel maybe_e attrs _) =
@@ -346,15 +313,9 @@ instance Pretty Init where
              Nothing -> empty
              Just e ->  space <> text "=" <+/> ppr e
 
-instance Show Init where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty Typedef where
     ppr (Typedef ident decl attrs loc) =
         ppr (Init ident decl Nothing Nothing attrs loc)
-
-instance Show Typedef where
-    showsPrec p = shows . pprPrec p
 
 instance Pretty InitGroup where
     ppr (InitGroup spec attrs inits _) =
@@ -378,9 +339,6 @@ instance Pretty InitGroup where
     ppr (AntiDecls v _)  = pprAnti "decls" v
     ppr (AntiDecl v _)   = pprAnti "decl" v
 
-instance Show InitGroup where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty Field where
     ppr (Field maybe_ident maybe_decl maybe_e _) =
         case maybe_decl of
@@ -390,18 +348,12 @@ instance Pretty Field where
               Nothing -> empty
               Just e ->  space <> colon <+> ppr e
 
-instance Show Field where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty FieldGroup where
     ppr (FieldGroup spec fields _) =
         ppr spec <> commasep (map ppr fields)
 
     ppr (AntiSdecls v _)  = pprAnti "sdecls" v
     ppr (AntiSdecl v _)   = pprAnti "sdecl" v
-
-instance Show FieldGroup where
-    showsPrec p = shows . pprPrec p
 
 instance Pretty CEnum where
     ppr (CEnum ident maybe_e _) =
@@ -413,9 +365,6 @@ instance Pretty CEnum where
     ppr (AntiEnums v _)  = pprAnti "enums" v
     ppr (AntiEnum v _)   = pprAnti "enum" v
 
-instance Show CEnum where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty Attr where
     ppr (Attr ident [] _) = ppr ident
     ppr (Attr ident args _) =
@@ -425,9 +374,6 @@ instance Pretty Attr where
     pprList attrs = text "__attribute__" <>
                     parens (parens (commasep (map ppr attrs)))
 
-instance Show Attr where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty Param where
     ppr (Param maybe_ident spec decl _) =
         ppr spec <> pprDeclarator maybe_ident decl
@@ -435,18 +381,12 @@ instance Pretty Param where
     ppr (AntiParams v _)  = pprAnti "params" v
     ppr (AntiParam v _)   = pprAnti "param" v
 
-instance Show Param where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty Params where
     ppr (Params args True _) =
         commasep (map ppr args ++ [text "..."])
 
     ppr (Params args False _) =
         commasep (map ppr args)
-
-instance Show Params where
-    showsPrec p = shows . pprPrec p
 
 instance Pretty Func where
     ppr (Func spec ident decl args body loc) =
@@ -461,9 +401,6 @@ instance Pretty Func where
                   stack (zipWith (<>) (map ppr initgroups) (repeat semi))
         </> ppr body
 
-instance Show Func where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty Definition where
     ppr (FuncDef func loc)     = srcloc loc <> ppr func
     ppr (DecDef initgroup loc) = srcloc loc <> ppr initgroup <> semi
@@ -475,9 +412,6 @@ instance Pretty Definition where
     ppr (AntiEdecl v _)   = pprAnti "edecl" v
 
     pprList ds = stack (map ppr ds) <> line
-
-instance Show Definition where
-    showsPrec p = shows . pprPrec p
 
 instance Pretty Stm where
     ppr (Label ident stm sloc) =
@@ -589,9 +523,6 @@ instance Pretty Stm where
     ppr (AntiStm v _)    = pprAnti "stm" v
     ppr (AntiStms v _)   = pprAnti "stms" v
 
-instance Show Stm where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty BlockItem where
     ppr (BlockDecl decl) = ppr decl <> semi
     ppr (BlockStm stm)   = ppr stm
@@ -619,9 +550,6 @@ instance Pretty BlockItem where
                      nest 4 (line <> stack ds) </>
                      rbrace
 
-instance Show BlockItem where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty Const where
     ppr (IntConst s _ _ _)          = text s
     ppr (LongIntConst s _ _ _)      = text s
@@ -643,9 +571,6 @@ instance Pretty Const where
     ppr (AntiLLInt v _)       = pprAnti "llint"   v
     ppr (AntiUInt v _)        = pprAnti "uint"    v
     ppr (AntiInt v _)         = pprAnti "int"     v
-
-instance Show Const where
-    showsPrec p = shows . pprPrec p
 
 instance Pretty Exp where
     pprPrec _ (Var ident loc) = pprLoc loc $ ppr ident
@@ -770,9 +695,6 @@ instance Pretty Exp where
 
     pprPrec _ (AntiExp v _)   = pprAnti "var"  v
 
-instance Show Exp where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty BinOp where
     ppr Add  = text "+"
     ppr Sub  = text "-"
@@ -793,9 +715,6 @@ instance Pretty BinOp where
     ppr Lsh  = text "<<"
     ppr Rsh  = text ">>"
 
-instance Show BinOp where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty AssignOp where
     ppr JustAssign = text "="
     ppr AddAssign  = text "+="
@@ -809,9 +728,6 @@ instance Pretty AssignOp where
     ppr XorAssign  = text "^="
     ppr OrAssign   = text "|="
 
-instance Show AssignOp where
-    showsPrec p = shows . pprPrec p
-
 instance Pretty UnOp where
     ppr AddrOf   = text "&"
     ppr Deref    = text "*"
@@ -819,6 +735,3 @@ instance Pretty UnOp where
     ppr Negate   = text "-"
     ppr Not      = text "~"
     ppr Lnot     = text "!"
-
-instance Show UnOp where
-    showsPrec p = shows . pprPrec p
