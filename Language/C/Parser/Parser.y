@@ -198,6 +198,8 @@ import qualified Language.C.Syntax as C
  ANTI_PARAM       { L _ (T.Tanti_param _) }
  ANTI_PARAMS      { L _ (T.Tanti_params _) }
  ANTI_PRAGMA      { L _ (T.Tanti_pragma _) }
+ ANTI_INIT        { L _ (T.Tanti_init _) }
+ ANTI_INITS       { L _ (T.Tanti_inits _) }
 
 %expect 1
 
@@ -1353,11 +1355,15 @@ initializer :
       { CompoundInitializer (rev $2) ($1 `srcspan` $4) }
   | '{' initializer_list ',' error
       {% unclosed ($1 <--> $3) "{" }
+  | ANTI_INIT
+      { AntiInit (getANTI_INIT $1) (srclocOf $1) }
 
 initializer_list :: { RevList (Maybe Designation, Initializer) }
 initializer_list :
     initializer
       { rsingleton (Nothing, $1) }
+  | ANTI_INITS
+      { rsingleton (Nothing, AntiInits (getANTI_INITS $1) (srclocOf $1)) }
   | designation initializer
       { rsingleton (Just $1, $2) }
   | initializer_list ',' initializer
@@ -1737,6 +1743,8 @@ getANTI_SPEC        (L _ (T.Tanti_spec v))        = v
 getANTI_PARAM       (L _ (T.Tanti_param v))       = v
 getANTI_PARAMS      (L _ (T.Tanti_params v))      = v
 getANTI_PRAGMA      (L _ (T.Tanti_pragma v))      = v
+getANTI_INIT        (L _ (T.Tanti_init v))        = v
+getANTI_INITS        (L _ (T.Tanti_inits v))      = v
 
 lexer :: (L T.Token -> P a) -> P a
 lexer cont = do

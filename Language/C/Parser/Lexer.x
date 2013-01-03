@@ -110,6 +110,8 @@ c :-
  "$param:"   / { allowAnti } { lexAnti Tanti_param }
  "$params:"  / { allowAnti } { lexAnti Tanti_params }
  "$pragma:"  / { allowAnti } { lexAnti Tanti_pragma }
+ "$init:"    / { allowAnti } { lexAnti Tanti_init }
+ "$inits:"   / { allowAnti } { lexAnti Tanti_inits }
  "$"         / { allowAnti } { lexAnti Tanti_exp }
 }
 

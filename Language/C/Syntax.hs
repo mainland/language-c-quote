@@ -119,6 +119,8 @@ data Designation = Designation [Designator] !SrcLoc
 
 data Initializer = ExpInitializer Exp !SrcLoc
                  | CompoundInitializer [(Maybe Designation, Initializer)] !SrcLoc
+                 | AntiInit String !SrcLoc
+                 | AntiInits String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 type AsmLabel = String
@@ -416,6 +418,8 @@ instance Located Designation where
 instance Located Initializer where
     locOf (ExpInitializer _ loc)       = locOf loc
     locOf (CompoundInitializer _ loc)  = locOf loc
+    locOf (AntiInit _ loc)             = locOf loc
+    locOf (AntiInits _ loc)            = locOf loc
 
 instance Located Init where
     locOf (Init _ _ _ _ _ loc) = locOf loc

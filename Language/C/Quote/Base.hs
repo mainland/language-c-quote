@@ -102,6 +102,17 @@ qqTypeE :: C.Type -> Maybe (Q Exp)
 qqTypeE (C.AntiType v _)  = Just $ antiVarE v
 qqTypeE _                 = Nothing
 
+qqInitializerE :: C.Initializer -> Maybe (Q Exp)
+qqInitializerE (C.AntiInit v _)  = Just $ antiVarE v
+qqInitializerE _                 = Nothing
+
+qqInitializerListE :: [C.Initializer] -> Maybe (Q Exp)
+qqInitializerListE [] = Just [|[]|]
+qqInitializerListE (C.AntiInits v _ : fields) =
+    Just [|$(antiVarE v) ++ $(dataToExpQ qqExp fields)|]
+qqInitializerListE (field : fields) =
+    Just [|$(dataToExpQ qqExp field) : $(dataToExpQ qqExp fields)|]
+
 qqInitGroupE :: C.InitGroup -> Maybe (Q Exp)
 qqInitGroupE (C.AntiDecl v _)  = Just $ antiVarE v
 qqInitGroupE _                 = Nothing
@@ -271,6 +282,8 @@ qqExp = const Nothing  `extQ` qqStringE
                        `extQ` qqDeclSpecE
                        `extQ` qqDeclE
                        `extQ` qqTypeE
+                       `extQ` qqInitializerE
+                       `extQ` qqInitializerListE
                        `extQ` qqInitGroupE
                        `extQ` qqInitGroupListE
                        `extQ` qqFieldGroupE
@@ -316,6 +329,18 @@ qqDeclP _ = Nothing
 qqTypeP :: C.Type -> Maybe (Q Pat)
 qqTypeP (C.AntiType v _)  = Just $ antiVarP v
 qqTypeP _                 = Nothing
+
+qqInitializerP :: C.Initializer -> Maybe (Q Pat)
+qqInitializerP (C.AntiInit v _)  = Just $ antiVarP v
+qqInitializerP _                 = Nothing
+
+qqInitializerListP :: [C.Initializer] -> Maybe (Q Pat)
+qqInitializerListP [] = Just $ listP []
+qqInitializerListP [C.AntiInits v _] = Just $ antiVarP v
+qqInitializerListP (C.AntiInits {} : _ : _) =
+    error "Antiquoted list of initializers must be last item in quoted list"
+qqInitializerListP (ini : inis) =
+    Just $ conP (mkName ":") [dataToPatQ qqPat ini,  dataToPatQ qqPat inis]
 
 qqInitGroupP :: C.InitGroup -> Maybe (Q Pat)
 qqInitGroupP (C.AntiDecl v _) = Just $ antiVarP v
@@ -455,6 +480,8 @@ qqPat = const Nothing `extQ` qqStringP
                       `extQ` qqDeclSpecP
                       `extQ` qqDeclP
                       `extQ` qqTypeP
+                      `extQ` qqInitializerP
+                      `extQ` qqInitializerListP
                       `extQ` qqInitGroupP
                       `extQ` qqInitGroupListP
                       `extQ` qqFieldGroupP

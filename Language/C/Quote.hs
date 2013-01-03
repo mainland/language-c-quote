@@ -152,6 +152,11 @@
 -- @['Param']@.
 --
 -- [@pragma@] A pragma statement. The argument must have type @'String'@.
+--
+-- [@init@] An initializer. The argument must have type @'Initializer'@.
+--
+-- [@inits@] A list of initializers. The argument must have type
+-- @['Initializer']@.
 --------------------------------------------------------------------------------
 
 module Language.C.Quote where

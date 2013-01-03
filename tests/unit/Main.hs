@@ -23,7 +23,8 @@ tests :: [Test]
 tests = [exp_id, exp_int, exp_float, exp_char, exp_string,
          exp_exp, exp_func, exp_args, exp_decl, exp_sdecl,
          exp_enum, exp_edecl, exp_stm, exp_param, exp_ty,
-         pat_args, exp_hexp]
+         pat_args, exp_hexp,
+         exp_init, exp_inits]
 
 exp_id :: Test
 exp_id = testCase "exp id" $ [cexp|$id:ident|] @=? [cexp|x|]
@@ -169,3 +170,16 @@ pat_args =
 exp_hexp :: Test
 exp_hexp =
     testCase "exp hexp" $ [cexp|$ulint:(13 - 2*5)|] @=? [cexp|3UL|]
+
+exp_init :: Test
+exp_init = testCase "initializer" $
+    [cinit|{$init:initializer, .a = 10}|] @=? [cinit|{{.d = 1}, .a = 10}|]
+  where
+    initializer = [cinit|{.d = 1}|]
+
+exp_inits :: Test
+exp_inits = testCase "initializers" $
+    [cinit|{$init:initializer1, $init:initializer2}|] @=? [cinit|{{.d = 1},{.a = 10}}|]
+  where
+    initializer1 = [cinit|{.d = 1}|]
+    initializer2 = [cinit|{.a = 10}|]

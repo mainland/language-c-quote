@@ -187,6 +187,8 @@ data Token = Teof
            | Tanti_param String
            | Tanti_params String
            | Tanti_pragma String
+           | Tanti_init String
+           | Tanti_inits String
     deriving (Ord, Eq)
 
 instance Pretty Token where
