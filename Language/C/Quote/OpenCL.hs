@@ -1,8 +1,9 @@
 -- |
 -- Module      :  Language.C.Quote.OpenCL
 -- Copyright   :  (c) Harvard University 2006-2011
+--                (c) Geoffrey Mainland 2011-2013
 -- License     :  BSD-style
--- Maintainer  :  Martin Dybdal <dybber@dybber.dk>
+-- Maintainer  :  mainland@eecs.harvard.edu
 
 module Language.C.Quote.OpenCL (
     ToExp(..),
@@ -22,10 +23,10 @@ module Language.C.Quote.OpenCL (
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
 import Language.C.Quote.Base (ToExp(..), quasiquote)
+import Language.Haskell.TH.Quote (QuasiQuoter)
 
 exts :: [C.Extensions]
 exts = [C.OpenCL]
-
 
 typenames :: [String]
 typenames =
@@ -36,8 +37,10 @@ typenames =
     "half", "quad", "image2d_t", "image3d_t", "sampler_t", "event_t"]
 
 typeN :: String -> [String]
-typeN typename = [typename ++ show n | n <- [2, 3, 4, 8, 16]]
+typeN typename = [typename ++ show n | n <- [2, 3, 4, 8, 16 :: Integer]]
 
+cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, csdecl, cstm :: QuasiQuoter
+cty, cunit :: QuasiQuoter
 cdecl  = quasiquote exts typenames P.parseDecl
 cedecl = quasiquote exts typenames P.parseEdecl
 cenum  = quasiquote exts typenames P.parseEnum

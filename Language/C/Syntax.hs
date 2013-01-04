@@ -205,15 +205,15 @@ data BlockItem = BlockDecl InitGroup
     deriving (Eq, Ord, Show, Data, Typeable)
 
 funcProto :: Func -> InitGroup
-funcProto f@(Func decl_spec id decl params _ _) =
+funcProto f@(Func decl_spec ident decl params _ _) =
     InitGroup decl_spec []
-      [Init id (Proto decl params l) Nothing Nothing [] l] l
+      [Init ident (Proto decl params l) Nothing Nothing [] l] l
   where
     l = srclocOf f
 
-funcProto f@(OldFunc decl_spec id decl params _ _ _) =
+funcProto f@(OldFunc decl_spec ident decl params _ _ _) =
     InitGroup decl_spec []
-      [Init id (OldProto decl params l) Nothing Nothing [] l] l
+      [Init ident (OldProto decl params l) Nothing Nothing [] l] l
   where
     l = srclocOf f
 
@@ -548,8 +548,8 @@ instance Located Exp where
     locOf (AntiArgs _ loc)        = locOf loc
 
 ctypedef :: Id -> Decl -> [Attr] -> Typedef
-ctypedef id decl attrs =
-    Typedef id decl attrs (id `srcspan` decl `srcspan` attrs)
+ctypedef ident decl attrs =
+    Typedef ident decl attrs (ident `srcspan` decl `srcspan` attrs)
 
 cdeclSpec :: [Storage] -> [TypeQual] -> TypeSpec -> DeclSpec
 cdeclSpec storage quals spec =

@@ -7,7 +7,7 @@
 -- |
 -- Module      :  Language.C.Parser.Lexer
 -- Copyright   :  (c) Harvard University 2006-2011
---                (c) Geoffrey Mainland 2011-2012
+--                (c) Geoffrey Mainland 2011-2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 
@@ -201,7 +201,7 @@ type Action = AlexInput -> AlexInput -> P (L Token)
 
 inputString :: AlexInput -> AlexInput -> String
 inputString beg end =
-  (B.unpack . B.take (alexOff end - alexOff beg)) (alexInp beg)
+  (B.unpack . B.take (alexOff end - alexOff beg)) (alexInput beg)
 
 locateTok :: AlexInput -> AlexInput -> Token -> L Token
 locateTok beg end tok =
@@ -512,7 +512,7 @@ lexToken = do
       AlexError end        -> lexerError end (text rest)
                                 where
                                   rest :: String
-                                  rest = B.unpack $ B.take 80 (alexInp end)
+                                  rest = B.unpack $ B.take 80 (alexInput end)
       AlexSkip end _       -> setInput end >> lexToken
       AlexToken end len t  -> setInput end >> t beg end
 }

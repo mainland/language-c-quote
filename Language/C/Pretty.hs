@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- |
 -- Module      :  Language.C.Pretty
@@ -297,8 +298,11 @@ instance Pretty Initializer where
         bracesList (map pprInit inits)
       where
         pprInit :: (Maybe Designation, Initializer) -> Doc
-        pprInit (Nothing, init) = ppr init
-        pprInit (Just d, init)  = ppr d <+> text "=" <//> ppr init
+        pprInit (Nothing, ini) = ppr ini
+        pprInit (Just d, ini)  = ppr d <+> text "=" <//> ppr ini
+
+    ppr (AntiInit v _)  = pprAnti "init" v
+    ppr (AntiInits v _) = pprAnti "inits" v
 
 instance Pretty Init where
     ppr (Init ident decl maybe_asmlabel maybe_e attrs _) =
@@ -504,15 +508,15 @@ instance Pretty Stm where
                  [] -> space <> colon
                  _ ->  colon <+/> commasep (map pprReg outputs)
 
-        pprAsm inputs clobbered =
+        pprAsm inp clob =
             spread (map text template)
             <> case outputs of
                  [] -> space <> colon
                  _ ->  colon <+/> commasep (map pprReg outputs)
-            <> case inputs of
+            <> case inp of
                  [] -> space <> colon
                  _ ->  colon <+/> commasep (map pprReg inputs)
-            <> case clobbered of
+            <> case clob of
                  [] -> space <> colon
                  _ ->  colon <+/> commasep (map text clobbered)
 
@@ -650,11 +654,11 @@ instance Pretty Exp where
         parensIf (p > 15) $
         pprPrec 15 f <> parensList (map ppr args)
 
-    pprPrec p (CudaCall f conf args loc) =
+    pprPrec p (CudaCall f config args loc) =
         pprLoc loc $
         parensIf (p > 15) $
         pprPrec 15 f <>
-        text "<<<" <> pprConfig conf <> text ">>>" <>
+        text "<<<" <> pprConfig config <> text ">>>" <>
         parensList (map ppr args)
       where
         pprConfig :: ExeConfig -> Doc
@@ -680,8 +684,8 @@ instance Pretty Exp where
         braces (commasep (map pprInit inits))
       where
         pprInit :: (Maybe Designation, Initializer) -> Doc
-        pprInit (Nothing, init) = ppr init
-        pprInit (Just d, init)  = ppr d <+> text "=" <+/> ppr init
+        pprInit (Nothing, ini) = ppr ini
+        pprInit (Just d, ini)  = ppr d <+> text "=" <+/> ppr ini
 
     pprPrec _ (StmExpr blockItems loc) =
         pprLoc loc $ parens $

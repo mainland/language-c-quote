@@ -1,7 +1,7 @@
 -- |
 -- Module      :  Language.C.Quote.C
 -- Copyright   :  (c) Harvard University 2006-2011
---                (c) Geoffrey Mainland 2011-2012
+--                (c) Geoffrey Mainland 2011-2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 
@@ -23,6 +23,7 @@ module Language.C.Quote.C (
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
 import Language.C.Quote.Base (ToExp(..), quasiquote)
+import Language.Haskell.TH.Quote (QuasiQuoter)
 
 exts :: [C.Extensions]
 exts = []
@@ -30,6 +31,8 @@ exts = []
 typenames :: [String]
 typenames = []
 
+cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, csdecl, cstm :: QuasiQuoter
+cty, cunit :: QuasiQuoter
 cdecl  = quasiquote exts typenames P.parseDecl
 cedecl = quasiquote exts typenames P.parseEdecl
 cenum  = quasiquote exts typenames P.parseEnum

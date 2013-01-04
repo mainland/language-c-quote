@@ -65,6 +65,8 @@ library
     Language.C.Smart
     Language.C.Syntax
 
+  ghc-options: -Wall -Werror
+
 test-suite unit
   type:             exitcode-stdio-1.0
   hs-source-dirs:   tests/unit

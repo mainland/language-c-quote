@@ -1,7 +1,7 @@
 -- |
 -- Module      :  Language.C.Parser.Monad
 -- Copyright   :  (c) Harvard University 2006-2011
---                (c) Geoffrey Mainland 2011-2012
+--                (c) Geoffrey Mainland 2011-2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 
@@ -87,7 +87,7 @@ import Language.C.Parser.Tokens
 import Language.C.Syntax
 
 data PState = PState
-    { inp        :: !AlexInput
+    { input      :: !AlexInput
     , curToken   :: L Token
     , lexState   :: ![Int]
     , extensions :: !ExtensionsInt
@@ -101,7 +101,7 @@ emptyPState :: [Extensions]
             -> Pos
             -> PState
 emptyPState exts typnames buf pos = PState
-    { inp         = inp
+    { input       = inp
     , curToken    = error "no token"
     , lexState    = [0]
     , extensions  = foldl' setBit 0 (map fromEnum exts)
@@ -113,7 +113,7 @@ emptyPState exts typnames buf pos = PState
     inp = AlexInput
           { alexPos      = pos
           , alexPrevChar = '\n'
-          , alexInp      = buf
+          , alexInput    = buf
           , alexOff      = 0
           }
 
@@ -166,11 +166,11 @@ evalP comp st =
       Right (a, _)  -> Right a
 
 getInput  :: P AlexInput
-getInput = gets inp
+getInput = gets input
 
 setInput  :: AlexInput -> P ()
 setInput inp= modify $ \s ->
-    s { inp = inp }
+    s { input = inp }
 
 pushLexState :: Int -> P ()
 pushLexState ls = modify $ \s ->
@@ -193,16 +193,16 @@ setCurToken :: L Token -> P ()
 setCurToken tok = modify $ \s -> s { curToken = tok }
 
 addTypedef :: String -> P ()
-addTypedef id = modify $ \s ->
-    s { typedefs = Set.insert id (typedefs s) }
+addTypedef ident = modify $ \s ->
+    s { typedefs = Set.insert ident (typedefs s) }
 
 addVariable :: String -> P ()
-addVariable id = modify $ \s ->
-    s { typedefs = Set.delete id (typedefs s) }
+addVariable ident = modify $ \s ->
+    s { typedefs = Set.delete ident (typedefs s) }
 
 isTypedef :: String -> P Bool
-isTypedef id = gets $ \s ->
-    Set.member id (typedefs s)
+isTypedef ident = gets $ \s ->
+    Set.member ident (typedefs s)
 
 pushScope :: P ()
 pushScope = modify  $ \s ->
@@ -310,17 +310,17 @@ expected alts = do
 data AlexInput = AlexInput
   {  alexPos      :: {-#UNPACK#-} !Pos
   ,  alexPrevChar :: {-#UNPACK#-} !Char
-  ,  alexInp      :: {-#UNPACK#-} !B.ByteString
+  ,  alexInput    :: {-#UNPACK#-} !B.ByteString
   ,  alexOff      :: {-#UNPACK#-} !Int
   }
 
 alexGetChar :: AlexInput -> Maybe (Char, AlexInput)
 alexGetChar inp =
-    case B.uncons (alexInp inp) of
+    case B.uncons (alexInput inp) of
       Nothing       -> Nothing
       Just (c, bs)  -> Just (c, inp  {  alexPos       = advancePos (alexPos inp) c
                                      ,  alexPrevChar  = c
-                                     ,  alexInp       = bs
+                                     ,  alexInput     = bs
                                      ,  alexOff       = alexOff inp + 1
                                      })
 
@@ -343,7 +343,7 @@ nextChar = do
 peekChar ::P Char
 peekChar = do
     inp <- getInput
-    case B.uncons (alexInp inp) of
+    case B.uncons (alexInput inp) of
       Nothing      -> unexpectedEOF inp
       Just (c, _)  -> return c
 
