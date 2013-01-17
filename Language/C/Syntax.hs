@@ -2,6 +2,7 @@
 -- Module      :  Language.C.Syntax
 -- Copyright   :  (c) Harvard University 2006-2011
 --                (c) Geoffrey Mainland 2011-2013
+--                (c) Manuel M T Chakravarty 2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 
@@ -19,6 +20,7 @@ data Extensions = Antiquotation
                 | Gcc
                 | CUDA
                 | OpenCL
+                | ObjC
   deriving (Eq, Ord, Enum, Show)
 
 data Id = Id String !SrcLoc
@@ -284,6 +286,9 @@ data Exp = Var Id !SrcLoc
          | CompoundLit Type [(Maybe Designation, Initializer)] !SrcLoc
          | StmExpr [BlockItem] !SrcLoc
          | BuiltinVaArg Exp Type !SrcLoc
+         | ObjCMsg ObjCRecv (Id, Maybe Exp) [(Maybe Id, Exp)] [Exp] !SrcLoc
+           -- ^Invariant: If the first argument is 'Nothing', the list of further arguments and the
+           --  list of variable arguments will be empty.
          | AntiExp String !SrcLoc
          | AntiArgs String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
@@ -327,6 +332,12 @@ data UnOp = AddrOf
           | Negate
           | Not
           | Lnot
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data ObjCRecv = ObjCRecvSuper !SrcLoc
+              | ObjCRecvExp Exp !SrcLoc
+              | ObjCRecvClassName Id !SrcLoc
+              | ObjCRecvTypeName Id !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 instance Located Id where
@@ -544,8 +555,15 @@ instance Located Exp where
     locOf (CompoundLit _ _ loc)   = locOf loc
     locOf (StmExpr _ loc)         = locOf loc
     locOf (BuiltinVaArg _ _ loc)  = locOf loc
+    locOf (ObjCMsg _ _ _ _ loc)   = locOf loc
     locOf (AntiExp _ loc)         = locOf loc
     locOf (AntiArgs _ loc)        = locOf loc
+
+instance Located ObjCRecv where
+    locOf (ObjCRecvSuper loc)       = locOf loc
+    locOf (ObjCRecvExp _ loc)       = locOf loc
+    locOf (ObjCRecvClassName _ loc) = locOf loc
+    locOf (ObjCRecvTypeName _ loc)  = locOf loc
 
 ctypedef :: Id -> Decl -> [Attr] -> Typedef
 ctypedef ident decl attrs =
