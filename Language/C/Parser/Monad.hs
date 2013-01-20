@@ -26,8 +26,10 @@ module Language.C.Parser.Monad (
     setCurToken,
 
     addTypedef,
+    addClassdef,
     addVariable,
     isTypedef,
+    isClassdef,
 
     pushScope,
     popScope,
@@ -35,12 +37,14 @@ module Language.C.Parser.Monad (
     gccExts,
     cudaExts,
     openCLExts,
+    objcExts,
 
     useExts,
     antiquotationExts,
     useGccExts,
     useCUDAExts,
     useOpenCLExts,
+    useObjCExts,
 
     LexerException(..),
     ParserException(..),
@@ -92,7 +96,8 @@ data PState = PState
     , lexState   :: ![Int]
     , extensions :: !ExtensionsInt
     , typedefs   :: !(Set.Set String)
-    , scopes     :: [Set.Set String]
+    , classdefs  :: !(Set.Set String)
+    , scopes     :: [(Set.Set String, Set.Set String)]
     }
 
 emptyPState :: [Extensions]
@@ -106,6 +111,7 @@ emptyPState exts typnames buf pos = PState
     , lexState    = [0]
     , extensions  = foldl' setBit 0 (map fromEnum exts)
     , typedefs    = Set.fromList typnames
+    , classdefs   = Set.empty
     , scopes      = []
     }
   where
@@ -196,22 +202,33 @@ addTypedef :: String -> P ()
 addTypedef ident = modify $ \s ->
     s { typedefs = Set.insert ident (typedefs s) }
 
+addClassdef :: String -> P ()
+addClassdef ident = modify $ \s ->
+    s { classdefs = Set.insert ident (classdefs s) }
+
 addVariable :: String -> P ()
 addVariable ident = modify $ \s ->
-    s { typedefs = Set.delete ident (typedefs s) }
+    s { typedefs  = Set.delete ident (typedefs s)
+      , classdefs = Set.delete ident (classdefs s)
+      }
 
 isTypedef :: String -> P Bool
 isTypedef ident = gets $ \s ->
     Set.member ident (typedefs s)
 
+isClassdef :: String -> P Bool
+isClassdef ident = gets $ \s ->
+    Set.member ident (classdefs s)
+
 pushScope :: P ()
 pushScope = modify  $ \s ->
-    s { scopes = typedefs s : scopes s }
+    s { scopes = (typedefs s, classdefs s) : scopes s }
 
 popScope :: P ()
 popScope = modify  $ \s ->
     s { scopes     = (tail . scopes) s
-      , typedefs   = (head . scopes) s
+      , typedefs   = (fst . head . scopes) s
+      , classdefs  = (snd . head . scopes) s
       }
 
 antiquotationExts :: ExtensionsInt
@@ -226,6 +243,9 @@ cudaExts = (bit . fromEnum) CUDA
 openCLExts :: ExtensionsInt
 openCLExts = (bit . fromEnum) OpenCL
 
+objcExts :: ExtensionsInt
+objcExts = (bit . fromEnum) ObjC
+
 useExts :: ExtensionsInt -> P Bool
 useExts ext = gets $ \s ->
     extensions s .&. ext /= 0
@@ -238,6 +258,9 @@ useCUDAExts = useExts cudaExts
 
 useOpenCLExts :: P Bool
 useOpenCLExts = useExts openCLExts
+
+useObjCExts :: P Bool
+useObjCExts = useExts objcExts
 
 data LexerException = LexerException Pos Doc
   deriving (Typeable)

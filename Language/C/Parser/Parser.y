@@ -164,6 +164,10 @@ import qualified Language.C.Syntax as C
  'kernel'       { L _ T.TCLkernel }
  '__kernel'     { L _ T.TCLkernel }
 
+ OBJCNAMED { L _ (T.TObjCnamed _) }
+ '@'       { L _ T.TObjCat }
+ 'class'   { L _ T.TObjCclass }
+
  'typename'       { L _ T.Ttypename }
 
  ANTI_ID          { L _ (T.Tanti_id _) }
@@ -225,7 +229,7 @@ import qualified Language.C.Syntax as C
 %name parseUnit       translation_unit
 %name parseFunc       function_definition
 
-%right NAMED
+%right NAMED OBJCNAMED
 %%
 
 {------------------------------------------------------------------------------
@@ -237,12 +241,14 @@ import qualified Language.C.Syntax as C
 identifier :: { Id }
 identifier :
     ID       { Id (getID $1) (srclocOf $1) }
+  | 'class'  { Id "class" (srclocOf $1) }                 -- Objective-C
   | ANTI_ID  { AntiId (getANTI_ID $1) (srclocOf $1) }
 
 identifier_or_typedef :: { Id }
 identifier_or_typedef :
     identifier  { $1 }
   | NAMED       { Id (getNAMED $1) (srclocOf $1) }
+  | OBJCNAMED   { Id (getOBJCNAMED $1) (srclocOf $1) }
 
 {------------------------------------------------------------------------------
  -
@@ -364,7 +370,8 @@ objc_receiver :: { ObjCRecv }
 objc_receiver :
     NAMED
       { ObjCRecvTypeName (Id (getNAMED $1) (srclocOf $1)) (srclocOf $1) }
-  -- FIXME: [OBJC] need another alternative for class names
+  | OBJCNAMED
+      { ObjCRecvClassName (Id (getOBJCNAMED $1) (srclocOf $1)) (srclocOf $1) }
   | expression
       { case $1 of 
           Var (Id "super" _) loc -> ObjCRecvSuper loc
@@ -1176,6 +1183,8 @@ typedef_direct_declarator :: { (Id, Decl -> Decl) }
 typedef_direct_declarator :
     NAMED
       { (Id (getNAMED $1) (srclocOf $1), id) }
+  | OBJCNAMED
+      { (Id (getOBJCNAMED $1) (srclocOf $1), id) }
   | '(' typedef_declarator ')'
       { $2 }
   | '(' typedef_declarator error
@@ -1232,6 +1241,8 @@ parameter_typedef_direct_declarator :: { (Id, Decl -> Decl) }
 parameter_typedef_direct_declarator :
     NAMED
       { (Id (getNAMED $1) (srclocOf $1), id) }
+  | OBJCNAMED
+      { (Id (getOBJCNAMED $1) (srclocOf $1), id) }
   | '(' pointer parameter_typedef_direct_declarator ')'
       { let (ident, dirDecl) = $3
         in
@@ -1454,6 +1465,8 @@ typedef_name :: { TySpec }
 typedef_name :
     NAMED
       { TSnamed (Id (getNAMED $1) (srclocOf $1)) (srclocOf $1) }
+  | OBJCNAMED
+      { TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) (srclocOf $1) }
   | 'typename' identifier
       { TSnamed $2 ($1 `srcspan` $2) }
   | 'typename' error
@@ -1672,6 +1685,9 @@ external_declaration :
       { FuncDef $1 (srclocOf $1) }
   | declaration
       { DecDef $1 (srclocOf $1) }
+  {- Extension: ObjC -}
+  | objc_class_declaration
+      { $1 }
   | ANTI_FUNC
       { AntiFunc (getANTI_FUNC $1) (srclocOf $1) }
   | ANTI_ESC
@@ -1716,6 +1732,24 @@ function_definition :
                }
            }
       }
+
+-- Objective-C extension: class declaration
+--
+-- objc-class-declaration -> 
+--   '@' 'class' identifier+ ';'
+--
+objc_class_declaration :: { Definition }
+objc_class_declaration : 
+    '@' 'class' identifier_list ';'
+      {% do { let { idents = rev $3
+                  ; addClassdef' (Id str _)  = addClassdef str
+                  ; addClassdef' (AntiId {}) = return ()
+                  }
+            ; mapM addClassdef' idents
+            ; return $ ObjCClassDec idents ($1 `srcspan` $4)
+            } 
+      }
+
 
 {------------------------------------------------------------------------------
  -
@@ -1832,6 +1866,7 @@ getDOUBLE      (L _ (T.TdoubleConst x))      = x
 getLONG_DOUBLE (L _ (T.TlongDoubleConst x))  = x
 getID          (L _ (T.Tidentifier ident))   = ident
 getNAMED       (L _ (T.Tnamed ident))        = ident
+getOBJCNAMED   (L _ (T.TObjCnamed ident))    = ident
 
 getPRAGMA      (L _ (T.Tpragma pragma))      = pragma
 

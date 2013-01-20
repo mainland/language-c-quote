@@ -407,9 +407,10 @@ instance Pretty Func where
         </> ppr body
 
 instance Pretty Definition where
-    ppr (FuncDef func loc)     = srcloc loc <> ppr func
-    ppr (DecDef initgroup loc) = srcloc loc <> ppr initgroup <> semi
-    ppr (EscDef s loc)         = srcloc loc <> text s
+    ppr (FuncDef func loc)      = srcloc loc <> ppr func
+    ppr (DecDef initgroup loc)  = srcloc loc <> ppr initgroup <> semi
+    ppr (EscDef s loc)          = srcloc loc <> text s
+    ppr (ObjCClassDec clss loc) = srcloc loc <> text "@class" <+> commasep (map ppr clss) <> semi
 
     ppr (AntiFunc v _)    = pprAnti "func" v
     ppr (AntiEsc v _)     = pprAnti "esc" v

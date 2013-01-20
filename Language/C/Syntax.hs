@@ -170,6 +170,7 @@ data Func  =  Func DeclSpec Id Decl Params [BlockItem] !SrcLoc
 data Definition  =  FuncDef Func !SrcLoc
                  |  DecDef InitGroup !SrcLoc
                  |  EscDef String !SrcLoc
+                 |  ObjCClassDec [Id] !SrcLoc
                  |  AntiFunc String !SrcLoc
                  |  AntiEsc String !SrcLoc
                  |  AntiEdecl String !SrcLoc
@@ -473,13 +474,14 @@ instance Located Func where
     locOf (OldFunc _ _ _ _ _ _ loc) = locOf loc
 
 instance Located Definition where
-    locOf (FuncDef _ loc)     = locOf loc
-    locOf (DecDef _ loc)      = locOf loc
-    locOf (EscDef _ loc)      = locOf loc
-    locOf (AntiFunc _ loc)    = locOf loc
-    locOf (AntiEsc _ loc)     = locOf loc
-    locOf (AntiEdecl _ loc)   = locOf loc
-    locOf (AntiEdecls _ loc)  = locOf loc
+    locOf (FuncDef _ loc)      = locOf loc
+    locOf (DecDef _ loc)       = locOf loc
+    locOf (EscDef _ loc)       = locOf loc
+    locOf (ObjCClassDec _ loc) = locOf loc
+    locOf (AntiFunc _ loc)     = locOf loc
+    locOf (AntiEsc _ loc)      = locOf loc
+    locOf (AntiEdecl _ loc)    = locOf loc
+    locOf (AntiEdecls _ loc)   = locOf loc
 
 instance Located Stm where
     locOf (Label _ _ loc)       = locOf loc
