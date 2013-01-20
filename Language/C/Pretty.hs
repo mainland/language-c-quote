@@ -7,6 +7,7 @@
 -- Module      :  Language.C.Pretty
 -- Copyright   :  (c) Harvard University 2006-2011
 --                (c) Geoffrey Mainland 2011-2013
+--                (c) Manuel M T Chakravarty 2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 
@@ -406,9 +407,10 @@ instance Pretty Func where
         </> ppr body
 
 instance Pretty Definition where
-    ppr (FuncDef func loc)     = srcloc loc <> ppr func
-    ppr (DecDef initgroup loc) = srcloc loc <> ppr initgroup <> semi
-    ppr (EscDef s loc)         = srcloc loc <> text s
+    ppr (FuncDef func loc)      = srcloc loc <> ppr func
+    ppr (DecDef initgroup loc)  = srcloc loc <> ppr initgroup <> semi
+    ppr (EscDef s loc)          = srcloc loc <> text s
+    ppr (ObjCClassDec clss loc) = srcloc loc <> text "@class" <+> commasep (map ppr clss) <> semi
 
     ppr (AntiFunc v _)    = pprAnti "func" v
     ppr (AntiEsc v _)     = pprAnti "esc" v
@@ -695,6 +697,21 @@ instance Pretty Exp where
         pprLoc loc $
         text "__builtin_va_arg(" <> ppr e <> comma <+> ppr ty <> rparen
 
+    pprPrec _ (ObjCMsg recv fstArg moreArgs varArgs loc) =
+        pprLoc loc $
+        brackets $
+        ppr recv <+/>
+        nest 2 (pprMsgArgs fstArg)
+      where
+        pprMsgArgs (sel, Nothing) = ppr sel
+        pprMsgArgs (sel, Just e)  = sep (map pprMsgArg ((Just sel, e):moreArgs)) <>
+                                    cat (map pprVarArg varArgs)
+        
+        pprMsgArg (Just sel, e) = ppr sel <> colon <+> ppr e
+        pprMsgArg (Nothing , e) = colon <+> ppr e
+        
+        pprVarArg e = comma <+> ppr e
+
     pprPrec _ (AntiArgs v _)  = pprAnti "args"  v
 
     pprPrec _ (AntiExp v _)   = pprAnti "var"  v
@@ -739,3 +756,9 @@ instance Pretty UnOp where
     ppr Negate   = text "-"
     ppr Not      = text "~"
     ppr Lnot     = text "!"
+
+instance Pretty ObjCRecv where
+    ppr (ObjCRecvSuper loc)               = pprLoc loc $ text "super"
+    ppr (ObjCRecvExp e loc)               = pprLoc loc $ ppr e
+    ppr (ObjCRecvClassName className loc) = pprLoc loc $ ppr className
+    ppr (ObjCRecvTypeName typeName loc)   = pprLoc loc $ ppr typeName

@@ -7,6 +7,7 @@
 -- Module      :  Language.C.Parser.Parser
 -- Copyright   :  (c) Harvard University 2006-2011
 --                (c) Geoffrey Mainland 2011-2012
+--                (c) Manuel M T Chakravarty 2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 
@@ -163,6 +164,10 @@ import qualified Language.C.Syntax as C
  'kernel'       { L _ T.TCLkernel }
  '__kernel'     { L _ T.TCLkernel }
 
+ OBJCNAMED { L _ (T.TObjCnamed _) }
+ '@'       { L _ T.TObjCat }
+ 'class'   { L _ T.TObjCclass }
+
  'typename'       { L _ T.Ttypename }
 
  ANTI_ID          { L _ (T.Tanti_id _) }
@@ -224,7 +229,7 @@ import qualified Language.C.Syntax as C
 %name parseUnit       translation_unit
 %name parseFunc       function_definition
 
-%right NAMED
+%right NAMED OBJCNAMED
 %%
 
 {------------------------------------------------------------------------------
@@ -236,12 +241,14 @@ import qualified Language.C.Syntax as C
 identifier :: { Id }
 identifier :
     ID       { Id (getID $1) (srclocOf $1) }
+  | 'class'  { Id "class" (srclocOf $1) }                 -- Objective-C
   | ANTI_ID  { AntiId (getANTI_ID $1) (srclocOf $1) }
 
 identifier_or_typedef :: { Id }
 identifier_or_typedef :
     identifier  { $1 }
   | NAMED       { Id (getNAMED $1) (srclocOf $1) }
+  | OBJCNAMED   { Id (getOBJCNAMED $1) (srclocOf $1) }
 
 {------------------------------------------------------------------------------
  -
@@ -322,6 +329,9 @@ primary_expression :
         in
           StmExpr items ($1 `srcspan` $3)
       }
+  {- Extension: ObjC -}
+  | objc_message_expr
+      { $1 }
   | ANTI_EXP
       { AntiExp (getANTI_EXP $1) (srclocOf $1) }
 
@@ -330,6 +340,128 @@ string_constant :
     STRING                  { rsingleton (L (locOf $1) (getSTRING $1)) }
     {- Extension: GCC -}
   | string_constant STRING  { rcons (L (locOf $2) (getSTRING $2)) $1 }
+
+-- Objective-C extension: message expression
+--
+-- objc-message-expr ->
+--   '[' objc-receiver 
+--         ( objc-selector 
+--         | ([objc-selector] ':' assignment-expression)+  (',' assignment-expression)*
+--         )
+--   ']'
+--
+-- objc-receiver -> 'super' | expression | class-name | type-name
+--
+-- objc-selector is an identifier whose lexeme may also be that of the following keywords and type names:
+--    asm auto bool break case char const continue default do double else enum
+--    extern false float for goto if inline int long register restrict return
+--    short signed sizeof static struct switch true try typedef type name
+--    typeof union unsigned void volatile wchar_t while _Bool _Complex
+--    _Imaginary __alignof
+--
+objc_message_expr :: { Exp }
+objc_message_expr :
+    '[' objc_receiver objc_message_args ']'
+      { let (firstSelArg, furtherSelArgs, varArgs) = $3
+        in
+        ObjCMsg $2 firstSelArg furtherSelArgs varArgs ($1 `srcspan` $4) }
+
+objc_receiver :: { ObjCRecv }
+objc_receiver :
+    NAMED
+      { ObjCRecvTypeName (Id (getNAMED $1) (srclocOf $1)) (srclocOf $1) }
+  | OBJCNAMED
+      { ObjCRecvClassName (Id (getOBJCNAMED $1) (srclocOf $1)) (srclocOf $1) }
+  | expression
+      { case $1 of 
+          Var (Id "super" _) loc -> ObjCRecvSuper loc
+          _                      -> ObjCRecvExp $1 (srclocOf $1) }
+
+objc_message_args :: { ((Id, Maybe Exp), [(Maybe Id, Exp)], [Exp]) }
+objc_message_args :
+    objc_selector
+      { (($1, Nothing), [], []) }
+  | objc_keywordarg_list objc_vararg_list
+      {% case rev $1 of
+           (Just firstSel, firstArg) : furtherSelArgs  -- 1st selector must be present!
+             -> return ((firstSel, Just firstArg), furtherSelArgs, rev $2)
+           (Nothing      , firstArg) : _furtherSelArgs
+             -> throw $ ParserException (locOf firstArg) $ 
+                    text "Selector in message is missing"
+           _ -> error "objc_message_args: 'objc_keywordarg_list' cannot be empty"
+      }
+
+objc_keywordarg_list :: { RevList (Maybe Id, Exp) }   -- will be non-empty
+objc_keywordarg_list :
+    objc_keywordarg
+      { rsingleton $1 }
+  | objc_keywordarg_list objc_keywordarg
+      { $2 `rcons` $1 }
+
+objc_keywordarg :: { (Maybe Id, Exp) }
+objc_keywordarg :
+    ':' assignment_expression
+      { (Nothing, $2) }
+  | 
+    objc_selector ':' assignment_expression
+      { (Just $1, $3) }
+
+objc_selector :: { Id }
+objc_selector :
+    identifier_or_typedef { $1 }
+--    | 'asm'                 { Id "asm" (srclocOf $1) }
+    | 'auto'                { Id "auto" (srclocOf $1) }
+--    | 'bool'                { Id "bool" (srclocOf $1) }
+    | 'break'               { Id "break" (srclocOf $1) }
+    | 'case'                { Id "case" (srclocOf $1) }
+    | 'char'                { Id "char" (srclocOf $1) }
+    | 'const'               { Id "const" (srclocOf $1) }
+    | 'continue'            { Id "continue" (srclocOf $1) }
+    | 'default'             { Id "default" (srclocOf $1) }
+    | 'do'                  { Id "do" (srclocOf $1) }
+    | 'double'              { Id "double" (srclocOf $1) }
+    | 'else'                { Id "else" (srclocOf $1) }
+    | 'enum'                { Id "enum" (srclocOf $1) }
+    | 'extern'              { Id "extern" (srclocOf $1) }
+--    | 'false'               { Id "false" (srclocOf $1) }
+    | 'float'               { Id "float" (srclocOf $1) }
+    | 'for'                 { Id "for" (srclocOf $1) }
+    | 'goto'                { Id "goto" (srclocOf $1) }
+    | 'if'                  { Id "if" (srclocOf $1) }
+    | 'inline'              { Id "inline" (srclocOf $1) }
+    | 'int'                 { Id "int" (srclocOf $1) }
+    | 'long'                { Id "long" (srclocOf $1) }
+    | 'register'            { Id "register" (srclocOf $1) }
+    | 'restrict'            { Id "restrict" (srclocOf $1) }
+    | 'return'              { Id "return" (srclocOf $1) }
+    | 'short'               { Id "short" (srclocOf $1) }
+    | 'signed'              { Id "signed" (srclocOf $1) }
+    | 'sizeof'              { Id "sizeof" (srclocOf $1) }
+    | 'static'              { Id "static" (srclocOf $1) }
+    | 'struct'              { Id "struct" (srclocOf $1) }
+    | 'switch'              { Id "switch" (srclocOf $1) }
+--    | 'true'                { Id "true" (srclocOf $1) }
+--    | 'try'                 { Id "try" (srclocOf $1) }
+    | 'typedef'             { Id "typedef" (srclocOf $1) }
+    | 'typename'            { Id "typename" (srclocOf $1) }
+--    | 'typeof'              { Id "typeof" (srclocOf $1) }
+    | 'union'               { Id "union" (srclocOf $1) }
+    | 'unsigned'            { Id "unsigned" (srclocOf $1) }
+    | 'void'                { Id "void" (srclocOf $1) }
+    | 'volatile'            { Id "volatile" (srclocOf $1) }
+--    | 'wchar_t'             { Id "wchar_t" (srclocOf $1) }
+    | 'while'               { Id "while" (srclocOf $1) }
+--    | '_Bool'               { Id "_Bool" (srclocOf $1) }
+--    | '_Complex'            { Id "_Complex" (srclocOf $1) }
+--    | '_Imaginary'          { Id "_Imaginary" (srclocOf $1) }
+--    | '__alignof'           { Id "__alignof" (srclocOf $1) }
+
+objc_vararg_list :: { RevList Exp }   -- might be empty
+objc_vararg_list :
+    -- epsilon
+      { rnil }
+  |  objc_vararg_list ',' assignment_expression
+      { $3 `rcons` $1 }
 
 postfix_expression :: { Exp }
 postfix_expression :
@@ -1051,6 +1183,8 @@ typedef_direct_declarator :: { (Id, Decl -> Decl) }
 typedef_direct_declarator :
     NAMED
       { (Id (getNAMED $1) (srclocOf $1), id) }
+  | OBJCNAMED
+      { (Id (getOBJCNAMED $1) (srclocOf $1), id) }
   | '(' typedef_declarator ')'
       { $2 }
   | '(' typedef_declarator error
@@ -1107,6 +1241,8 @@ parameter_typedef_direct_declarator :: { (Id, Decl -> Decl) }
 parameter_typedef_direct_declarator :
     NAMED
       { (Id (getNAMED $1) (srclocOf $1), id) }
+  | OBJCNAMED
+      { (Id (getOBJCNAMED $1) (srclocOf $1), id) }
   | '(' pointer parameter_typedef_direct_declarator ')'
       { let (ident, dirDecl) = $3
         in
@@ -1329,6 +1465,8 @@ typedef_name :: { TySpec }
 typedef_name :
     NAMED
       { TSnamed (Id (getNAMED $1) (srclocOf $1)) (srclocOf $1) }
+  | OBJCNAMED
+      { TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) (srclocOf $1) }
   | 'typename' identifier
       { TSnamed $2 ($1 `srcspan` $2) }
   | 'typename' error
@@ -1547,6 +1685,9 @@ external_declaration :
       { FuncDef $1 (srclocOf $1) }
   | declaration
       { DecDef $1 (srclocOf $1) }
+  {- Extension: ObjC -}
+  | objc_class_declaration
+      { $1 }
   | ANTI_FUNC
       { AntiFunc (getANTI_FUNC $1) (srclocOf $1) }
   | ANTI_ESC
@@ -1591,6 +1732,24 @@ function_definition :
                }
            }
       }
+
+-- Objective-C extension: class declaration
+--
+-- objc-class-declaration -> 
+--   '@' 'class' identifier+ ';'
+--
+objc_class_declaration :: { Definition }
+objc_class_declaration : 
+    '@' 'class' identifier_list ';'
+      {% do { let { idents = rev $3
+                  ; addClassdef' (Id str _)  = addClassdef str
+                  ; addClassdef' (AntiId {}) = return ()
+                  }
+            ; mapM addClassdef' idents
+            ; return $ ObjCClassDec idents ($1 `srcspan` $4)
+            } 
+      }
+
 
 {------------------------------------------------------------------------------
  -
@@ -1707,6 +1866,7 @@ getDOUBLE      (L _ (T.TdoubleConst x))      = x
 getLONG_DOUBLE (L _ (T.TlongDoubleConst x))  = x
 getID          (L _ (T.Tidentifier ident))   = ident
 getNAMED       (L _ (T.Tnamed ident))        = ident
+getOBJCNAMED   (L _ (T.TObjCnamed ident))    = ident
 
 getPRAGMA      (L _ (T.Tpragma pragma))      = pragma
 

@@ -150,6 +150,11 @@ data Token = Teof
            | TCLreadonly
            | TCLwriteonly
            | TCLkernel
+           
+           -- Objective-C
+           | TObjCnamed String
+           | TObjCat
+           | TObjCclass
 
            -- Antiquoting
            | Ttypename
@@ -328,7 +333,13 @@ tokenStrings = [(Tlparen,     "("),
                 (TCLconstant,  "__constant"),
                 (TCLreadonly,  "read_only"),
                 (TCLwriteonly, "write_only"),
-                (TCLkernel,    "__kernel")
+                (TCLkernel,    "__kernel"),
+
+                --
+                -- Objective-C extensions
+                --
+                (TObjCat,    "@"),
+                (TObjCclass, "class")
                 ]
 
 keywords :: [(String,      Token,      Maybe [Extensions])]
@@ -409,7 +420,9 @@ keywords = [("auto",       Tauto,      Nothing),
             ("write_only",   TCLwriteonly, Just [OpenCL]),
             ("__write_only", TCLwriteonly, Just [OpenCL]),
             ("kernel",       TCLkernel,    Just [OpenCL]),
-            ("__kernel",     TCLkernel,    Just [OpenCL])
+            ("__kernel",     TCLkernel,    Just [OpenCL]),
+            
+            ("class", TObjCclass, Just [ObjC])
            ]
 
 type ExtensionsInt = Word32

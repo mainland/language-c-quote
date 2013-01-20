@@ -194,6 +194,9 @@ c :-
 
  ">>>" / { ifExtension cudaExts }
          { token TCUDA3gt }
+
+ "@" / { ifExtension objcExts }
+       { token TObjCat }
 }
 
 {
@@ -241,10 +244,13 @@ identifier beg end =
 
     nonKeyword :: P (L Token)
     nonKeyword = do
-        test <- isTypedef ident
+        typeTest  <- isTypedef ident
+        classTest <- isTypedef ident
         return $
-          if test
+          if typeTest
           then locateTok beg end (Tnamed ident)
+          else if classTest
+          then locateTok beg end (TObjCnamed ident)
           else locateTok beg end (Tidentifier ident)
 
 lexAnti ::(String -> Token) ->  Action
