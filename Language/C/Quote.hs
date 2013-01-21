@@ -5,11 +5,11 @@
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 --
--- There are four modules that provide quasiquoters, each for a different C
+-- There are five modules that provide quasiquoters, each for a different C
 -- variant. 'Language.C.Quote.C' parses C99, 'Language.C.Quote.GCC' parses C99
 -- plus GNU extensions, 'Language.C.Quote.CUDA' parses C99 plus GNU and CUDA
--- extensions, and 'Language.C.Quote.OpenCL' parses C99 plus GNU and OpenCL
--- extensions.
+-- extensions, 'Language.C.Quote.OpenCL' parses C99 plus GNU and OpenCL
+-- extensions and, 'Language.C.Quote.ObjC' parses C99 plus a subset of Objective-C
 --
 -- For version of GHC prior to 7.4, the quasiquoters generate Template Haskell
 -- expressions that use data constructors that must be in scope where the
