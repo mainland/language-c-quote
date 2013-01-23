@@ -14,7 +14,8 @@
 module Language.C.Parser.Parser where
 
 import Control.Monad (forM_,
-                      when)
+                      when,
+                      unless)
 import Control.Monad.Exception
 import Data.List (intersperse)
 import Data.Loc
@@ -362,9 +363,14 @@ string_constant :
 objc_message_expr :: { Exp }
 objc_message_expr :
     '[' objc_receiver objc_message_args ']'
-      { let (firstSelArg, furtherSelArgs, varArgs) = $3
-        in
-        ObjCMsg $2 firstSelArg furtherSelArgs varArgs ($1 `srcspan` $4) }
+      {% do { objc_enabled <- useObjCExts
+            ; unless objc_enabled $ 
+                throw $ ParserException ($1 <--> $4) $ 
+                  text "To use a message expression, enable Objective-C support"
+            ; let (firstSelArg, furtherSelArgs, varArgs) = $3
+            ; return $ ObjCMsg $2 firstSelArg furtherSelArgs varArgs ($1 `srcspan` $4) 
+            }
+      }
 
 objc_receiver :: { ObjCRecv }
 objc_receiver :
