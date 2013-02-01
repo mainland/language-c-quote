@@ -1,7 +1,8 @@
 -- |
 -- Module      :  Language.C.Parser.Tokens
 -- Copyright   :  (c) Harvard University 2006-2011
---                (c) Geoffrey Mainland 2011-2012
+--                (c) Geoffrey Mainland 2011-2013
+--                (c) Manuel M T Chakravarty 2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 
@@ -155,6 +156,15 @@ data Token = Teof
            | TObjCnamed String
            | TObjCat
            | TObjCclass
+           | TObjCend
+           | TObjCinterface
+           | TObjCprivate
+           | TObjCoptional
+           | TObjCpublic
+           | TObjCproperty
+           | TObjCprotected
+           | TObjCpackage
+           | TObjCrequired
 
            -- Antiquoting
            | Ttypename
@@ -327,7 +337,7 @@ tokenStrings = [(Tlparen,     "("),
                 --
                 -- OpenCL extensions
                 --
-                (TCLprivate,   "__private"),
+                (TCLprivate,   "private"),    -- must be without '__' prefix for Objective-C
                 (TCLlocal,     "__local"),
                 (TCLglobal,    "__global"),
                 (TCLconstant,  "__constant"),
@@ -338,8 +348,17 @@ tokenStrings = [(Tlparen,     "("),
                 --
                 -- Objective-C extensions
                 --
-                (TObjCat,    "@"),
-                (TObjCclass, "class")
+                (TObjCat        , "@"),
+                (TObjCclass     , "class"),
+                (TObjCend       , "end"),
+                (TObjCinterface , "interface"),
+                (TObjCprivate   , "private"),
+                (TObjCoptional  , "optional"),
+                (TObjCpublic    , "public"),
+                (TObjCproperty  , "property"),
+                (TObjCprotected , "protected"),
+                (TObjCpackage   , "package"),
+                (TObjCrequired  , "required")
                 ]
 
 keywords :: [(String,      Token,      Maybe [Extensions])]
@@ -407,7 +426,7 @@ keywords = [("auto",       Tauto,      Nothing),
             ("__restrict__", TCUDArestrict, Just [CUDA]),
             ("__noinline__", TCUDAnoinline, Just [CUDA]),
 
-            ("private",      TCLprivate,   Just [OpenCL]),
+            ("private",      TCLprivate,   Just [OpenCL, ObjC]),  -- see Lexer.identifier for 'TObjCprivate'
             ("__private",    TCLprivate,   Just [OpenCL]),
             ("local",        TCLlocal,     Just [OpenCL]),
             ("__local",      TCLlocal,     Just [OpenCL]),
@@ -422,7 +441,15 @@ keywords = [("auto",       Tauto,      Nothing),
             ("kernel",       TCLkernel,    Just [OpenCL]),
             ("__kernel",     TCLkernel,    Just [OpenCL]),
             
-            ("class", TObjCclass, Just [ObjC])
+            ("class",     TObjCclass,     Just [ObjC]),
+            ("end",       TObjCend,       Just [ObjC]),
+            ("interface", TObjCinterface, Just [ObjC]),
+            ("optional",  TObjCoptional,  Just [ObjC]),
+            ("public",    TObjCpublic,    Just [ObjC]),
+            ("property",  TObjCproperty,  Just [ObjC]),
+            ("protected", TObjCprotected, Just [ObjC]),
+            ("package",   TObjCpackage,   Just [ObjC]),
+            ("required",  TObjCrequired,  Just [ObjC])
            ]
 
 type ExtensionsInt = Word32

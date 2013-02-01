@@ -165,9 +165,18 @@ import qualified Language.C.Syntax as C
  'kernel'       { L _ T.TCLkernel }
  '__kernel'     { L _ T.TCLkernel }
 
- OBJCNAMED { L _ (T.TObjCnamed _) }
- '@'       { L _ T.TObjCat }
- 'class'   { L _ T.TObjCclass }
+ OBJCNAMED      { L _ (T.TObjCnamed _) }
+ '@'            { L _ T.TObjCat }
+ 'class'        { L _ T.TObjCclass }
+ 'end'          { L _ T.TObjCend }
+ 'interface'    { L _ T.TObjCinterface }
+ 'objc_private' { L _ T.TObjCprivate }
+ 'optional'     { L _ T.TObjCoptional }
+ 'public'       { L _ T.TObjCpublic }
+ 'property'     { L _ T.TObjCproperty }
+ 'protected'    { L _ T.TObjCprotected }
+ 'package'      { L _ T.TObjCpackage }
+ 'required'     { L _ T.TObjCrequired }
 
  'typename'       { L _ T.Ttypename }
 
@@ -241,9 +250,18 @@ import qualified Language.C.Syntax as C
 
 identifier :: { Id }
 identifier :
-    ID       { Id (getID $1) (srclocOf $1) }
-  | 'class'  { Id "class" (srclocOf $1) }                 -- Objective-C
-  | ANTI_ID  { AntiId (getANTI_ID $1) (srclocOf $1) }
+    ID               { Id (getID $1) (srclocOf $1) }
+  | 'class'          { Id "class" (srclocOf $1) }                 -- Objective-C
+  | 'end'            { Id "end" (srclocOf $1) }                   -- Objective-C
+  | 'interface'      { Id "interface" (srclocOf $1) }             -- Objective-C
+  | 'objc_private'   { Id "private" (srclocOf $1) }               -- Objective-C
+  | 'optional'       { Id "optional" (srclocOf $1) }              -- Objective-C
+  | 'public'         { Id "public" (srclocOf $1) }                -- Objective-C
+  | 'property'       { Id "property" (srclocOf $1) }              -- Objective-C
+  | 'protected'      { Id "protected" (srclocOf $1) }             -- Objective-C
+  | 'package'        { Id "package" (srclocOf $1) }               -- Objective-C
+  | 'required'       { Id "required" (srclocOf $1) }              -- Objective-C
+  | ANTI_ID          { AntiId (getANTI_ID $1) (srclocOf $1) }
 
 identifier_or_typedef :: { Id }
 identifier_or_typedef :
@@ -367,8 +385,8 @@ objc_message_expr :
             ; unless objc_enabled $ 
                 throw $ ParserException ($1 <--> $4) $ 
                   text "To use a message expression, enable Objective-C support"
-            ; let (firstSelArg, furtherSelArgs, varArgs) = $3
-            ; return $ ObjCMsg $2 firstSelArg furtherSelArgs varArgs ($1 `srcspan` $4) 
+            ; let (args, vargs) = $3
+            ; return $ ObjCMsg $2 args vargs ($1 `srcspan` $4) 
             }
       }
 
@@ -383,34 +401,26 @@ objc_receiver :
           Var (Id "super" _) loc -> ObjCRecvSuper loc
           _                      -> ObjCRecvExp $1 (srclocOf $1) }
 
-objc_message_args :: { ((Id, Maybe Exp), [(Maybe Id, Exp)], [Exp]) }
+objc_message_args :: { ([ObjCArg], [Exp]) }
 objc_message_args :
     objc_selector
-      { (($1, Nothing), [], []) }
+      { ([ObjCArg (Just $1) Nothing (srclocOf $1)], []) }
   | objc_keywordarg_list objc_vararg_list
-      {% case rev $1 of
-           (Just firstSel, firstArg) : furtherSelArgs  -- 1st selector must be present!
-             -> return ((firstSel, Just firstArg), furtherSelArgs, rev $2)
-           (Nothing      , firstArg) : _furtherSelArgs
-             -> throw $ ParserException (locOf firstArg) $ 
-                    text "Selector in message is missing"
-           _ -> error "objc_message_args: 'objc_keywordarg_list' cannot be empty"
-      }
+      { (rev $1, rev $2) }
 
-objc_keywordarg_list :: { RevList (Maybe Id, Exp) }   -- will be non-empty
+objc_keywordarg_list :: { RevList ObjCArg }   -- will be non-empty
 objc_keywordarg_list :
     objc_keywordarg
       { rsingleton $1 }
   | objc_keywordarg_list objc_keywordarg
       { $2 `rcons` $1 }
 
-objc_keywordarg :: { (Maybe Id, Exp) }
+objc_keywordarg :: { ObjCArg }
 objc_keywordarg :
     ':' assignment_expression
-      { (Nothing, $2) }
-  | 
-    objc_selector ':' assignment_expression
-      { (Just $1, $3) }
+      { ObjCArg Nothing (Just $2) ($1 `srcspan` $2) }
+  | objc_selector ':' assignment_expression
+      { ObjCArg (Just $1) (Just $3) ($1 `srcspan` $3) }
 
 objc_selector :: { Id }
 objc_selector :
@@ -1694,6 +1704,9 @@ external_declaration :
   {- Extension: ObjC -}
   | objc_class_declaration
       { $1 }
+  {- Extension: ObjC -}
+  | objc_interface
+      { $1 }
   | ANTI_FUNC
       { AntiFunc (getANTI_FUNC $1) (srclocOf $1) }
   | ANTI_ESC
@@ -1755,6 +1768,262 @@ objc_class_declaration :
             ; return $ ObjCClassDec idents ($1 `srcspan` $4)
             } 
       }
+
+-- Objective-C extension: class or category interface
+--
+-- objc-interface ->
+--   [attributes] objc-class-interface | objc-category-interface
+--
+-- objc-class-interface -> 
+--   '@' 'interface' identifier [':' identifier]
+--     [objc-protocol-refs]
+--     [objc-class-instance-variables]
+--     objc-interface-decl*
+--   '@' 'end'
+--
+-- objc-category-interface -> 
+--   '@' 'interface' identifier '(' [identifier] ')'
+--     [objc-protocol-refs]
+--     [objc-class-instance-variables]
+--     objc-interface-decl*
+--   '@' 'end'
+--
+-- objc-protocol-refs ->
+--   '<' identifier-list '>'
+--
+-- objc-class-instance-variables ->
+--   '{' objc-instance-variable-decl* '}'
+--
+-- objc-instance-variable-decl ->
+--   objc-visibility-spec | [objc-instance-variable-decl] ';'
+--
+-- objc-instance-variable-decl -> struct-declaration
+--
+-- objc-visibility-spec -> '@' 'private' | '@' 'public' | '@' 'protected' | '@' 'package'
+--
+-- objc-interface-decl ->
+--   objc-property-decl | objc-method-requirement | objc-method-proto | declaration | ';'
+--
+-- objc-property-decl ->
+--   '@' 'property' [objc-property-attrs] struct-declaration ';'
+--
+-- objc-property-attrs ->
+--   '(' objc-property-attribute (',' objc-property-attribute)* ')'
+--
+-- objc-property-attribute ->
+--     'getter' '=' objc-selector
+--   | 'setter' '=' objc-selector ':'
+--   | 'readonly'
+--   | 'readwrite'
+--   | 'assign'
+--   | 'retain'
+--   | 'copy'
+--   | 'nonatomic'
+--   | 'atomic'
+--   | 'strong'
+--   | 'weak'
+--   | 'unsafe_unretained'
+--
+-- objc-method-requirement -> '@' 'required' | '@' 'optional'
+--
+-- objc-method-proto ->
+--   ('-' | '+') objc-method-decl [attributes] ';'
+--
+-- objc-method-decl ->
+--   ['(' type-name ')'] [attributes]
+--     ( objc-selector
+--     | ([objc-selector] ':' ['(' type-name ')'] [attributes] identifier)+
+--     ) [',' '...']
+--
+-- NB: We omit C-style parameters to methods as they don't appear to be current anymore.
+--
+objc_interface :: { Definition }
+objc_interface :
+               '@' 'interface' identifier objc_interface_body
+      { let (prot, vars, decls, loc) = $4
+        in 
+        ObjCClassIface $3 Nothing prot vars decls [] ($1 `srcspan` loc) }
+  | attributes '@' 'interface' identifier objc_interface_body
+      { let (prot, vars, decls, loc) = $5
+        in 
+        ObjCClassIface $4 Nothing prot vars decls $1 ($2 `srcspan` loc) }
+  |            '@' 'interface' identifier ':' identifier objc_interface_body
+      { let (prot, vars, decls, loc) = $6
+        in 
+        ObjCClassIface $3 (Just $5) prot vars decls [] ($1 `srcspan` loc) }
+  | attributes '@' 'interface' identifier ':' identifier objc_interface_body
+      { let (prot, vars, decls, loc) = $7
+        in 
+        ObjCClassIface $4 (Just $6) prot vars decls $1 ($2 `srcspan` loc) }
+  | '@' 'interface' identifier '(' ')' objc_interface_body
+      { let (prot, vars, decls, loc) = $6
+        in 
+        ObjCCatIface $3 Nothing prot vars decls ($1 `srcspan` loc) }
+  | '@' 'interface' identifier '(' identifier ')' objc_interface_body
+      { let (prot, vars, decls, loc) = $7
+        in 
+        ObjCCatIface $3 (Just $5) prot vars decls ($1 `srcspan` loc) }
+
+objc_interface_body :: { ([Id], [ObjCIvarDecl], [ObjCIfaceDecl], Loc) }
+objc_interface_body :
+   objc_protocol_refs_opt objc_class_instance_variables_opt objc_interface_decl_list  '@' 'end'
+      { ( rev $1, rev $2, rev $3, $4 <--> $5) }
+
+objc_protocol_refs_opt :: { RevList Id }
+objc_protocol_refs_opt :
+    {- empty -}
+      { rnil }
+  | '<' identifier_list '>'
+      { $2 }
+
+objc_class_instance_variables_opt :: { RevList ObjCIvarDecl }
+objc_class_instance_variables_opt :
+    {- empty -}
+      { rnil }
+  | '{' '}'
+      { rnil }
+  | '{' objc_instance_variable_decl_list '}'
+      { $2 }
+
+objc_instance_variable_decl_list :: { RevList ObjCIvarDecl }
+objc_instance_variable_decl_list :
+    objc_visibility_spec
+      { rsingleton (ObjCIvarVisi $1 (srclocOf $1)) }
+  | ';'
+      { rnil }
+  | struct_declaration ';'
+      { rsingleton (ObjCIvarDecl $1 (srclocOf $1)) }
+  | objc_instance_variable_decl_list objc_visibility_spec
+      { rcons (ObjCIvarVisi $2 (srclocOf $2)) $1 }
+  | objc_instance_variable_decl_list ';'
+      { $1 }
+  | objc_instance_variable_decl_list struct_declaration ';'
+      { rcons (ObjCIvarDecl $2 (srclocOf $2)) $1 }
+
+objc_visibility_spec :: { ObjCVisibilitySpec }
+objc_visibility_spec :
+    '@' 'objc_private'
+      { ObjCPrivate ($1 `srcspan` $2) }
+  | '@' 'public'
+      { ObjCPublic ($1 `srcspan` $2) }
+  | '@' 'protected'
+      { ObjCProtected ($1 `srcspan` $2) }
+  | '@' 'package'
+      { ObjCPackage ($1 `srcspan` $2) }
+
+objc_interface_decl_list :: { RevList ObjCIfaceDecl }
+objc_interface_decl_list :
+    {- empty -}
+      { rnil }
+  | objc_interface_decl_list ';'
+      { $1 }
+  | objc_interface_decl_list objc_property_decl
+      { rcons $2 $1 }
+  | objc_interface_decl_list objc_method_requirement
+      { rcons (ObjCIfaceReq $2 (srclocOf $2)) $1 }
+  | objc_interface_decl_list objc_method_proto ';' 
+      { rcons $2 $1 }
+  | objc_interface_decl_list declaration
+      { rcons (ObjCIfaceDecl $2 (srclocOf $2)) $1 }
+
+objc_property_decl :: { ObjCIfaceDecl }
+objc_property_decl :
+    '@' 'property' struct_declaration ';'
+      { ObjCIfaceProp [] $3 ($1 `srcspan` $4) }
+  | '@' 'property' '(' objc_property_attr_list ')' struct_declaration ';'
+      { ObjCIfaceProp (rev $4) $6 ($1 `srcspan` $7) }
+
+objc_property_attr_list :: { RevList ObjCPropAttr }
+objc_property_attr_list :
+    objc_property_attr
+      { rsingleton $1 }
+  | objc_property_attr_list objc_property_attr
+      { rcons $2 $1 }
+
+objc_property_attr :: { ObjCPropAttr }
+objc_property_attr :
+    identifier '=' objc_selector 
+      {% case $1 of 
+           Id "getter" _ -> return $ ObjCGetter $3 ($1 `srcspan` $3)
+           _             -> expectedObjCPropertyAttr (locOf $1) }
+  | identifier '=' objc_selector ':'
+      {% case $1 of 
+           Id "setter" _ -> return $ ObjCSetter $3 ($1 `srcspan` $4)
+           _             -> expectedObjCPropertyAttr (locOf $1) }
+  | identifier
+      {% case $1 of 
+           Id "readonly" _        -> return $ ObjCReadonly (srclocOf $1) 
+           Id "readwrite" _       -> return $ ObjCReadwrite (srclocOf $1) 
+           Id "assign" _          -> return $ ObjCAssign (srclocOf $1) 
+           Id "retain" _          -> return $ ObjCRetain (srclocOf $1) 
+           Id "copy" _            -> return $ ObjCCopy (srclocOf $1) 
+           Id "nonatomic" _       -> return $ ObjCNonatomic (srclocOf $1) 
+           Id "atomic" _          -> return $ ObjCAtomic (srclocOf $1) 
+           Id "strong" _          -> return $ ObjCStrong (srclocOf $1) 
+           Id "weak" _            -> return $ ObjCWeak (srclocOf $1) 
+           Id "unsafe_retained" _ -> return $ ObjCUnsafeRetained (srclocOf $1) 
+           _                      -> expectedObjCPropertyAttr (locOf $1) }
+
+objc_method_requirement :: { ObjCMethodReq }
+objc_method_requirement :
+    '@' 'required'
+      { ObjCRequired ($1 `srcspan` $2) }
+  | '@' 'optional'
+      { ObjCOptional ($1 `srcspan` $2) }
+
+objc_method_proto :: { ObjCIfaceDecl }
+objc_method_proto :
+    '-' objc_method_decl attributes_opt ';'
+      { let (res, attrs, parms, hasVargs) = $2
+        in
+        ObjCIfaceMeth False res attrs parms hasVargs $3 ($1 `srcspan` $4) }
+  | '+' objc_method_decl attributes_opt ';'
+      { let (res, attrs, parms, hasVargs) = $2
+        in
+        ObjCIfaceMeth True res attrs parms hasVargs $3 ($1 `srcspan` $4) }
+
+objc_method_decl :: { (Maybe Type, [Attr], [ObjCParm], Bool) }
+objc_method_decl :
+                 attributes_opt objc_method_args
+      { (Nothing, $1, $2, False) }
+  | '(' type_name ')' attributes_opt objc_method_args
+      { (Just $2, $4, $5, False) }
+  |               attributes_opt objc_method_args ',' '...'
+      { (Nothing, $1, $2, True) }
+  | '(' type_name ')' attributes_opt objc_method_args ',' '...'
+      { (Just $2, $4, $5, True) }
+
+objc_method_args :: { [ObjCParm] }
+objc_method_args :
+    objc_selector
+      { [ObjCParm (Just $1) Nothing [] Nothing (srclocOf $1)] }
+  | objc_method_arg_list
+      { rev $1 }
+
+objc_method_arg_list :: { RevList ObjCParm }
+objc_method_arg_list :
+    objc_method_arg
+      { rsingleton $1 }
+  | objc_method_arg_list objc_method_arg
+      { rcons $2 $1 }
+
+objc_method_arg :: { ObjCParm }
+objc_method_arg :
+    objc_selector ':' '(' type_name ')' attributes_opt identifier
+      { ObjCParm (Just $1) (Just $4) $6 (Just $7) ($1 `srcspan` $7) }
+  |               ':' '(' type_name ')' attributes_opt identifier
+      { ObjCParm Nothing   (Just $3) $5 (Just $6) ($1 `srcspan` $6) }
+  | objc_selector ':'               attributes_opt identifier
+      { ObjCParm (Just $1) Nothing   $3 (Just $4) ($1 `srcspan` $4) }
+  |               ':'               attributes_opt identifier
+      { ObjCParm Nothing   Nothing   $2 (Just $3) ($1 `srcspan` $3) }
+
+attributes_opt :: { [Attr] }
+attributes_opt :
+    {- empty -}
+      { [] }
+  | attributes
+      { $1 }
 
 
 {------------------------------------------------------------------------------
@@ -2373,6 +2642,14 @@ checkInitGroup dspec decl attrs inits =
 
 declRoot :: Located a => a -> Decl
 declRoot x = DeclRoot (srclocOf x)
+
+expectedObjCPropertyAttr :: Loc -> P a
+expectedObjCPropertyAttr loc
+  = throw $ ParserException loc $
+      text "Expected an Objective-C property attribute; allowed are the following:" </>
+      nest 2 
+        (text "'getter = <sel>', 'setter = <sel>:', 'readonly', 'readwrite', 'assign'," <+>
+         text "'retain', 'copy', 'nonatomic', 'atomic', 'strong', 'weak', and 'unsafe_retained'")
 
 data RevList a  =  RNil
                 |  RCons a (RevList a)
