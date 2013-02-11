@@ -226,6 +226,8 @@ import qualified Language.C.Syntax as C
 
 %name parseStm        statement
 
+%name parseBlockItem  block_item
+
 %name parseUnit       translation_unit
 %name parseFunc       function_definition
 

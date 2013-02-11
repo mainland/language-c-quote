@@ -17,7 +17,8 @@ module Language.C.Quote.CUDA (
     cinit,
     cstm,
     cunit,
-    cfun
+    cfun,
+    cblktm
   ) where
 
 import qualified Language.C.Parser as P
@@ -40,7 +41,7 @@ typeN :: Int -> String -> [String]
 typeN k typename = [typename ++ show n | n <- [1..k]]
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, csdecl, cstm :: QuasiQuoter
-cty, cunit :: QuasiQuoter
+cty, cunit, cblktm :: QuasiQuoter
 cdecl  = quasiquote exts typenames P.parseDecl
 cedecl = quasiquote exts typenames P.parseEdecl
 cenum  = quasiquote exts typenames P.parseEnum
@@ -52,3 +53,4 @@ csdecl = quasiquote exts typenames P.parseStructDecl
 cstm   = quasiquote exts typenames P.parseStm
 cty    = quasiquote exts typenames P.parseType
 cunit  = quasiquote exts typenames P.parseUnit
+cblktm = quasiquote exts typenames P.parseBlockItem
