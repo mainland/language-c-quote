@@ -38,6 +38,9 @@
 --
 -- [@cstm@] Statement, of type @'Stm'@.
 --
+-- [@cblktm@] Block item (statement or variable declaration), of type
+-- @'BlockItem'@.
+--
 -- [@cfun@] Function definition, of type @'Func'@.
 --
 -- [@cinit@] Initializer, of type @'Initializer'@.
