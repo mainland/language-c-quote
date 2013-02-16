@@ -1928,10 +1928,10 @@ objc_interface_decl_list :
 
 objc_property_decl :: { ObjCIfaceDecl }
 objc_property_decl :
-    '@' 'property' struct_declaration ';'
-      { ObjCIfaceProp [] $3 ($1 `srcspan` $4) }
-  | '@' 'property' '(' objc_property_attr_list ')' struct_declaration ';'
-      { ObjCIfaceProp (rev $4) $6 ($1 `srcspan` $7) }
+    '@' 'property' struct_declaration
+      { ObjCIfaceProp [] $3 ($1 `srcspan` $3) }
+  | '@' 'property' '(' objc_property_attr_list ')' struct_declaration
+      { ObjCIfaceProp (rev $4) $6 ($1 `srcspan` $6) }
 
 objc_property_attr_list :: { RevList ObjCPropAttr }
 objc_property_attr_list :

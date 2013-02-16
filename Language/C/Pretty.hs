@@ -459,6 +459,7 @@ instance Pretty ObjCIfaceDecl where
               [] -> empty
               _  -> parensList (map ppr attrs)
         <> ppr field
+        <> semi
     ppr (ObjCIfaceReq req loc)          
       = pprLoc loc $ ppr req
     ppr (ObjCIfaceMeth isClassMeth resTy attrs1 parms vargs attrs2 loc) 
