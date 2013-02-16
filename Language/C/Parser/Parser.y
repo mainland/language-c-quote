@@ -1760,11 +1760,8 @@ function_definition :
 objc_class_declaration :: { Definition }
 objc_class_declaration : 
     '@' 'class' identifier_list ';'
-      {% do { let { idents = rev $3
-                  ; addClassdef' (Id str _)  = addClassdef str
-                  ; addClassdef' (AntiId {}) = return ()
-                  }
-            ; mapM addClassdef' idents
+      {% do { let idents = rev $3
+            ; mapM addClassdefId idents
             ; return $ ObjCClassDec idents ($1 `srcspan` $4)
             } 
       }
@@ -1840,21 +1837,25 @@ objc_class_declaration :
 objc_interface :: { Definition }
 objc_interface :
                '@' 'interface' identifier objc_interface_body
-      { let (prot, vars, decls, loc) = $4
-        in 
-        ObjCClassIface $3 Nothing prot vars decls [] ($1 `srcspan` loc) }
+      {% do { let (prot, vars, decls, loc) = $4
+            ; addClassdefId $3
+            ; return $ ObjCClassIface $3 Nothing prot vars decls [] ($1 `srcspan` loc) 
+            } }
   | attributes '@' 'interface' identifier objc_interface_body
-      { let (prot, vars, decls, loc) = $5
-        in 
-        ObjCClassIface $4 Nothing prot vars decls $1 ($2 `srcspan` loc) }
+      {% do { let (prot, vars, decls, loc) = $5
+            ; addClassdefId $4
+            ; return $ ObjCClassIface $4 Nothing prot vars decls $1 ($2 `srcspan` loc) 
+            } }
   |            '@' 'interface' identifier ':' identifier objc_interface_body
-      { let (prot, vars, decls, loc) = $6
-        in 
-        ObjCClassIface $3 (Just $5) prot vars decls [] ($1 `srcspan` loc) }
+      {% do { let (prot, vars, decls, loc) = $6
+            ; addClassdefId $3
+            ; return $ ObjCClassIface $3 (Just $5) prot vars decls [] ($1 `srcspan` loc) 
+            } }
   | attributes '@' 'interface' identifier ':' identifier objc_interface_body
-      { let (prot, vars, decls, loc) = $7
-        in 
-        ObjCClassIface $4 (Just $6) prot vars decls $1 ($2 `srcspan` loc) }
+      {% do { let (prot, vars, decls, loc) = $7
+            ; addClassdefId $4
+            ; return $ ObjCClassIface $4 (Just $6) prot vars decls $1 ($2 `srcspan` loc)
+            } }
   | '@' 'interface' identifier '(' ')' objc_interface_body
       { let (prot, vars, decls, loc) = $6
         in 
@@ -2650,6 +2651,10 @@ expectedObjCPropertyAttr loc
       nest 2 
         (text "'getter = <sel>', 'setter = <sel>:', 'readonly', 'readwrite', 'assign'," <+>
          text "'retain', 'copy', 'nonatomic', 'atomic', 'strong', 'weak', and 'unsafe_retained'")
+
+addClassdefId :: Id -> P ()
+addClassdefId (Id str _)  = addClassdef str
+addClassdefId (AntiId {}) = return ()
 
 data RevList a  =  RNil
                 |  RCons a (RevList a)

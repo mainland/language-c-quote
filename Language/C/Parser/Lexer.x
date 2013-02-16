@@ -255,8 +255,8 @@ identifier beg end =
 
     nonKeyword :: P (L Token)
     nonKeyword = do
-        typeTest  <- isTypedef ident
-        classTest <- isTypedef ident
+        typeTest  <- isTypedef  ident
+        classTest <- isClassdef ident
         return $
           if typeTest
           then locateTok beg end (Tnamed ident)
