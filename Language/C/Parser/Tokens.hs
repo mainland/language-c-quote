@@ -221,7 +221,45 @@ instance Show Token where
     show (TcharConst (s, _))            = s
     show (TstringConst (s, _))          = s
     show (Tidentifier s)                = s
-    show t = fromMaybe (error "internal error: unknown token")
+    show (Tnamed s)                     = s
+    show (TObjCnamed s)                 = s
+
+    show (Tanti_id s)                   = "$id:" ++ s
+    show (Tanti_int s)                  = "$int:" ++ s
+    show (Tanti_uint s)                 = "$uint:" ++ s
+    show (Tanti_lint s)                 = "$lint:" ++ s
+    show (Tanti_ulint s)                = "$ulint:" ++ s
+    show (Tanti_llint s)                = "$llint:" ++ s
+    show (Tanti_ullint s)               = "$ullint:" ++ s
+    show (Tanti_float s)                = "$float:" ++ s
+    show (Tanti_double s)               = "$double:" ++ s
+    show (Tanti_long_double s)          = "$longdouble:" ++ s
+    show (Tanti_char s)                 = "$char:" ++ s
+    show (Tanti_string s)               = "$string:" ++ s
+    show (Tanti_exp s)                  = "$exp:" ++ s
+    show (Tanti_func s)                 = "$func:" ++ s
+    show (Tanti_args s)                 = "$args:" ++ s
+    show (Tanti_decl s)                 = "$decl:" ++ s
+    show (Tanti_decls s)                = "$decls:" ++ s
+    show (Tanti_sdecl s)                = "$sdecl:" ++ s
+    show (Tanti_sdecls s)               = "$sdecls:" ++ s
+    show (Tanti_enum s)                 = "$enum:" ++ s
+    show (Tanti_enums s)                = "$enums:" ++ s
+    show (Tanti_esc s)                  = "$esc:" ++ s
+    show (Tanti_edecl s)                = "$edecl:" ++ s
+    show (Tanti_edecls s)               = "$edecls:" ++ s
+    show (Tanti_item s)                 = "$item:" ++ s
+    show (Tanti_items s)                = "$items:" ++ s
+    show (Tanti_stm s)                  = "$stm:" ++ s
+    show (Tanti_stms s)                 = "$stms:" ++ s
+    show (Tanti_type s)                 = "$type:" ++ s
+    show (Tanti_spec s)                 = "$spec:" ++ s
+    show (Tanti_param s)                = "$param:" ++ s
+    show (Tanti_params s)               = "$params:" ++ s
+    show (Tanti_pragma s)               = "$pragma:" ++ s
+    show (Tanti_init s)                 = "$init:" ++ s
+    show (Tanti_inits s)                = "$inits:" ++ s
+    show t = fromMaybe (error "language-c-quote: internal error: unknown token")
                        (lookup t tokenStrings)
 
 tokenStrings :: [(Token, String)]
@@ -358,7 +396,9 @@ tokenStrings = [(Tlparen,     "("),
                 (TObjCproperty  , "property"),
                 (TObjCprotected , "protected"),
                 (TObjCpackage   , "package"),
-                (TObjCrequired  , "required")
+                (TObjCrequired  , "required"),
+
+                (Ttypename, "typename")
                 ]
 
 keywords :: [(String,      Token,      Maybe [Extensions])]
