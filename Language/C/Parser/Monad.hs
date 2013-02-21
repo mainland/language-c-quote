@@ -315,10 +315,10 @@ unclosed :: Loc -> String -> P a
 unclosed loc x =
     parserError (locEnd loc) (text "unclosed" <+> quoteTok (text x))
 
-expected :: [String] -> P b
-expected alts = do
+expected :: [String] -> Maybe String -> P b
+expected alts after = do
     tok@(L loc _) <- getCurToken
-    parserError (locStart loc) (text "expected" <+> pprAlts alts <+> pprGot tok)
+    parserError (locStart loc) (text "expected" <+> pprAlts alts <+> pprGot tok <> pprAfter after)
   where
     pprAlts :: [String] -> Doc
     pprAlts []        = empty
@@ -329,6 +329,10 @@ expected alts = do
     pprGot :: L Token -> Doc
     pprGot (L _ Teof)  = text "but reached end of file"
     pprGot (L _ t)     = text "but got" <+> quoteTok (ppr t)
+    
+    pprAfter :: Maybe String -> Doc
+    pprAfter Nothing     = empty
+    pprAfter (Just what) = text " after" <+> text what
 
 data AlexInput = AlexInput
   {  alexPos      :: {-#UNPACK#-} !Pos

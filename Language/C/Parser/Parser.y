@@ -760,7 +760,7 @@ declaration_ :
       }
   | declaration_specifiers error
       {% do{ let (_, decl)  = $1
-           ; expected ["';'"]
+           ; expected ["';'"] (Just "declaration")
            }
       }
   | ANTI_DECL
@@ -907,7 +907,7 @@ init_declarator :
   | declarator error
       {% do{  let (ident, declToDecl) = $1
            ;  let decl                = declToDecl (declRoot ident)
-           ;  expected ["'='"]
+           ;  expected ["'='"] Nothing
            }
       }
 
@@ -1486,7 +1486,7 @@ typedef_name :
   | 'typename' identifier
       { TSnamed $2 ($1 `srcspan` $2) }
   | 'typename' error
-      {% expected ["identifier"] }
+      {% expected ["identifier"] (Just "'typename'")}
   | '__typeof__' '(' unary_expression ')'
       { TStypeofExp $3 ($1 `srcspan` $4) }
   | '__typeof__' '(' type_name ')'
@@ -1566,13 +1566,13 @@ statement :
 
 labeled_statement :: { Stm }
 labeled_statement :
-    identifier ':' error                      {% expected ["statement"] }
+    identifier ':' error                      {% expected ["statement"] (Just "label") }
   | identifier ':' statement                  { Label $1 $3 ($1 `srcspan` $3) }
-  | 'case' constant_expression error          {% expected ["`:'"] }
-  | 'case' constant_expression ':' error      {% expected ["statement"] }
+  | 'case' constant_expression error          {% expected ["`:'"] Nothing }
+  | 'case' constant_expression ':' error      {% expected ["statement"] Nothing }
   | 'case' constant_expression ':' statement  { Case $2 $4 ($1 `srcspan` $4) }
-  | 'default' error                           {% expected ["`:'"] }
-  | 'default' ':' error                       {% expected ["statement"] }
+  | 'default' error                           {% expected ["`:'"] (Just "`default'")}
+  | 'default' ':' error                       {% expected ["statement"] Nothing }
   | 'default' ':' statement                   { Default $3 ($1 `srcspan` $3) }
 
 compound_statement :: { Stm }
@@ -1619,7 +1619,7 @@ expression_statement :: { Stm }
 expression_statement:
     ';'               { Exp Nothing (srclocOf $1) }
   | expression ';'    { Exp (Just $1) ($1 `srcspan` $2) }
-  | expression error  {% expected ["';'"] }
+  | expression error  {% expected ["';'"] Nothing }
 
 selection_statement :: { Stm }
 selection_statement :
@@ -1627,6 +1627,8 @@ selection_statement :
       { If $3 $5 Nothing ($1 `srcspan` $5) }
   | 'if' '(' expression ')' statement 'else' statement
       { If $3 $5 (Just $7) ($1 `srcspan` $7) }
+  | 'if' error 
+      {% expected ["("] (Just "`if'") }
   | 'if' '(' expression error
       {% unclosed ($2 <--> $3) "(" }
   | 'switch' '(' expression ')' statement
@@ -1645,7 +1647,7 @@ iteration_statement :
   | 'do' statement 'while' '(' expression error
       {% unclosed ($4 <--> $5) "(" }
   | 'for' '(' error
-      {% expected ["expression", "declaration"] }
+      {% expected ["expression", "declaration"] Nothing }
   | 'for' '(' declaration maybe_expression ';' ')' statement
       { For (Left $3) $4 Nothing $7 ($1 `srcspan` $7) }
   | 'for' '(' maybe_expression ';' maybe_expression ';' ')' statement
@@ -1662,16 +1664,16 @@ iteration_statement :
 jump_statement :: { Stm }
 jump_statement :
     'goto' identifier ';'      { Goto $2 ($1 `srcspan` $3) }
-  | 'goto' error               {% expected ["identifier"] }
-  | 'goto' identifier error    {% expected ["';'"] }
+  | 'goto' error               {% expected ["identifier"] (Just "`goto'") }
+  | 'goto' identifier error    {% expected ["';'"] Nothing }
   | 'continue' ';'             { Continue ($1 `srcspan` $2) }
-  | 'continue' error           {% expected ["';'"] }
+  | 'continue' error           {% expected ["';'"] (Just "`continue'") }
   | 'break' ';'                { Break ($1 `srcspan` $2) }
-  | 'break' error              {% expected ["';'"] }
+  | 'break' error              {% expected ["';'"] (Just "`break'") }
   | 'return' ';'               { Return Nothing ($1 `srcspan` $2) }
-  | 'return' error             {% expected ["';'"] }
+  | 'return' error             {% expected ["';'", "expression"] Nothing }
   | 'return' expression ';'    { Return (Just $2) ($1 `srcspan` $3) }
-  | 'return' expression error  {% expected ["';'"] }
+  | 'return' expression error  {% expected ["';'"] Nothing }
 
 {------------------------------------------------------------------------------
  -
