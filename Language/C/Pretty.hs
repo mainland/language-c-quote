@@ -422,8 +422,38 @@ instance Pretty Definition where
         <> text "@interface" <+> ppr cident <+> maybe empty (\ident -> char ':' <+> ppr ident) sident 
         <+> pprIfaceBody refs ivars decls
     ppr (ObjCCatIface cident catident refs ivars decls loc)
-      = srcloc loc <>
-        text "@interface" <+> ppr cident <+> parens (maybe empty ppr catident) <+> pprIfaceBody refs ivars decls
+      = srcloc loc
+        <> text "@interface" <+> ppr cident <+> parens (maybe empty ppr catident) <+> pprIfaceBody refs ivars decls
+    ppr (ObjCProtDec prots loc) = srcloc loc <> text "@protocol" <+> commasep (map ppr prots) <> semi
+    ppr (ObjCProtDef pident refs decls loc)
+      = srcloc loc
+        <> text "@protocol" <+> ppr pident <+> pprIfaceBody refs [] decls
+    ppr (ObjCClassImpl cident sident ivars defs loc)
+      = srcloc loc
+        <>   text "@implementation" <+> ppr cident <+> maybe empty (\ident -> char ':' <+> ppr ident) sident
+        </>  stack (map ppr ivars)
+        <//> stack (map ppr defs)
+        </>  text "@end"
+    ppr (ObjCCatImpl cident catident defs loc)
+      = srcloc loc
+        <>   text "@implementation" <+> ppr cident <+> parens (ppr catident)
+        <//> stack (map ppr defs)
+        </>  text "@end"
+    ppr (ObjCSynDef pivars loc)
+      = srcloc loc
+        <> text "@synthesize" <+> commasep (map pprPivar pivars) <> semi
+      where
+        pprPivar (ident,  Nothing)     = ppr ident
+        pprPivar (ident1, Just ident2) = ppr ident1 <> char '=' <> ppr ident2
+    ppr (ObjCDynDef pivars loc)
+      = srcloc loc
+        <> text "@dynamic" <+> commasep (map ppr pivars) <> semi
+    ppr (ObjCMethDef proto body loc)
+      = srcloc loc
+        <> ppr proto </> ppr body
+    ppr (ObjCCompAlias aident cident loc)
+      = srcloc loc
+        <> text "@compatibility_alias" <+> ppr aident <+> ppr cident
 
     ppr (AntiFunc v _)    = pprAnti "func" v
     ppr (AntiEsc v _)     = pprAnti "esc" v
@@ -462,16 +492,8 @@ instance Pretty ObjCIfaceDecl where
         <> semi
     ppr (ObjCIfaceReq req loc)          
       = pprLoc loc $ ppr req
-    ppr (ObjCIfaceMeth isClassMeth resTy attrs1 parms vargs attrs2 loc) 
-      = pprLoc loc $
-        (if isClassMeth then char '+' else char '-')
-        <+> maybe empty (parens . ppr) resTy
-        <> case attrs1 of
-             [] -> empty
-             _  -> space <> ppr attrs1 <> space
-        <> spread (map ppr parms) 
-        <> if vargs then text ", ..." else empty
-        <> ppr attrs2
+    ppr (ObjCIfaceMeth proto _loc) 
+      = ppr proto
         <> semi
     ppr (ObjCIfaceDecl decl loc)        
       = pprLoc loc $ ppr decl
@@ -503,6 +525,18 @@ instance Pretty ObjCParm where
              (Just sid, Nothing) -> ppr sid
              (_       , Just pid) 
                -> maybe empty ppr sel <> colon <> maybe empty (parens . ppr) ty <> ppr attrs <> ppr pid
+
+instance Pretty ObjCMethodProto where
+    ppr (ObjCMethodProto isClassMeth resTy attrs1 parms vargs attrs2 loc) 
+      = pprLoc loc $
+        (if isClassMeth then char '+' else char '-')
+        <+> maybe empty (parens . ppr) resTy
+        <> case attrs1 of
+             [] -> empty
+             _  -> space <> ppr attrs1 <> space
+        <> spread (map ppr parms) 
+        <> if vargs then text ", ..." else empty
+        <> ppr attrs2
 
 instance Pretty Stm where
     ppr (Label ident stm sloc) =

@@ -165,18 +165,23 @@ import qualified Language.C.Syntax as C
  'kernel'       { L _ T.TCLkernel }
  '__kernel'     { L _ T.TCLkernel }
 
- OBJCNAMED      { L _ (T.TObjCnamed _) }
- '@'            { L _ T.TObjCat }
- 'class'        { L _ T.TObjCclass }
- 'end'          { L _ T.TObjCend }
- 'interface'    { L _ T.TObjCinterface }
- 'objc_private' { L _ T.TObjCprivate }
- 'optional'     { L _ T.TObjCoptional }
- 'public'       { L _ T.TObjCpublic }
- 'property'     { L _ T.TObjCproperty }
- 'protected'    { L _ T.TObjCprotected }
- 'package'      { L _ T.TObjCpackage }
- 'required'     { L _ T.TObjCrequired }
+ OBJCNAMED             { L _ (T.TObjCnamed _) }
+ '@'                   { L _ T.TObjCat }
+ 'class'               { L _ T.TObjCclass }
+ 'compatibility_alias' { L _ T.TObjCcompatibility_alias }
+ 'dynamic'             { L _ T.TObjCdynamic }
+ 'end'                 { L _ T.TObjCend }
+ 'interface'           { L _ T.TObjCinterface }
+ 'implementation'      { L _ T.TObjCimplementation }
+ 'objc_private'        { L _ T.TObjCprivate }
+ 'optional'            { L _ T.TObjCoptional }
+ 'public'              { L _ T.TObjCpublic }
+ 'property'            { L _ T.TObjCproperty }
+ 'protected'           { L _ T.TObjCprotected }
+ 'package'             { L _ T.TObjCpackage }
+ 'protocol'            { L _ T.TObjCprotocol }
+ 'required'            { L _ T.TObjCrequired }
+ 'synthesize'          { L _ T.TObjCsynthesize }
 
  'typename'       { L _ T.Ttypename }
 
@@ -216,7 +221,10 @@ import qualified Language.C.Syntax as C
  ANTI_INIT        { L _ (T.Tanti_init _) }
  ANTI_INITS       { L _ (T.Tanti_inits _) }
 
-%expect 1
+-- Two shift-reduce conflicts:
+-- (1) The standard dangling else conflict
+-- (2) Documented conflict in 'objc_protocol_declaration'
+%expect 2
 
 %monad { P } { >>= } { return }
 %lexer { lexer } { L _ T.Teof }
@@ -250,18 +258,23 @@ import qualified Language.C.Syntax as C
 
 identifier :: { Id }
 identifier :
-    ID               { Id (getID $1) (srclocOf $1) }
-  | 'class'          { Id "class" (srclocOf $1) }                 -- Objective-C
-  | 'end'            { Id "end" (srclocOf $1) }                   -- Objective-C
-  | 'interface'      { Id "interface" (srclocOf $1) }             -- Objective-C
-  | 'objc_private'   { Id "private" (srclocOf $1) }               -- Objective-C
-  | 'optional'       { Id "optional" (srclocOf $1) }              -- Objective-C
-  | 'public'         { Id "public" (srclocOf $1) }                -- Objective-C
-  | 'property'       { Id "property" (srclocOf $1) }              -- Objective-C
-  | 'protected'      { Id "protected" (srclocOf $1) }             -- Objective-C
-  | 'package'        { Id "package" (srclocOf $1) }               -- Objective-C
-  | 'required'       { Id "required" (srclocOf $1) }              -- Objective-C
-  | ANTI_ID          { AntiId (getANTI_ID $1) (srclocOf $1) }
+    ID                    { Id (getID $1) (srclocOf $1) }
+  | 'class'               { Id "class" (srclocOf $1) }                 -- Objective-C
+  | 'compatibility_alias' { Id "compatibility_alias" (srclocOf $1) }   -- Objective-C
+  | 'dynamic'             { Id "dynamic" (srclocOf $1) }               -- Objective-C
+  | 'end'                 { Id "end" (srclocOf $1) }                   -- Objective-C
+  | 'implementation'      { Id "implementation" (srclocOf $1) }        -- Objective-C
+  | 'interface'           { Id "interface" (srclocOf $1) }             -- Objective-C
+  | 'objc_private'        { Id "private" (srclocOf $1) }               -- Objective-C
+  | 'optional'            { Id "optional" (srclocOf $1) }              -- Objective-C
+  | 'public'              { Id "public" (srclocOf $1) }                -- Objective-C
+  | 'property'            { Id "property" (srclocOf $1) }              -- Objective-C
+  | 'protected'           { Id "protected" (srclocOf $1) }             -- Objective-C
+  | 'package'             { Id "package" (srclocOf $1) }               -- Objective-C
+  | 'protocol'            { Id "protocol" (srclocOf $1) }              -- Objective-C
+  | 'required'            { Id "required" (srclocOf $1) }              -- Objective-C
+  | 'synthesize'          { Id "synthesize" (srclocOf $1) }              -- Objective-C
+  | ANTI_ID               { AntiId (getANTI_ID $1) (srclocOf $1) }
 
 identifier_or_typedef :: { Id }
 identifier_or_typedef :
@@ -1709,6 +1722,15 @@ external_declaration :
   {- Extension: ObjC -}
   | objc_interface
       { $1 }
+  {- Extension: ObjC -}
+  | objc_protocol_declaration
+      { $1 }
+  {- Extension: ObjC -}
+  | objc_implementation
+      { $1 }
+  {- Extension: ObjC -}
+  | objc_compatibility_alias
+      { $1 }
   | ANTI_FUNC
       { AntiFunc (getANTI_FUNC $1) (srclocOf $1) }
   | ANTI_ESC
@@ -1801,7 +1823,7 @@ objc_class_declaration :
 -- objc-visibility-spec -> '@' 'private' | '@' 'public' | '@' 'protected' | '@' 'package'
 --
 -- objc-interface-decl ->
---   objc-property-decl | objc-method-requirement | objc-method-proto | declaration | ';'
+--   objc-property-decl | objc-method-requirement | objc-method-proto ';' | declaration | ';'
 --
 -- objc-property-decl ->
 --   '@' 'property' [objc-property-attrs] struct-declaration ';'
@@ -1826,7 +1848,7 @@ objc_class_declaration :
 -- objc-method-requirement -> '@' 'required' | '@' 'optional'
 --
 -- objc-method-proto ->
---   ('-' | '+') objc-method-decl [attributes] ';'
+--   ('-' | '+') objc-method-decl [attributes]
 --
 -- objc-method-decl ->
 --   ['(' type-name ')'] [attributes]
@@ -1925,7 +1947,7 @@ objc_interface_decl_list :
   | objc_interface_decl_list objc_method_requirement
       { rcons (ObjCIfaceReq $2 (srclocOf $2)) $1 }
   | objc_interface_decl_list objc_method_proto ';' 
-      { rcons $2 $1 }
+      { rcons (ObjCIfaceMeth $2 (srclocOf $2)) $1 }
   | objc_interface_decl_list declaration
       { rcons (ObjCIfaceDecl $2 (srclocOf $2)) $1 }
 
@@ -1974,16 +1996,16 @@ objc_method_requirement :
   | '@' 'optional'
       { ObjCOptional ($1 `srcspan` $2) }
 
-objc_method_proto :: { ObjCIfaceDecl }
+objc_method_proto :: { ObjCMethodProto }
 objc_method_proto :
-    '-' objc_method_decl attributes_opt ';'
+    '-' objc_method_decl attributes_opt
       { let (res, attrs, parms, hasVargs) = $2
         in
-        ObjCIfaceMeth False res attrs parms hasVargs $3 ($1 `srcspan` $4) }
-  | '+' objc_method_decl attributes_opt ';'
+        ObjCMethodProto False res attrs parms hasVargs $3 ($1 `srcspan` $3) }
+  | '+' objc_method_decl attributes_opt
       { let (res, attrs, parms, hasVargs) = $2
         in
-        ObjCIfaceMeth True res attrs parms hasVargs $3 ($1 `srcspan` $4) }
+        ObjCMethodProto True res attrs parms hasVargs $3 ($1 `srcspan` $3) }
 
 objc_method_decl :: { (Maybe Type, [Attr], [ObjCParm], Bool) }
 objc_method_decl :
@@ -2020,6 +2042,155 @@ objc_method_arg :
       { ObjCParm (Just $1) Nothing   $3 (Just $4) ($1 `srcspan` $4) }
   |               ':'               attributes_opt identifier
       { ObjCParm Nothing   Nothing   $2 (Just $3) ($1 `srcspan` $3) }
+
+-- Objective-C extension: protocol declaration
+--
+-- objc-protocol-declaration ->
+--   objc-protocol-definition | objc-protocol-forward-reference
+--
+-- objc-protocol-definition ->
+--   '@' 'protocol' identifier
+--     [objc-protocol-refs] 
+--     objc-interface-decl*
+--   '@' 'end'
+--
+-- objc-protocol-forward-reference ->
+--   '@' 'protocol' identifier-list ';'
+--
+-- NB: "@protocol identifier ;" should be parsed as a 'objc-protocol-forward-reference', which means that
+--     'objc-interface-decl-list' in 'objc-protocol-definition' may not start with a semicolon if the
+--     'objc-protocol-refs' are empty.
+--
+--     We achieve this by factoring the common prefix into the non-terminal 'objc_protocol_prefix' to turn
+--     the ambiguity into a shift-reduce conflict that is resolved by preferring shifting.
+--
+objc_protocol_declaration :: { Definition }
+objc_protocol_declaration :
+    objc_protocol_prefix objc_protocol_refs_opt objc_interface_decl_list '@' 'end'
+      { ObjCProtDef (fst $1) (rev $2) (rev $3) (snd $1 `srcspan` $5) }
+  | objc_protocol_prefix ';'                                  -- this rule wins the shift-reduce conflict
+      { ObjCProtDec [fst $1] (snd $1 `srcspan` $2) }
+  | objc_protocol_prefix ',' identifier_list ';'
+      { ObjCProtDec (fst $1 : rev $3) (snd $1 `srcspan` $4) }
+
+objc_protocol_prefix :: { (Id, Loc) }
+objc_protocol_prefix :
+  '@' 'protocol' identifier
+    { ($3, locOf $1) }  
+
+-- Objective-C extension: class or category implementation
+--
+-- objc-implementation ->
+--   objc-class-implementation | objc-category-implementation
+--
+-- objc-class-implementation ->
+--   '@' 'implementation' identifier [':' identifier]
+--     [objc-class-instance-variables]
+--     objc-implementation-decl*
+--   '@' end
+--
+-- objc-category-implementation ->
+--   '@' 'implementation' identifier '(' identifier ')'
+--     objc-implementation-decl*
+--   '@' end
+--
+-- objc-implementation-decl ->
+--   function-definition | declaration | property-synthesize | property-dynamic | objc-method-definition
+--
+-- property-synthesize ->
+--   '@' 'synthesize' property-ivar (',' property-ivar)* ';'
+--
+-- property-dynamic ->
+--   '@' 'dynamic' identifier (',' identifier)* ';'
+--
+-- property-ivar ->
+--   identifier | identifier '=' identifier
+--
+-- objc-method-definition ->
+--   objc-method-proto [';'] compound_statement
+--
+objc_implementation :: { Definition }
+objc_implementation :
+    '@' 'implementation' identifier ':' identifier     objc_class_instance_variables_opt objc_implementation_body
+      { ObjCClassImpl $3 (Just $5) (rev $6) (fst $7) ($1 `srcspan` snd $7) }
+  | '@' 'implementation' identifier                    objc_class_instance_variables_opt objc_implementation_body
+      { ObjCClassImpl $3 Nothing   (rev $4) (fst $5) ($1 `srcspan` snd $5) }
+  | '@' 'implementation' identifier '(' identifier ')'                                   objc_implementation_body
+      { ObjCCatImpl $3 $5 (fst $7) ($1 `srcspan` snd $7) }
+
+objc_implementation_body :: { ([Definition], Loc) }
+objc_implementation_body :
+  objc_implementation_decl_list '@' 'end'
+    { (rev $1, locOf $3) }
+
+objc_implementation_decl_list :: { RevList Definition }
+objc_implementation_decl_list :
+    {- empty -}
+      { rnil }
+  | objc_implementation_decl_list function_definition
+      { rcons (FuncDef $2 (srclocOf $2)) $1 }
+  | objc_implementation_decl_list declaration
+      { rcons (DecDef $2 (srclocOf $2)) $1 }
+  | objc_implementation_decl_list property_synthesize
+      { rcons $2 $1 }
+  | objc_implementation_decl_list property_dynamic
+      { rcons $2 $1 }
+  | objc_implementation_decl_list objc_method_definition
+      { rcons $2 $1 }
+  | objc_implementation_decl_list ANTI_FUNC
+      { rcons (AntiFunc (getANTI_FUNC $2) (srclocOf $2)) $1 }
+  | objc_implementation_decl_list ANTI_ESC
+      { rcons (AntiEsc (getANTI_ESC $2) (srclocOf $2)) $1 }
+-- FIXME: we need an anti implementation decl like this:
+--  | objc_implementation_decl_list ANTI_IDECL
+--      { rcons (AntiIdecl (getANTI_IDECL $2) (srclocOf $2)) $1 }
+
+property_synthesize :: { Definition }
+property_synthesize :
+  '@' 'synthesize' property_ivar_list ';'
+    { ObjCSynDef (rev $3) ($1 `srcspan` $4) }
+
+property_ivar_list :: { RevList (Id, Maybe Id) }
+property_ivar_list :
+    identifier
+      { rsingleton ($1, Nothing) }
+  | identifier '=' identifier
+      { rsingleton ($1, Just $3) }
+  | property_ivar_list identifier
+      { rcons ($2, Nothing) $1 }
+  | property_ivar_list identifier '=' identifier
+      { rcons ($2, Just $4) $1 }
+
+property_dynamic :: { Definition }
+property_dynamic :
+  '@' 'dynamic' identifier_list ';'
+    { ObjCDynDef (rev $3) ($1 `srcspan` $4) }
+
+objc_method_definition :: { Definition }
+objc_method_definition :
+    objc_method_proto ';' compound_statement
+      { let Block stmts loc = $3
+        in
+        ObjCMethDef $1 stmts ($1 `srcspan` loc)
+      }
+  | objc_method_proto     compound_statement
+      { let Block stmts loc = $2
+        in
+        ObjCMethDef $1 stmts ($1 `srcspan` loc)
+      }
+
+-- Objective-C extension: compatibility alias
+--
+-- objc-compatibility-alias ->
+--   '@' 'compatibility_alias' identifier class-name ';'
+--
+objc_compatibility_alias :: { Definition }
+objc_compatibility_alias :
+  '@' 'compatibility_alias' identifier OBJCNAMED ';'
+      {% do { addClassdefId $3
+            ; return $ ObjCCompAlias $3 (Id (getOBJCNAMED $1) (srclocOf $1)) ($1 `srcspan` $5)
+            } 
+      }
 
 attributes_opt :: { [Attr] }
 attributes_opt :

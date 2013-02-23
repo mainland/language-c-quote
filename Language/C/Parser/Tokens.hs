@@ -156,15 +156,20 @@ data Token = Teof
            | TObjCnamed String
            | TObjCat
            | TObjCclass
+           | TObjCcompatibility_alias
+           | TObjCdynamic
            | TObjCend
+           | TObjCimplementation
            | TObjCinterface
            | TObjCprivate
            | TObjCoptional
            | TObjCpublic
            | TObjCproperty
            | TObjCprotected
+           | TObjCprotocol
            | TObjCpackage
            | TObjCrequired
+           | TObjCsynthesize
 
            -- Antiquoting
            | Ttypename
@@ -386,17 +391,22 @@ tokenStrings = [(Tlparen,     "("),
                 --
                 -- Objective-C extensions
                 --
-                (TObjCat        , "@"),
-                (TObjCclass     , "class"),
-                (TObjCend       , "end"),
-                (TObjCinterface , "interface"),
-                (TObjCprivate   , "private"),
-                (TObjCoptional  , "optional"),
-                (TObjCpublic    , "public"),
-                (TObjCproperty  , "property"),
-                (TObjCprotected , "protected"),
-                (TObjCpackage   , "package"),
-                (TObjCrequired  , "required"),
+                (TObjCat                 , "@"),
+                (TObjCclass              , "class"),
+                (TObjCcompatibility_alias, "compatibility_alias"),
+                (TObjCdynamic            , "dynamic"),
+                (TObjCend                , "end"),
+                (TObjCimplementation     , "implementation"),
+                (TObjCinterface          , "interface"),
+                (TObjCprivate            , "private"),
+                (TObjCoptional           , "optional"),
+                (TObjCpublic             , "public"),
+                (TObjCproperty           , "property"),
+                (TObjCprotected          , "protected"),
+                (TObjCprotocol           , "protocol"),
+                (TObjCpackage            , "package"),
+                (TObjCrequired           , "required"),
+                (TObjCsynthesize         , "synthesize"),
 
                 (Ttypename, "typename")
                 ]
@@ -481,15 +491,20 @@ keywords = [("auto",       Tauto,      Nothing),
             ("kernel",       TCLkernel,    Just [OpenCL]),
             ("__kernel",     TCLkernel,    Just [OpenCL]),
             
-            ("class",     TObjCclass,     Just [ObjC]),
-            ("end",       TObjCend,       Just [ObjC]),
-            ("interface", TObjCinterface, Just [ObjC]),
-            ("optional",  TObjCoptional,  Just [ObjC]),
-            ("public",    TObjCpublic,    Just [ObjC]),
-            ("property",  TObjCproperty,  Just [ObjC]),
-            ("protected", TObjCprotected, Just [ObjC]),
-            ("package",   TObjCpackage,   Just [ObjC]),
-            ("required",  TObjCrequired,  Just [ObjC])
+            ("class",               TObjCclass,               Just [ObjC]),
+            ("compatibility_alias", TObjCcompatibility_alias, Just [ObjC]),
+            ("dynamic",             TObjCdynamic,             Just [ObjC]),
+            ("end",                 TObjCend,                 Just [ObjC]),
+            ("implementation",      TObjCimplementation,      Just [ObjC]),
+            ("interface",           TObjCinterface,           Just [ObjC]),
+            ("optional",            TObjCoptional,            Just [ObjC]),
+            ("public",              TObjCpublic,              Just [ObjC]),
+            ("property",            TObjCproperty,            Just [ObjC]),
+            ("protected",           TObjCprotected,           Just [ObjC]),
+            ("package",             TObjCpackage,             Just [ObjC]),
+            ("protocol",            TObjCprotocol,            Just [ObjC]),
+            ("required",            TObjCrequired,            Just [ObjC]),
+            ("synthesize",          TObjCsynthesize,          Just [ObjC])
            ]
 
 type ExtensionsInt = Word32

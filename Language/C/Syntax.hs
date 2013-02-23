@@ -173,6 +173,15 @@ data Definition  =  FuncDef Func !SrcLoc
                  |  ObjCClassDec [Id] !SrcLoc
                  |  ObjCClassIface Id (Maybe Id) [Id] [ObjCIvarDecl] [ObjCIfaceDecl] [Attr] !SrcLoc
                  |  ObjCCatIface Id (Maybe Id) [Id] [ObjCIvarDecl] [ObjCIfaceDecl] !SrcLoc
+                 |  ObjCProtDec [Id] !SrcLoc
+                 |  ObjCProtDef Id [Id] [ObjCIfaceDecl] !SrcLoc
+                 |  ObjCClassImpl Id (Maybe Id) [ObjCIvarDecl] [Definition] !SrcLoc
+                 |  ObjCCatImpl Id Id [Definition] !SrcLoc
+                 |  ObjCSynDef [(Id, Maybe Id)] !SrcLoc
+                 |  ObjCDynDef [Id] !SrcLoc
+                 |  ObjCMethDef ObjCMethodProto [BlockItem] !SrcLoc
+                 |  ObjCCompAlias Id Id !SrcLoc
+                 -- -=chak FIXME: do we need an AntiObjCMeth?
                  |  AntiFunc String !SrcLoc
                  |  AntiEsc String !SrcLoc
                  |  AntiEdecl String !SrcLoc
@@ -181,6 +190,7 @@ data Definition  =  FuncDef Func !SrcLoc
 
 data ObjCIvarDecl = ObjCIvarVisi ObjCVisibilitySpec !SrcLoc
                   | ObjCIvarDecl FieldGroup !SrcLoc
+                  -- -=chak FIXME: needs ANTI forms
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data ObjCVisibilitySpec = ObjCPrivate !SrcLoc
@@ -191,10 +201,9 @@ data ObjCVisibilitySpec = ObjCPrivate !SrcLoc
 
 data ObjCIfaceDecl = ObjCIfaceProp [ObjCPropAttr] FieldGroup !SrcLoc
                    | ObjCIfaceReq ObjCMethodReq !SrcLoc
-                   | ObjCIfaceMeth Bool (Maybe Type) [Attr] [ObjCParm] Bool [Attr] !SrcLoc
-                       -- ^Invariant: First parameter must at least either have a selector or
-                       --  an identifier; all other parameters must have an identifier.
+                   | ObjCIfaceMeth ObjCMethodProto !SrcLoc
                    | ObjCIfaceDecl InitGroup !SrcLoc
+                  -- -=chak FIXME: needs ANTI forms
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data ObjCPropAttr = ObjCGetter Id !SrcLoc
@@ -209,6 +218,7 @@ data ObjCPropAttr = ObjCGetter Id !SrcLoc
                   | ObjCStrong !SrcLoc
                   | ObjCWeak !SrcLoc
                   | ObjCUnsafeRetained !SrcLoc
+                  -- -=chak FIXME: needs ANTI forms
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data ObjCMethodReq = ObjCRequired !SrcLoc
@@ -217,6 +227,11 @@ data ObjCMethodReq = ObjCRequired !SrcLoc
 
 data ObjCParm = ObjCParm (Maybe Id) (Maybe Type) [Attr] (Maybe Id) !SrcLoc
     -- -=chak FIXME: provide an ANTI form (singular and plural)
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data ObjCMethodProto = ObjCMethodProto Bool (Maybe Type) [Attr] [ObjCParm] Bool [Attr] !SrcLoc
+                       -- ^Invariant: First parameter must at least either have a selector or
+                       --  an identifier; all other parameters must have an identifier.
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data Stm  = Label Id Stm !SrcLoc
@@ -526,6 +541,14 @@ instance Located Definition where
     locOf (ObjCClassDec _ loc)             = locOf loc
     locOf (ObjCClassIface _ _ _ _ _ _ loc) = locOf loc
     locOf (ObjCCatIface _ _ _ _ _ loc)     = locOf loc
+    locOf (ObjCProtDec _ loc)              = locOf loc
+    locOf (ObjCProtDef _ _ _ loc)          = locOf loc
+    locOf (ObjCClassImpl _ _ _ _ loc)      = locOf loc
+    locOf (ObjCCatImpl _ _ _ loc)          = locOf loc
+    locOf (ObjCSynDef _ loc)               = locOf loc
+    locOf (ObjCDynDef _ loc)               = locOf loc
+    locOf (ObjCMethDef _ _ loc)            = locOf loc
+    locOf (ObjCCompAlias _ _ loc)          = locOf loc
     locOf (AntiFunc _ loc)                 = locOf loc
     locOf (AntiEsc _ loc)                  = locOf loc
     locOf (AntiEdecl _ loc)                = locOf loc
@@ -542,10 +565,10 @@ instance Located ObjCVisibilitySpec where
     locOf (ObjCPackage loc)   = locOf loc
 
 instance Located ObjCIfaceDecl where
-    locOf (ObjCIfaceProp _ _ loc)         = locOf loc
-    locOf (ObjCIfaceReq _ loc)            = locOf loc
-    locOf (ObjCIfaceMeth _ _ _ _ _ _ loc) = locOf loc
-    locOf (ObjCIfaceDecl _ loc)           = locOf loc
+    locOf (ObjCIfaceProp _ _ loc) = locOf loc
+    locOf (ObjCIfaceReq _ loc)    = locOf loc
+    locOf (ObjCIfaceMeth _ loc)   = locOf loc
+    locOf (ObjCIfaceDecl _ loc)   = locOf loc
 
 instance Located ObjCPropAttr where
     locOf (ObjCGetter _ loc)       = locOf loc
@@ -567,6 +590,9 @@ instance Located ObjCMethodReq where
 
 instance Located ObjCParm where
     locOf (ObjCParm _ _ _ _ loc) = locOf loc
+
+instance Located ObjCMethodProto where
+    locOf (ObjCMethodProto _ _ _ _ _ _ loc) = locOf loc
 
 instance Located Stm where
     locOf (Label _ _ loc)       = locOf loc
