@@ -394,10 +394,7 @@ string_constant :
 objc_message_expr :: { Exp }
 objc_message_expr :
     '[' objc_receiver objc_message_args ']'
-      {% do { objc_enabled <- useObjCExts
-            ; unless objc_enabled $ 
-                throw $ ParserException ($1 <--> $4) $ 
-                  text "To use a message expression, enable Objective-C support"
+      {% do { assertObjCEnabled ($1 <--> $4) "To use a message expression, enable Objective-C support"
             ; let (args, vargs) = $3
             ; return $ ObjCMsg $2 args vargs ($1 `srcspan` $4) 
             }
@@ -1493,11 +1490,23 @@ direct_abstract_declarator :
 typedef_name :: { TySpec }
 typedef_name :
     NAMED
-      { TSnamed (Id (getNAMED $1) (srclocOf $1)) (srclocOf $1) }
+      { TSnamed (Id (getNAMED $1) (srclocOf $1)) [] (srclocOf $1) }
+  | NAMED '<' identifier_list '>'
+      {% do { assertObjCEnabled ($1 <--> $4) "To use protocol qualifiers, enable support for Objective-C"
+            ; return $ TSnamed (Id (getNAMED $1) (srclocOf $1)) (rev $3) ($1 `srcspan` $4) 
+            } }
   | OBJCNAMED
-      { TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) (srclocOf $1) }
+      { TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) [] (srclocOf $1) }
+  | OBJCNAMED '<' identifier_list '>'
+      {% do { assertObjCEnabled ($1 <--> $4) "To use protocol qualifiers, enable support for Objective-C"
+            ; return $ TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) (rev $3) ($1 `srcspan` $4) 
+            } }
   | 'typename' identifier
-      { TSnamed $2 ($1 `srcspan` $2) }
+      { TSnamed $2 [] (srclocOf $1) }
+  | 'typename' identifier '<' identifier_list '>'
+      {% do { assertObjCEnabled ($1 <--> $5) "To use protocol qualifiers, enable support for Objective-C"
+            ; return $ TSnamed $2 (rev $4) ($1 `srcspan` $5) 
+            } }
   | 'typename' error
       {% expected ["identifier"] (Just "'typename'")}
   | '__typeof__' '(' unary_expression ')'
@@ -2392,7 +2401,7 @@ data TySpec = TSauto !SrcLoc
             | TSstruct (Maybe Id) (Maybe [FieldGroup]) [Attr] !SrcLoc
             | TSunion (Maybe Id) (Maybe [FieldGroup]) [Attr] !SrcLoc
             | TSenum (Maybe Id) [CEnum] [Attr] !SrcLoc
-            | TSnamed Id !SrcLoc
+            | TSnamed Id [Id] !SrcLoc           -- the '[Id]' are Objective-C protocol references
 
             | TStypeofExp Exp !SrcLoc
             | TStypeofType Type !SrcLoc
@@ -2449,7 +2458,7 @@ instance Located TySpec where
     locOf (TSstruct _ _ _ loc)  = locOf loc
     locOf (TSunion _ _ _ loc)   = locOf loc
     locOf (TSenum _ _ _ loc)    = locOf loc
-    locOf (TSnamed _ loc)       = locOf loc
+    locOf (TSnamed _ _ loc)     = locOf loc
 
     locOf (TStypeofExp _ loc)   = locOf loc
     locOf (TStypeofType _ loc)  = locOf loc
@@ -2508,9 +2517,9 @@ instance Pretty TySpec where
 
     ppr (TStypeofExp e _)   = text "__typeof__" <> parens (ppr e)
     ppr (TStypeofType ty _) = text "__typeof__" <> parens (ppr ty)
-    ppr (TSnamed ident _)   = ppr ident
+    ppr (TSnamed ident ps _)= ppr ident <> if null ps then empty else angles (commasep (map ppr ps))
 
-    ppr (TSva_list _)   = text "__builtin_va_list"
+    ppr (TSva_list _)       = text "__builtin_va_list"
 
     ppr (TSCUDAdevice _)    = text "__device__"
     ppr (TSCUDAglobal _)    = text "__global__"
@@ -2726,9 +2735,9 @@ mkDeclSpec specs =
         checkNoSign specs "sign specified for enum type"
         return $ cdeclSpec storage quals (Tenum ident enums attrs loc)
 
-    go [TSnamed ident loc] = do
+    go [TSnamed ident refs loc] = do
         checkNoSign specs "sign specified for named type"
-        return $ cdeclSpec storage quals (Tnamed ident loc)
+        return $ cdeclSpec storage quals (Tnamed ident refs loc)
 
     go [TStypeofExp e loc] = do
         checkNoSign specs "sign specified for typeof"
@@ -2817,6 +2826,10 @@ checkInitGroup dspec decl attrs inits =
 declRoot :: Located a => a -> Decl
 declRoot x = DeclRoot (srclocOf x)
 
+addClassdefId :: Id -> P ()
+addClassdefId (Id str _)  = addClassdef str
+addClassdefId (AntiId {}) = return ()
+
 expectedObjCPropertyAttr :: Loc -> P a
 expectedObjCPropertyAttr loc
   = throw $ ParserException loc $
@@ -2825,9 +2838,14 @@ expectedObjCPropertyAttr loc
         (text "'getter = <sel>', 'setter = <sel>:', 'readonly', 'readwrite', 'assign'," <+>
          text "'retain', 'copy', 'nonatomic', 'atomic', 'strong', 'weak', and 'unsafe_retained'")
 
-addClassdefId :: Id -> P ()
-addClassdefId (Id str _)  = addClassdef str
-addClassdefId (AntiId {}) = return ()
+assertObjCEnabled :: Loc -> String -> P ()
+assertObjCEnabled loc errMsg
+  = do
+    { objc_enabled <- useObjCExts
+    ; unless objc_enabled $ 
+        throw $ ParserException loc $ 
+          text errMsg
+    }
 
 data RevList a  =  RNil
                 |  RCons a (RevList a)

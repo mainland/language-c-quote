@@ -174,8 +174,8 @@ instance Pretty TypeSpec where
     ppr (Tenum maybe_ident cenums attrs _) =
         pprEnum maybe_ident cenums attrs
 
-    ppr (Tnamed ident _) =
-        ppr ident
+    ppr (Tnamed ident refs _) =
+        ppr ident <> if null refs then empty else angles (commasep (map ppr refs))
 
     ppr (TtypeofExp e _) =
         text "__typeof__" <> parens (pprPrec 14 e)

@@ -77,7 +77,7 @@ data TypeSpec = Tvoid !SrcLoc
               | Tstruct (Maybe Id) (Maybe [FieldGroup]) [Attr] !SrcLoc
               | Tunion (Maybe Id) (Maybe [FieldGroup]) [Attr] !SrcLoc
               | Tenum (Maybe Id) [CEnum] [Attr] !SrcLoc
-              | Tnamed Id !SrcLoc
+              | Tnamed Id [Id] !SrcLoc           -- the '[Id]' are Objective-C protocol references
               | TtypeofExp Exp !SrcLoc
               | TtypeofType Type !SrcLoc
               | Tva_list !SrcLoc
@@ -454,7 +454,7 @@ instance Located TypeSpec where
     locOf (Tstruct _ _ _ loc)  = locOf loc
     locOf (Tunion _ _ _ loc)   = locOf loc
     locOf (Tenum _ _ _ loc)    = locOf loc
-    locOf (Tnamed _ loc)       = locOf loc
+    locOf (Tnamed _ _ loc)     = locOf loc
     locOf (TtypeofExp _ loc)   = locOf loc
     locOf (TtypeofType _ loc)  = locOf loc
     locOf (Tva_list loc)       = locOf loc
