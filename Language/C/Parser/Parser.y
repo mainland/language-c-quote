@@ -167,12 +167,17 @@ import qualified Language.C.Syntax as C
 
  OBJCNAMED             { L _ (T.TObjCnamed _) }
  '@'                   { L _ T.TObjCat }
+ 'autoreleasepool'     { L _ T.TObjCautoreleasepool }
+ 'catch'               { L _ T.TObjCcatch }
  'class'               { L _ T.TObjCclass }
  'compatibility_alias' { L _ T.TObjCcompatibility_alias }
  'dynamic'             { L _ T.TObjCdynamic }
+ 'encode'              { L _ T.TObjCencode }
  'end'                 { L _ T.TObjCend }
+ 'finally'             { L _ T.TObjCfinally }
  'interface'           { L _ T.TObjCinterface }
  'implementation'      { L _ T.TObjCimplementation }
+ 'NO'                  { L _ T.TObjCNO }
  'objc_private'        { L _ T.TObjCprivate }
  'optional'            { L _ T.TObjCoptional }
  'public'              { L _ T.TObjCpublic }
@@ -181,7 +186,12 @@ import qualified Language.C.Syntax as C
  'package'             { L _ T.TObjCpackage }
  'protocol'            { L _ T.TObjCprotocol }
  'required'            { L _ T.TObjCrequired }
+ 'selector'            { L _ T.TObjCselector }
+ 'synchronized'        { L _ T.TObjCsynchronized }
  'synthesize'          { L _ T.TObjCsynthesize }
+ 'throw'               { L _ T.TObjCthrow }
+ 'try'                 { L _ T.TObjCtry }
+ 'YES'                 { L _ T.TObjCYES }
 
  'typename'       { L _ T.Ttypename }
 
@@ -221,10 +231,11 @@ import qualified Language.C.Syntax as C
  ANTI_INIT        { L _ (T.Tanti_init _) }
  ANTI_INITS       { L _ (T.Tanti_inits _) }
 
--- Two shift-reduce conflicts:
--- (1) The standard dangling else conflict
--- (2) Documented conflict in 'objc_protocol_declaration'
-%expect 2
+-- Three shift-reduce conflicts:
+-- (1) Documented conflict in 'objc_protocol_declaration'
+-- (2) Objective-C exception syntax (would need lookahead of 2 to disambiguate properly)
+-- (3) The standard dangling else conflict
+%expect 3
 
 %monad { P } { >>= } { return }
 %lexer { lexer } { L _ T.Teof }
@@ -259,12 +270,17 @@ import qualified Language.C.Syntax as C
 identifier :: { Id }
 identifier :
     ID                    { Id (getID $1) (srclocOf $1) }
+  | 'autoreleasepool'     { Id "autoreleasepool" (srclocOf $1) }       -- Objective-C
+  | 'catch'               { Id "catch" (srclocOf $1) }                 -- Objective-C
   | 'class'               { Id "class" (srclocOf $1) }                 -- Objective-C
   | 'compatibility_alias' { Id "compatibility_alias" (srclocOf $1) }   -- Objective-C
   | 'dynamic'             { Id "dynamic" (srclocOf $1) }               -- Objective-C
+  | 'encode'              { Id "encode" (srclocOf $1) }                -- Objective-C
   | 'end'                 { Id "end" (srclocOf $1) }                   -- Objective-C
+  | 'finally'             { Id "finally" (srclocOf $1) }               -- Objective-C
   | 'implementation'      { Id "implementation" (srclocOf $1) }        -- Objective-C
   | 'interface'           { Id "interface" (srclocOf $1) }             -- Objective-C
+  | 'NO'                  { Id "NO" (srclocOf $1) }                    -- Objective-C
   | 'objc_private'        { Id "private" (srclocOf $1) }               -- Objective-C
   | 'optional'            { Id "optional" (srclocOf $1) }              -- Objective-C
   | 'public'              { Id "public" (srclocOf $1) }                -- Objective-C
@@ -273,7 +289,12 @@ identifier :
   | 'package'             { Id "package" (srclocOf $1) }               -- Objective-C
   | 'protocol'            { Id "protocol" (srclocOf $1) }              -- Objective-C
   | 'required'            { Id "required" (srclocOf $1) }              -- Objective-C
-  | 'synthesize'          { Id "synthesize" (srclocOf $1) }              -- Objective-C
+  | 'selector'            { Id "selector" (srclocOf $1) }              -- Objective-C
+  | 'synchronized'        { Id "synchronized" (srclocOf $1) }          -- Objective-C
+  | 'synthesize'          { Id "synthesize" (srclocOf $1) }            -- Objective-C
+  | 'throw'               { Id "throw" (srclocOf $1) }                 -- Objective-C
+  | 'try'                 { Id "try" (srclocOf $1) }                   -- Objective-C
+  | 'YES'                 { Id "YES" (srclocOf $1) }                   -- Objective-C
   | ANTI_ID               { AntiId (getANTI_ID $1) (srclocOf $1) }
 
 identifier_or_typedef :: { Id }
@@ -288,7 +309,7 @@ identifier_or_typedef :
  -
  ------------------------------------------------------------------------------}
 
-constant :: {  Const }
+constant :: { Const }
 constant :
     INT               { let (s, sign, n) = getINT $1
                         in
@@ -343,14 +364,10 @@ primary_expression :
       { Var $1 (srclocOf $1) }
   | constant
       { Const $1 (srclocOf $1) }
-  | string_constant
-      { let  {  ss   = rev $1
-             ;  l    = srclocOf ss
-             ;  raw  = map (fst . unLoc) ss
-             ;  s    = (concat . intersperse " " . map (snd . unLoc)) ss
-             }
+  | string_literal
+      { let str@(StringConst _raw _s l) = mkStringConst $1
         in
-          Const (StringConst raw s l) l
+        Const str l
       }
   | '(' expression ')'
       { $2 }
@@ -364,14 +381,17 @@ primary_expression :
   {- Extension: ObjC -}
   | objc_message_expr
       { $1 }
+  {- Extension: ObjC -}
+  | objc_at_expression
+      { $1 }
   | ANTI_EXP
       { AntiExp (getANTI_EXP $1) (srclocOf $1) }
 
-string_constant :: { RevList (L (String, String)) }
-string_constant :
+string_literal :: { RevList (L (String, String)) }
+string_literal :
     STRING                  { rsingleton (L (locOf $1) (getSTRING $1)) }
     {- Extension: GCC -}
-  | string_constant STRING  { rcons (L (locOf $2) (getSTRING $2)) $1 }
+  | string_literal STRING  { rcons (L (locOf $2) (getSTRING $2)) $1 }
 
 -- Objective-C extension: message expression
 --
@@ -488,6 +508,99 @@ objc_vararg_list :
       { rnil }
   |  objc_vararg_list ',' assignment_expression
       { $3 `rcons` $1 }
+
+-- Objective-C extension: at expression
+--
+-- objc-at-expression ->
+--     '@' ['+' | '-'] constant
+--   | '@' string-literal
+--   | '@' ('YES' | 'NO')
+--   | '@' '[' [assignment-expression (',' assignment-expression)* [',']] ']'
+--   | '@' '{' [objc-key-value (',' objc-key-value)* [',']] '}'
+--   | '@' '(' assignment-expression ')'
+--   | '@' 'encode' '(' type-name ')'
+--   | '@' 'protocol' '(' identifier ')'
+--   | '@' 'selector' '(' ( objc-selector | ([objc-selector] ':')+ ')'
+--
+-- objc-key-value ->
+--   assignment-expression ':' assignment-expression
+--
+-- NB: We need to make 'NO' and 'YES' into special tokens. If we match on "'@' identifier" instead,
+--     we get lots of shift-reduce conflicts as other special tokens that may appear behind a '@'
+--     can also reduce to "identifier".
+--
+objc_at_expression :: { Exp }
+objc_at_expression :
+    '@' constant
+      { ObjCLitConst Nothing $2 ($1 `srcspan` $2) }
+  | '@' '+' constant
+      { ObjCLitConst (Just Positive) $3 ($1 `srcspan` $3) }
+  | '@' '-' constant
+      { ObjCLitConst (Just Negate) $3 ($1 `srcspan` $3) }
+  | objc_string_literal_list
+      { let lits = rev $1 in ObjCLitString lits (head lits `srcspan` last lits) }
+  | '@' 'NO'
+      { ObjCLitBool False ($1 `srcspan` $2) }
+  | '@' 'YES'
+      { ObjCLitBool True ($1 `srcspan` $2) }
+  | '@' '[' ']'
+      { ObjCLitArray [] ($1 `srcspan` $3) }
+  | '@' '[' assignment_expression_list ']'
+      { ObjCLitArray (rev $3) ($1 `srcspan` $4) }
+  | '@' '[' assignment_expression_list ',' ']'
+      { ObjCLitArray (rev $3) ($1 `srcspan` $5) }
+  | '@' '{' '}'
+      { ObjCLitDict [] ($1 `srcspan` $3) }
+  | '@' '{' objc_key_value_list '}'
+      { ObjCLitDict (rev $3) ($1 `srcspan` $4) }
+  | '@' '{' objc_key_value_list ',' '}'
+      { ObjCLitDict (rev $3) ($1 `srcspan` $5) }
+  | '@' '(' expression ')'
+      { ObjCLitBoxed $3 ($1 `srcspan` $4) }
+  | '@' 'encode' '(' type_name ')'
+      { ObjCEncode $4 ($1 `srcspan` $5) }
+  | '@' 'protocol' '(' identifier ')'
+      { ObjCProtocol $4 ($1 `srcspan` $5) }
+  | '@' 'selector' '(' objc_selector ')'
+      { let Id str _ = $4
+        in
+        ObjCSelector str ($1 `srcspan` $5) }
+  | '@' 'selector' '(' objc_selector_list ')'
+      { let str = concat [s ++ ":" | Id s _ <- rev $4]
+        in
+        ObjCSelector str ($1 `srcspan` $5) }
+
+assignment_expression_list :: { RevList Exp }
+assignment_expression_list :
+    assignment_expression
+      { rsingleton $1 }
+  | assignment_expression_list ',' assignment_expression
+      { rcons $3 $1 }
+
+objc_key_value_list :: { RevList (Exp, Exp) }
+objc_key_value_list :
+    assignment_expression ':' assignment_expression
+      { rsingleton ($1, $3) }
+  | objc_key_value_list ',' assignment_expression ':' assignment_expression
+      { rcons ($3, $5) $1 }
+
+objc_string_literal_list :: { RevList Const }
+objc_string_literal_list :
+    '@' string_literal
+      { rsingleton (mkStringConst $2) }
+  | objc_string_literal_list '@' string_literal
+      { rcons (mkStringConst $3) $1 }
+
+objc_selector_list :: { RevList Id }
+objc_selector_list :
+    ':'
+      { rsingleton (Id "" (srclocOf $1)) }
+  | objc_selector ':'
+      { rsingleton $1 }
+  | objc_selector_list ':'
+      { rcons (Id "" (srclocOf $2)) $1 }
+  | objc_selector_list objc_selector ':'
+      { rcons $2 $1 }
 
 postfix_expression :: { Exp }
 postfix_expression :
@@ -1583,6 +1696,8 @@ statement :
   | jump_statement       { $1 }
   | asm_statement        { $1 }
   | '#pragma'            { Pragma (getPRAGMA $1) (srclocOf $1) }
+  {- Extension: ObjC -}
+  | objc_at_statement    { $1 }
   | ANTI_PRAGMA          { AntiPragma (getANTI_PRAGMA $1) (srclocOf $1) }
   | ANTI_STM             { AntiStm (getANTI_STM $1) (srclocOf $1) }
 
@@ -1696,6 +1811,76 @@ jump_statement :
   | 'return' error             {% expected ["';'", "expression"] Nothing }
   | 'return' expression ';'    { Return (Just $2) ($1 `srcspan` $3) }
   | 'return' expression error  {% expected ["';'"] Nothing }
+
+-- Objective-C extension: at statement
+--
+-- objc-at-statement ->
+--     '@' 'try' compound-statement objc-catch-statement+
+--   | '@' 'try' compound-statement objc-catch-statement* '@' 'finally' compound-statement
+--   | '@' 'throw' [expression] ';'
+--   | '@' 'synchronized' '(' expression ')' compound-statement
+--   | '@' 'autoreleasepool' compound-statement
+--
+-- objc-catch-statement ->
+--   '@' 'catch' '(' (parameter-declaration | '...') ')' compound-statement
+-- 
+-- NB: If a try-catch statement without a finally clause is followed by another '@' statement,
+--     we require a ';' after the try-catch statement. To avoid that, we would need a lookahead
+--     of 2 (to see what special keyword comes after the '@'). In LALR(1), we get a shift-reduce
+--     conflict that shifts to continue the try-catch statement.
+--
+objc_at_statement :: { Stm }
+objc_at_statement :
+    '@' 'try' compound_statement objc_catch_statement_list '@' 'finally' compound_statement
+      { let { Block tryItems _     = $3
+            ; Block finallyItems _ = $7
+            }
+        in
+        ObjCTry tryItems (rev $4) (Just finallyItems) ($1 `srcspan` $7) }
+  | '@' 'try' compound_statement objc_catch_statement_list
+      {% do { let { Block tryItems _ = $3
+                  ; catchStmts       = rev $4
+                  }
+            ; when (null catchStmts) $
+                throw $ ParserException ($1 <--> $3) $ 
+                  text "@try statement without @finally needs at least one @catch statement"
+            ; return $ ObjCTry tryItems catchStmts Nothing ($1 `srcspan` catchStmts) 
+            } }
+  | '@' 'try' compound_statement objc_catch_statement_list '@' error
+      {% parserError ($1 <--> $5)
+           (text $ "a @try-@catch statement without a @finally clause needs to be followed\n" ++
+                   "by a semicolon if the next statement begins with a '@'")
+      }
+  | '@' 'throw' expression ';'
+      { ObjCThrow (Just $3) ($1 `srcspan` $4) }
+  | '@' 'throw' expression error
+      {% expected ["';'"] Nothing }
+  | '@' 'throw' ';'
+      { ObjCThrow Nothing ($1 `srcspan` $3) }
+  | '@' 'throw' error
+      {% expected ["';'", "expression"] Nothing }
+  | '@' 'synchronized' '(' expression ')' compound_statement
+      { let Block items _ = $6
+        in
+        ObjCSynchronized $4 items ($1 `srcspan` $6) }
+  | '@' 'autoreleasepool' compound_statement
+      { let Block items _ = $3
+        in
+        ObjCAutoreleasepool items ($1 `srcspan` $3) }
+
+objc_catch_statement_list :: { RevList ObjCCatch }
+objc_catch_statement_list :
+    {- empty -}
+      { rnil }
+  | objc_catch_statement_list '@' 'catch' '(' parameter_declaration ')' compound_statement
+      { let Block items _ = $7
+        in
+        rcons (ObjCCatch (Just $5) items ($2 `srcspan` $7)) $1 }
+  | objc_catch_statement_list '@' 'catch' '(' '...' ')' compound_statement
+      { let Block items _ = $7
+        in
+        rcons (ObjCCatch Nothing items ($2 `srcspan` $7)) $1 }
+
 
 {------------------------------------------------------------------------------
  -
@@ -2623,6 +2808,15 @@ mkSign specs =
 checkNoSign :: [TySpec] -> String -> P ()
 checkNoSign spec msg  | hasSign spec  = fail msg
                       | otherwise     = return ()
+
+mkStringConst :: RevList (L (String, String)) -> Const
+mkStringConst str_desc
+  = let ss   = rev str_desc
+        l    = srclocOf ss
+        raw  = map (fst . unLoc) ss
+        s    = (concat . intersperse " " . map (snd . unLoc)) ss
+    in
+    StringConst raw s l
 
 composeDecls :: Decl -> Decl -> Decl
 composeDecls (DeclRoot _) root =

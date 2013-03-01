@@ -253,6 +253,11 @@ data Stm  = Label Id Stm !SrcLoc
           | Asm Bool [Attr] [String]
                      [(String, Exp)] [(String, Exp)]
                      [String] !SrcLoc
+          | ObjCTry [BlockItem] [ObjCCatch] (Maybe [BlockItem]) !SrcLoc
+            -- ^Invariant: There is either at least one 'ObjCCatch' or the finally block is present.
+          | ObjCThrow (Maybe Exp) !SrcLoc
+          | ObjCSynchronized Exp [BlockItem] !SrcLoc
+          | ObjCAutoreleasepool [BlockItem] !SrcLoc
           | AntiPragma String !SrcLoc
           | AntiStm String !SrcLoc
           | AntiStms String !SrcLoc
@@ -262,6 +267,9 @@ data BlockItem = BlockDecl InitGroup
                | BlockStm Stm
                | AntiBlockItem String !SrcLoc
                | AntiBlockItems String !SrcLoc
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data ObjCCatch = ObjCCatch (Maybe Param) [BlockItem] !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 funcProto :: Func -> InitGroup
@@ -347,6 +355,15 @@ data Exp = Var Id !SrcLoc
          | ObjCMsg ObjCRecv [ObjCArg] [Exp] !SrcLoc
            -- ^Invariant: First argument must at least have either a selector or an expression;
            --  all other arguments must have an expression.
+         | ObjCLitConst (Maybe UnOp) Const !SrcLoc    -- anything, but 'StringConst'
+         | ObjCLitString [Const] !SrcLoc              -- they are all 'StringConst'
+         | ObjCLitBool Bool !SrcLoc
+         | ObjCLitArray [Exp] !SrcLoc
+         | ObjCLitDict [(Exp, Exp)] !SrcLoc
+         | ObjCLitBoxed Exp !SrcLoc
+         | ObjCEncode Type !SrcLoc
+         | ObjCProtocol Id !SrcLoc
+         | ObjCSelector String !SrcLoc
          | AntiExp String !SrcLoc
          | AntiArgs String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
@@ -595,31 +612,38 @@ instance Located ObjCMethodProto where
     locOf (ObjCMethodProto _ _ _ _ _ _ loc) = locOf loc
 
 instance Located Stm where
-    locOf (Label _ _ loc)       = locOf loc
-    locOf (Case _ _ loc)        = locOf loc
-    locOf (Default _ loc)       = locOf loc
-    locOf (Exp _ loc)           = locOf loc
-    locOf (Block _ loc)         = locOf loc
-    locOf (If _ _ _ loc)        = locOf loc
-    locOf (Switch _ _ loc)      = locOf loc
-    locOf (While _ _ loc)       = locOf loc
-    locOf (DoWhile _ _ loc)     = locOf loc
-    locOf (For _ _ _ _ loc)     = locOf loc
-    locOf (Goto _ loc)          = locOf loc
-    locOf (Continue loc)        = locOf loc
-    locOf (Break loc)           = locOf loc
-    locOf (Return _ loc)        = locOf loc
-    locOf (Pragma _ loc)        = locOf loc
-    locOf (Asm _ _ _ _ _ _ loc) = locOf loc
-    locOf (AntiPragma _ loc)    = locOf loc
-    locOf (AntiStm _ loc)       = locOf loc
-    locOf (AntiStms _ loc)      = locOf loc
+    locOf (Label _ _ loc)             = locOf loc
+    locOf (Case _ _ loc)              = locOf loc
+    locOf (Default _ loc)             = locOf loc
+    locOf (Exp _ loc)                 = locOf loc
+    locOf (Block _ loc)               = locOf loc
+    locOf (If _ _ _ loc)              = locOf loc
+    locOf (Switch _ _ loc)            = locOf loc
+    locOf (While _ _ loc)             = locOf loc
+    locOf (DoWhile _ _ loc)           = locOf loc
+    locOf (For _ _ _ _ loc)           = locOf loc
+    locOf (Goto _ loc)                = locOf loc
+    locOf (Continue loc)              = locOf loc
+    locOf (Break loc)                 = locOf loc
+    locOf (Return _ loc)              = locOf loc
+    locOf (Pragma _ loc)              = locOf loc
+    locOf (Asm _ _ _ _ _ _ loc)       = locOf loc
+    locOf (ObjCTry _ _ _ loc)         = locOf loc
+    locOf (ObjCThrow _ loc)           = locOf loc
+    locOf (ObjCSynchronized _ _ loc)  = locOf loc
+    locOf (ObjCAutoreleasepool _ loc) = locOf loc
+    locOf (AntiPragma _ loc)          = locOf loc
+    locOf (AntiStm _ loc)             = locOf loc
+    locOf (AntiStms _ loc)            = locOf loc
 
 instance Located BlockItem where
     locOf (BlockDecl decl)       = locOf decl
     locOf (BlockStm stm)         = locOf stm
     locOf (AntiBlockItem _ loc)  = locOf loc
     locOf (AntiBlockItems _ loc) = locOf loc
+
+instance Located ObjCCatch where
+    locOf (ObjCCatch _ _ loc) = locOf loc
 
 instance Located Const where
     locOf (IntConst _ _ _ loc)          = locOf loc
@@ -668,7 +692,16 @@ instance Located Exp where
     locOf (CompoundLit _ _ loc)   = locOf loc
     locOf (StmExpr _ loc)         = locOf loc
     locOf (BuiltinVaArg _ _ loc)  = locOf loc
-    locOf (ObjCMsg _ _ _ loc)   = locOf loc
+    locOf (ObjCMsg _ _ _ loc)     = locOf loc
+    locOf (ObjCLitConst _ _ loc)  = locOf loc
+    locOf (ObjCLitString _ loc)   = locOf loc
+    locOf (ObjCLitBool _ loc)     = locOf loc
+    locOf (ObjCLitArray _ loc)    = locOf loc
+    locOf (ObjCLitDict _ loc)     = locOf loc
+    locOf (ObjCLitBoxed _ loc)    = locOf loc
+    locOf (ObjCEncode _ loc)      = locOf loc
+    locOf (ObjCProtocol _ loc)    = locOf loc
+    locOf (ObjCSelector _ loc)    = locOf loc
     locOf (AntiExp _ loc)         = locOf loc
     locOf (AntiArgs _ loc)        = locOf loc
 

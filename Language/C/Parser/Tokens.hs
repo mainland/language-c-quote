@@ -155,12 +155,17 @@ data Token = Teof
            -- Objective-C
            | TObjCnamed String
            | TObjCat
+           | TObjCautoreleasepool
+           | TObjCcatch
            | TObjCclass
            | TObjCcompatibility_alias
            | TObjCdynamic
+           | TObjCencode
            | TObjCend
+           | TObjCfinally
            | TObjCimplementation
            | TObjCinterface
+           | TObjCNO
            | TObjCprivate
            | TObjCoptional
            | TObjCpublic
@@ -169,7 +174,12 @@ data Token = Teof
            | TObjCprotocol
            | TObjCpackage
            | TObjCrequired
+           | TObjCselector
+           | TObjCsynchronized
            | TObjCsynthesize
+           | TObjCthrow
+           | TObjCtry
+           | TObjCYES
 
            -- Antiquoting
            | Ttypename
@@ -392,21 +402,31 @@ tokenStrings = [(Tlparen,     "("),
                 -- Objective-C extensions
                 --
                 (TObjCat                 , "@"),
+                (TObjCautoreleasepool    , "autoreleasepool"),
+                (TObjCcatch              , "catch"),
                 (TObjCclass              , "class"),
                 (TObjCcompatibility_alias, "compatibility_alias"),
                 (TObjCdynamic            , "dynamic"),
+                (TObjCencode             , "encode"),
                 (TObjCend                , "end"),
+                (TObjCfinally            , "finally"),
                 (TObjCimplementation     , "implementation"),
                 (TObjCinterface          , "interface"),
-                (TObjCprivate            , "private"),
+                (TObjCNO                 , "NO"),
                 (TObjCoptional           , "optional"),
+                (TObjCprivate            , "private"),
                 (TObjCpublic             , "public"),
                 (TObjCproperty           , "property"),
                 (TObjCprotected          , "protected"),
                 (TObjCprotocol           , "protocol"),
                 (TObjCpackage            , "package"),
                 (TObjCrequired           , "required"),
+                (TObjCselector           , "selector"),
+                (TObjCsynchronized       , "synchronized"),
                 (TObjCsynthesize         , "synthesize"),
+                (TObjCthrow              , "throw"),
+                (TObjCtry                , "try"),
+                (TObjCYES                , "YES"),
 
                 (Ttypename, "typename")
                 ]
@@ -491,12 +511,17 @@ keywords = [("auto",       Tauto,      Nothing),
             ("kernel",       TCLkernel,    Just [OpenCL]),
             ("__kernel",     TCLkernel,    Just [OpenCL]),
             
+            ("autoreleasepool",     TObjCautoreleasepool,     Just [ObjC]),
+            ("catch",               TObjCcatch,               Just [ObjC]),
             ("class",               TObjCclass,               Just [ObjC]),
             ("compatibility_alias", TObjCcompatibility_alias, Just [ObjC]),
             ("dynamic",             TObjCdynamic,             Just [ObjC]),
+            ("encode",              TObjCencode,              Just [ObjC]),
             ("end",                 TObjCend,                 Just [ObjC]),
+            ("finally",             TObjCfinally,             Just [ObjC]),
             ("implementation",      TObjCimplementation,      Just [ObjC]),
             ("interface",           TObjCinterface,           Just [ObjC]),
+            ("NO",                  TObjCNO,                  Just [ObjC]),
             ("optional",            TObjCoptional,            Just [ObjC]),
             ("public",              TObjCpublic,              Just [ObjC]),
             ("property",            TObjCproperty,            Just [ObjC]),
@@ -504,7 +529,12 @@ keywords = [("auto",       Tauto,      Nothing),
             ("package",             TObjCpackage,             Just [ObjC]),
             ("protocol",            TObjCprotocol,            Just [ObjC]),
             ("required",            TObjCrequired,            Just [ObjC]),
-            ("synthesize",          TObjCsynthesize,          Just [ObjC])
+            ("selector",            TObjCselector,            Just [ObjC]),
+            ("synchronized",        TObjCsynchronized,        Just [ObjC]),
+            ("synthesize",          TObjCsynthesize,          Just [ObjC]),
+            ("throw",               TObjCthrow,               Just [ObjC]),
+            ("try",                 TObjCtry,                 Just [ObjC]),
+            ("YES",                 TObjCYES,                 Just [ObjC])
            ]
 
 type ExtensionsInt = Word32

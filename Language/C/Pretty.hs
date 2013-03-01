@@ -644,10 +644,43 @@ instance Pretty Stm where
         pprReg :: (String, Exp) -> Doc
         pprReg (reg, e) = text reg <+> parens (ppr e)
 
+    ppr (ObjCTry try catchs finally sloc) =
+        srcloc sloc
+        <>  text "@try" 
+        </> ppr try
+        </> stack (map ppr catchs)
+        </> case finally of
+              Nothing    -> empty
+              Just block -> text "@finally" </> ppr block
+
+    ppr (ObjCThrow e sloc) =
+        srcloc sloc 
+        <> text "@throw" 
+        <> case e of 
+             Nothing -> semi
+             Just e' -> space <> ppr e' <> semi
+
+    ppr (ObjCSynchronized e block sloc) =
+        srcloc sloc
+        <>  text "@synchronized" <+> parens (ppr e)
+        </> ppr block
+
+    ppr (ObjCAutoreleasepool block sloc) =
+        srcloc sloc
+        <>  text "@autoreleasepool"
+        </> ppr block
+
     ppr (AntiPragma v _) = pprAnti "pragma" v
     ppr (AntiStm v _)    = pprAnti "stm" v
     ppr (AntiStms v _)   = pprAnti "stms" v
 
+instance Pretty ObjCCatch where
+    ppr (ObjCCatch Nothing     block loc) = srcloc loc <> text "@catch (...)" <+> ppr block
+    ppr (ObjCCatch (Just parm) block loc) = srcloc loc 
+                                            <> text "@catch" <+> parens (ppr parm) <+> ppr block
+    
+    pprList = stack . map ppr
+  
 instance Pretty BlockItem where
     ppr (BlockDecl decl) = ppr decl <> semi
     ppr (BlockStm stm)   = ppr stm
@@ -828,10 +861,54 @@ instance Pretty Exp where
         
         pprMsgArg (ObjCArg (Just sel) (Just e) loc) = pprLoc loc $ ppr sel <> colon <+> ppr e
         pprMsgArg (ObjCArg Nothing    (Just e) loc) = pprLoc loc $ colon <+> ppr e
-        pprMsgArg (ObjCArg _          Nothing  loc) = error $ "pretty printing 'ObjCArg': missing expression at " ++
-                                                              show loc
-        
+        pprMsgArg (ObjCArg _          Nothing  loc) 
+          = error $ "pretty printing 'ObjCArg': missing expression at " ++ show loc
+
         pprVarArg e = comma <+> ppr e
+
+    pprPrec _ (ObjCLitConst op c loc) =
+        srcloc loc <>
+        char '@' <>
+        maybe empty ppr op <>
+        ppr c
+
+    pprPrec _ (ObjCLitString strs loc) =
+        srcloc loc <>
+        spread (map ((char '@' <>) . ppr) strs)
+
+    pprPrec _ (ObjCLitBool False loc) =
+        srcloc loc <>
+        text "@NO"
+
+    pprPrec _ (ObjCLitBool True loc) =
+        srcloc loc <>
+        text "@YES"
+
+    pprPrec _ (ObjCLitArray es loc) =
+        srcloc loc <>
+        char '@' <> brackets
+          (commasep (map ppr es))
+        
+    pprPrec _ (ObjCLitDict as loc) =
+        srcloc loc <>
+        char '@' <> braces
+          (commasep (map (\(l, r) -> ppr l <+> colon <+> ppr r) as))
+
+    pprPrec _ (ObjCLitBoxed e loc) =
+        srcloc loc <>
+        char '@' <> parens (ppr e)
+        
+    pprPrec _ (ObjCEncode t loc) =
+        srcloc loc <>
+        text "@encode" <> parens (ppr t)
+        
+    pprPrec _ (ObjCProtocol ident loc) =
+        srcloc loc <>
+        text "@protocol" <> parens (ppr ident)
+        
+    pprPrec _ (ObjCSelector sel loc) =
+        srcloc loc <>
+        text "@selector" <> parens (text sel)
 
     pprPrec _ (AntiArgs v _)  = pprAnti "args"  v
 
