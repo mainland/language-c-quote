@@ -2064,21 +2064,21 @@ objc_interface :
             ; addClassdefId $4
             ; return $ ObjCClassIface $4 Nothing prot vars decls $1 ($2 `srcspan` loc) 
             } }
-  |            '@' 'interface' identifier ':' identifier objc_interface_body
+  |            '@' 'interface' identifier ':' identifier_or_typedef objc_interface_body
       {% do { let (prot, vars, decls, loc) = $6
             ; addClassdefId $3
             ; return $ ObjCClassIface $3 (Just $5) prot vars decls [] ($1 `srcspan` loc) 
             } }
-  | attributes '@' 'interface' identifier ':' identifier objc_interface_body
+  | attributes '@' 'interface' identifier ':' identifier_or_typedef objc_interface_body
       {% do { let (prot, vars, decls, loc) = $7
             ; addClassdefId $4
             ; return $ ObjCClassIface $4 (Just $6) prot vars decls $1 ($2 `srcspan` loc)
             } }
-  | '@' 'interface' identifier '(' ')' objc_interface_body
+  | '@' 'interface' identifier_or_typedef '(' ')' objc_interface_body
       { let (prot, vars, decls, loc) = $6
         in 
         ObjCCatIface $3 Nothing prot vars decls ($1 `srcspan` loc) }
-  | '@' 'interface' identifier '(' identifier ')' objc_interface_body
+  | '@' 'interface' identifier_or_typedef '(' identifier ')' objc_interface_body
       { let (prot, vars, decls, loc) = $7
         in 
         ObjCCatIface $3 (Just $5) prot vars decls ($1 `srcspan` loc) }
@@ -2305,12 +2305,21 @@ objc_protocol_prefix :
 --
 objc_implementation :: { Definition }
 objc_implementation :
-    '@' 'implementation' identifier ':' identifier     objc_class_instance_variables_opt objc_implementation_body
-      { ObjCClassImpl $3 (Just $5) (rev $6) (fst $7) ($1 `srcspan` snd $7) }
-  | '@' 'implementation' identifier                    objc_class_instance_variables_opt objc_implementation_body
-      { ObjCClassImpl $3 Nothing   (rev $4) (fst $5) ($1 `srcspan` snd $5) }
-  | '@' 'implementation' identifier '(' identifier ')'                                   objc_implementation_body
+    '@' 'implementation' identifier_or_typedef ':' identifier_or_typedef objc_implementation_body_vars
+      { let (ivars, defs, loc) = $6
+        in
+        ObjCClassImpl $3 (Just $5) ivars defs ($1 `srcspan` loc) }
+  | '@' 'implementation' identifier_or_typedef                           objc_implementation_body_vars
+      { let (ivars, defs, loc) = $4
+        in
+        ObjCClassImpl $3 Nothing   ivars defs ($1 `srcspan` loc) }
+  | '@' 'implementation' identifier_or_typedef '(' identifier ')'        objc_implementation_body
       { ObjCCatImpl $3 $5 (fst $7) ($1 `srcspan` snd $7) }
+
+objc_implementation_body_vars :: { ([ObjCIvarDecl], [Definition], Loc) }
+objc_implementation_body_vars :
+  objc_class_instance_variables_opt objc_implementation_body
+    { (rev $1, fst $2, snd $2) }
 
 objc_implementation_body :: { ([Definition], Loc) }
 objc_implementation_body :
