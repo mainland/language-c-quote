@@ -33,6 +33,10 @@ data Storage = Tauto !SrcLoc
              | Textern !SrcLoc
              | TexternL String !SrcLoc
              | Ttypedef !SrcLoc
+             | T__block !SrcLoc                 -- Extension: clang blocks extension
+             | TObjC__weak !SrcLoc              -- Extension: Objective-C
+             | TObjC__strong !SrcLoc            -- Extension: Objective-C
+             | TObjC__unsafe_retained !SrcLoc   -- Extension: Objective-C
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data TypeQual = Tconst !SrcLoc
@@ -102,6 +106,7 @@ data ArraySize = ArraySize Bool Exp !SrcLoc
 
 data Decl = DeclRoot !SrcLoc
           | Ptr [TypeQual] Decl !SrcLoc
+          | BlockPtr [TypeQual] Decl !SrcLoc             -- Extension: clang blocks extension
           | Array [TypeQual] ArraySize Decl !SrcLoc
           | Proto Decl Params !SrcLoc
           | OldProto Decl [Id] !SrcLoc
@@ -290,6 +295,7 @@ isPtr  (Type _ decl _)  = go decl
   where
     go  (DeclRoot _)        = False
     go  (Ptr _ _ _)         = True
+    go  (BlockPtr _ _ _)    = True
     go  (Array _ _ _ _)     = True
     go  (Proto _ _ _)       = False
     go  (OldProto _ _ _)    = False
@@ -352,6 +358,7 @@ data Exp = Var Id !SrcLoc
          | CompoundLit Type [(Maybe Designation, Initializer)] !SrcLoc
          | StmExpr [BlockItem] !SrcLoc
          | BuiltinVaArg Exp Type !SrcLoc
+         | BlockLit BlockType [Attr] [BlockItem] !SrcLoc             -- Extension: clang blocks extension
          | ObjCMsg ObjCRecv [ObjCArg] [Exp] !SrcLoc
            -- ^Invariant: First argument must at least have either a selector or an expression;
            --  all other arguments must have an expression.
@@ -409,6 +416,13 @@ data UnOp = AddrOf
           | Lnot
     deriving (Eq, Ord, Show, Data, Typeable)
 
+data BlockType = BlockVoid !SrcLoc
+               | BlockParam [Param] !SrcLoc
+               | BlockType Type !SrcLoc
+                 -- NB: Type may be something other than 'Proto', in which case clang defaults to
+                 --     regard the type as the return type and assume the arguments to be 'void'.
+    deriving (Eq, Ord, Show, Data, Typeable)
+
 data ObjCRecv = ObjCRecvSuper !SrcLoc
               | ObjCRecvExp Exp !SrcLoc
               | ObjCRecvClassName Id !SrcLoc
@@ -424,12 +438,16 @@ instance Located Id where
     locOf (AntiId _ loc)  = locOf loc
 
 instance Located Storage where
-    locOf (Tauto loc)      = locOf loc
-    locOf (Tregister loc)  = locOf loc
-    locOf (Tstatic loc)    = locOf loc
-    locOf (Textern loc)    = locOf loc
-    locOf (TexternL _ loc) = locOf loc
-    locOf (Ttypedef loc)   = locOf loc
+    locOf (Tauto loc)                  = locOf loc
+    locOf (Tregister loc)              = locOf loc
+    locOf (Tstatic loc)                = locOf loc
+    locOf (Textern loc)                = locOf loc
+    locOf (TexternL _ loc)             = locOf loc
+    locOf (Ttypedef loc)               = locOf loc
+    locOf (T__block loc)               = locOf loc
+    locOf (TObjC__weak loc)            = locOf loc
+    locOf (TObjC__strong loc)          = locOf loc
+    locOf (TObjC__unsafe_retained loc) = locOf loc
 
 instance Located TypeQual where
     locOf (Tconst loc)     = locOf loc
@@ -489,6 +507,7 @@ instance Located ArraySize where
 instance Located Decl where
     locOf (DeclRoot loc)        = locOf loc
     locOf (Ptr _ _ loc)         = locOf loc
+    locOf (BlockPtr _ _ loc)    = locOf loc
     locOf (Array _ _ _ loc)     = locOf loc
     locOf (Proto _ _ loc)       = locOf loc
     locOf (OldProto _ _ loc)    = locOf loc
@@ -692,6 +711,7 @@ instance Located Exp where
     locOf (CompoundLit _ _ loc)   = locOf loc
     locOf (StmExpr _ loc)         = locOf loc
     locOf (BuiltinVaArg _ _ loc)  = locOf loc
+    locOf (BlockLit _ _ _ loc)    = locOf loc
     locOf (ObjCMsg _ _ _ loc)     = locOf loc
     locOf (ObjCLitConst _ _ loc)  = locOf loc
     locOf (ObjCLitString _ loc)   = locOf loc
@@ -704,6 +724,11 @@ instance Located Exp where
     locOf (ObjCSelector _ loc)    = locOf loc
     locOf (AntiExp _ loc)         = locOf loc
     locOf (AntiArgs _ loc)        = locOf loc
+
+instance Located BlockType where
+    locOf (BlockVoid loc)    = locOf loc
+    locOf (BlockParam _ loc) = locOf loc
+    locOf (BlockType _ loc)  = locOf loc
 
 instance Located ObjCRecv where
     locOf (ObjCRecvSuper loc)       = locOf loc

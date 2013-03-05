@@ -15,7 +15,8 @@ module Language.C.Parser.Parser where
 
 import Control.Monad (forM_,
                       when,
-                      unless)
+                      unless,
+                      liftM)
 import Control.Monad.Exception
 import Data.List (intersperse)
 import Data.Loc
@@ -165,6 +166,8 @@ import qualified Language.C.Syntax as C
  'kernel'       { L _ T.TCLkernel }
  '__kernel'     { L _ T.TCLkernel }
 
+ '__block'             { L _ T.T__block }
+
  OBJCNAMED             { L _ (T.TObjCnamed _) }
  '@'                   { L _ T.TObjCat }
  'autoreleasepool'     { L _ T.TObjCautoreleasepool }
@@ -192,6 +195,9 @@ import qualified Language.C.Syntax as C
  'throw'               { L _ T.TObjCthrow }
  'try'                 { L _ T.TObjCtry }
  'YES'                 { L _ T.TObjCYES }
+ '__weak'              { L _ T.TObjC__weak }
+ '__strong'            { L _ T.TObjC__strong }
+ '__unsafe_retained'   { L _ T.TObjC__unsafe_retained }
 
  'typename'       { L _ T.Ttypename }
 
@@ -378,6 +384,9 @@ primary_expression :
         in
           StmExpr items ($1 `srcspan` $3)
       }
+  {- Extension: clang -}
+  | block_literal
+      { $1 }
   {- Extension: ObjC -}
   | objc_message_expr
       { $1 }
@@ -392,6 +401,39 @@ string_literal :
     STRING                  { rsingleton (L (locOf $1) (getSTRING $1)) }
     {- Extension: GCC -}
   | string_literal STRING  { rcons (L (locOf $2) (getSTRING $2)) $1 }
+
+-- Clang extension (currently only enabled with Objective-C): block literal expression
+--
+-- block-literal ->
+--   '^' [block-type] attributes_opt compound-statement
+--
+-- block-type ->
+--   '(' parameter-list ')' | specifier-qualifier-list abstract-declarator
+--
+block_literal :: { Exp }
+block_literal :
+    '^'                                              attributes_opt compound_statement
+      {% do { assertObjCEnabled ($1 <--> $3) "To use blocks, enable Objective-C support"
+            ; let Block items _ = $3
+            ; return $ BlockLit (BlockVoid (srclocOf $1)) $2 items ($1 `srcspan` $3)
+            }
+      }
+  | '^' '(' parameter_list ')'                       attributes_opt compound_statement
+      {% do { assertObjCEnabled ($1 <--> $6) "To use blocks, enable Objective-C support"
+            ; let Block items _ = $6
+            ; return $ BlockLit (BlockParam (rev $3) ($2 `srcspan` $4)) $5 items ($1 `srcspan` $6)
+            }
+      }
+  | '^' specifier_qualifier_list abstract_declarator attributes_opt compound_statement
+      {% do { assertObjCEnabled ($1 <--> $5) "To use blocks, enable Objective-C support"
+            ; let { decl          = $3 (declRoot $2)
+                  ; Block items _ = $5
+                  }
+            ; dspec <- mkDeclSpec $2
+            ; let typeLoc = dspec `srcspan` decl
+            ; return $ BlockLit (BlockType (Type dspec decl typeLoc) typeLoc) $4 items ($1 `srcspan` $5)
+            }
+      }
 
 -- Objective-C extension: message expression
 --
@@ -500,6 +542,10 @@ objc_selector :
 --    | '_Bool'               { Id "_Bool" (srclocOf $1) }
 --    | '_Complex'            { Id "_Complex" (srclocOf $1) }
 --    | '_Imaginary'          { Id "_Imaginary" (srclocOf $1) }
+    | '__block'             { Id "__block" (srclocOf $1) }
+    | '__weak'              { Id "__weak" (srclocOf $1) }
+    | '__strong'            { Id "__strong" (srclocOf $1) }
+    | '__unsafe_retained'   { Id "__unsafe_retained" (srclocOf $1) }
 --    | '__alignof'           { Id "__alignof" (srclocOf $1) }
 
 objc_vararg_list :: { RevList Exp }   -- might be empty
@@ -1036,12 +1082,16 @@ init_declarator :
 
 storage_class_specifier :: { TySpec }
 storage_class_specifier :
-    'auto'           { TSauto (srclocOf $1) }
-  | 'register'       { TSregister (srclocOf $1) }
-  | 'static'         { TSstatic (srclocOf $1) }
-  | 'extern'         { TSextern (srclocOf $1) }
-  | 'extern' STRING  { TSexternL ((snd . getSTRING) $2) (srclocOf $1) }
-  | 'typedef'        { TStypedef (srclocOf $1) }
+    'auto'              { TSauto (srclocOf $1) }
+  | 'register'          { TSregister (srclocOf $1) }
+  | 'static'            { TSstatic (srclocOf $1) }
+  | 'extern'            { TSextern (srclocOf $1) }
+  | 'extern' STRING     { TSexternL ((snd . getSTRING) $2) (srclocOf $1) }
+  | '__block'           { TS__block (srclocOf $1) }
+  | '__weak'            { TSObjC__weak (srclocOf $1) }
+  | '__strong'          { TSObjC__strong (srclocOf $1) }
+  | '__unsafe_retained' { TSObjC__unsafe_retained (srclocOf $1) }
+  | 'typedef'           { TStypedef (srclocOf $1) }
 
 type_specifier :: { TySpec }
 type_specifier :
@@ -1444,12 +1494,24 @@ array_declarator :
   | '[' type_qualifier_list  '*' ']'
       { mkArray (rev $2) (VariableArraySize ($1 `srcspan` $4)) }
 
+-- Extension: blocks <http://clang.llvm.org/docs/BlockLanguageSpec.html>
+--
+-- Any declarator for a function pointer turns into a block declarator by replacing the '*' by a '^'.
+-- However, block pointers can only point to function types.
+--
+-- Currently, we only allow blocks in Objective-C code, but technically, they are a language
+-- extension independent of Objective-C.
+--
 pointer :: { Decl -> Decl }
 pointer :
     '*'                              { mkPtr [] }
   | '*' type_qualifier_list          { mkPtr (rev $2) }
   | '*' pointer                      { $2 . mkPtr [] }
   | '*' type_qualifier_list pointer  { $3 . mkPtr (rev $2) }
+  | '^'                              {% mkBlockPtr (locOf $1) [] }
+  | '^' type_qualifier_list          {% mkBlockPtr (locOf $1) (rev $2) }
+  | '^' pointer                      {% ($2 .) `liftM` mkBlockPtr (locOf $1) [] }
+  | '^' type_qualifier_list pointer  {% ($3 .) `liftM` mkBlockPtr (locOf $1) (rev $2) }
 
 type_qualifier_list :: { RevList TySpec }
 type_qualifier_list :
@@ -2436,6 +2498,7 @@ attrib_name :
   | 'static'              { Id "static" (srclocOf $1) }
   | 'extern'              { Id "extern" (srclocOf $1) }
   | 'register'            { Id "register" (srclocOf $1) }
+  | '__block'             { Id "__block" (srclocOf $1) }
   | 'typedef'             { Id "typedef" (srclocOf $1) }
   | 'inline'              { Id "inline" (srclocOf $1) }
   | 'auto'                { Id "auto" (srclocOf $1) }
@@ -2576,6 +2639,10 @@ data TySpec = TSauto !SrcLoc
             | TSextern !SrcLoc
             | TSexternL String !SrcLoc
             | TStypedef !SrcLoc
+            | TS__block !SrcLoc
+            | TSObjC__weak !SrcLoc
+            | TSObjC__strong !SrcLoc
+            | TSObjC__unsafe_retained !SrcLoc
 
             | TSconst !SrcLoc
             | TSvolatile !SrcLoc
@@ -2633,6 +2700,11 @@ instance Located TySpec where
     locOf (TSextern loc)        = locOf loc
     locOf (TSexternL _ loc)     = locOf loc
     locOf (TStypedef loc)       = locOf loc
+    locOf (TS__block loc)       = locOf loc
+    locOf (TSObjC__weak loc)    = locOf loc
+    locOf (TSObjC__strong loc)  = locOf loc
+    locOf (TSObjC__unsafe_retained loc)
+                                = locOf loc
 
     locOf (TSconst loc)         = locOf loc
     locOf (TSvolatile loc)      = locOf loc
@@ -2677,12 +2749,16 @@ instance Located TySpec where
     locOf (TSCLkernel loc)      = locOf loc
 
 instance Pretty TySpec where
-    ppr (TSauto _)       = text "auto"
-    ppr (TSregister _)   = text "register"
-    ppr (TSstatic _)     = text "static"
-    ppr (TSextern _)     = text "extern"
-    ppr (TSexternL l _)  = text "extern" <+> ppr l
-    ppr (TStypedef _)    = text "typedef"
+    ppr (TSauto _)                  = text "auto"
+    ppr (TSregister _)              = text "register"
+    ppr (TSstatic _)                = text "static"
+    ppr (TSextern _)                = text "extern"
+    ppr (TSexternL l _)             = text "extern" <+> ppr l
+    ppr (TStypedef _)               = text "typedef"
+    ppr (TS__block _)               = text "__block"
+    ppr (TSObjC__weak _)            = text "__weak"
+    ppr (TSObjC__strong _)          = text "__strong"
+    ppr (TSObjC__unsafe_retained _) = text "__unsafe_retained"
 
     ppr (TSconst _)    = text "const"
     ppr (TSinline _)   = text "inline"
@@ -2732,25 +2808,33 @@ instance Pretty TySpec where
     ppr (TSCLkernel _)      = text "__kernel"
 
 isStorage :: TySpec -> Bool
-isStorage (TSauto _)      = True
-isStorage (TSregister _)  = True
-isStorage (TSstatic _)    = True
-isStorage (TSextern _)    = True
-isStorage (TSexternL _ _) = True
-isStorage (TStypedef _)   = True
-isStorage _               = False
+isStorage (TSauto _)                  = True
+isStorage (TSregister _)              = True
+isStorage (TSstatic _)                = True
+isStorage (TSextern _)                = True
+isStorage (TSexternL _ _)             = True
+isStorage (TStypedef _)               = True
+isStorage (TS__block _)               = True
+isStorage (TSObjC__weak _)            = True
+isStorage (TSObjC__strong _)          = True
+isStorage (TSObjC__unsafe_retained _) = True
+isStorage _                           = False
 
 mkStorage :: [TySpec] -> [Storage]
 mkStorage specs = map mk (filter isStorage specs)
     where
       mk :: TySpec -> Storage
-      mk (TSauto loc)      = Tauto loc
-      mk (TSregister loc)  = Tregister loc
-      mk (TSstatic loc)    = Tstatic loc
-      mk (TSextern loc)    = Textern loc
-      mk (TSexternL l loc) = TexternL l loc
-      mk (TStypedef loc)   = Ttypedef loc
-      mk _                 = error "internal error in mkStorage"
+      mk (TSauto loc)                  = Tauto loc
+      mk (TSregister loc)              = Tregister loc
+      mk (TSstatic loc)                = Tstatic loc
+      mk (TSextern loc)                = Textern loc
+      mk (TSexternL l loc)             = TexternL l loc
+      mk (TStypedef loc)               = Ttypedef loc
+      mk (TS__block loc)               = T__block loc
+      mk (TSObjC__weak loc)            = TObjC__weak loc
+      mk (TSObjC__strong loc)          = TObjC__strong loc
+      mk (TSObjC__unsafe_retained loc) = TObjC__unsafe_retained loc
+      mk _                             = error "internal error in mkStorage"
 
 isTypeQual :: TySpec -> Bool
 isTypeQual (TSconst _)        = True
@@ -2833,6 +2917,9 @@ composeDecls (DeclRoot _) root =
 
 composeDecls (C.Ptr quals decl loc) root =
     C.Ptr quals (composeDecls decl root) loc
+
+composeDecls (C.BlockPtr quals decl loc) root =
+    C.BlockPtr quals (composeDecls decl root) loc
 
 composeDecls (Array quals size decl loc) root =
     Array quals size (composeDecls decl root) loc
@@ -2964,6 +3051,15 @@ mkDeclSpec specs =
 
 mkPtr :: [TySpec] -> Decl -> Decl
 mkPtr specs decl = C.Ptr quals decl (specs `srcspan` decl)
+  where
+    quals = mkTypeQuals specs
+
+mkBlockPtr :: Loc -> [TySpec] -> P (Decl -> Decl)
+mkBlockPtr loc specs
+  = do
+    { assertObjCEnabled loc "blocks are currently only allowed as part of the Objective-C extension"
+    ; return $ \decl -> C.BlockPtr quals decl (specs `srcspan` decl)
+    }
   where
     quals = mkTypeQuals specs
 

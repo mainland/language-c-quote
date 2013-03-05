@@ -1,10 +1,11 @@
 name:          language-c-quote
-version:       0.6.1
+version:       0.7.0
 cabal-version: >= 1.10
 license:       BSD3
 license-file:  LICENSE
 copyright:     (c) 2006-2011 Harvard University
                (c) 2011-2013 Geoffrey Mainland
+               (c) 2013 Manuel M. T. Chakravarty
 author:        Geoffrey Mainland <mainland@eecs.harvard.edu>	       
 maintainer:    mainland@eecs.harvard.edu
 stability:     alpha
@@ -15,7 +16,8 @@ tested-with:   GHC==7.0.4, GHC==7.4.2, GHC==7.6.1
 
 description:
   This package provides a general parser for the C language, including most GCC
-  extensions and some CUDA and OpenCL extensions as well as a subset of Objective-C.
+  extensions and some CUDA and OpenCL extensions as well as the entire Objective-C
+  language.
 
 build-type: Custom
 

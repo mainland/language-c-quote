@@ -116,12 +116,16 @@ instance Pretty Id where
     ppr (AntiId v _)  = pprAnti "id" v
 
 instance Pretty Storage where
-    ppr (Tauto _)      = text "auto"
-    ppr (Tregister _)  = text "register"
-    ppr (Tstatic _)    = text "static"
-    ppr (Textern _)    = text "extern"
-    ppr (TexternL l _) = text "extern" <+> ppr l
-    ppr (Ttypedef _)   = text "typedef"
+    ppr (Tauto _)                  = text "auto"
+    ppr (Tregister _)              = text "register"
+    ppr (Tstatic _)                = text "static"
+    ppr (Textern _)                = text "extern"
+    ppr (TexternL l _)             = text "extern" <+> ppr l
+    ppr (Ttypedef _)               = text "typedef"
+    ppr (T__block _)               = text "__block"
+    ppr (TObjC__weak _)            = text "__weak"
+    ppr (TObjC__strong _)          = text "__strong"
+    ppr (TObjC__unsafe_retained _) = text "__unsafe_retained"
 
 instance Pretty TypeQual where
     ppr (Tconst _)        = text "const"
@@ -255,6 +259,12 @@ pprDeclarator maybe_ident declarator =
       pprPtr (Ptr quals decl _) post =
           pprPtr decl $
           text "*" <+> spread (map ppr quals) <> post
+      pprPtr (BlockPtr [] decl _) post =
+          pprPtr decl $
+          text "^" <> post
+      pprPtr (BlockPtr quals decl _) post =
+          pprPtr decl $
+          text "^" <+> spread (map ppr quals) <> post
       pprPtr decl post = (decl, post)
 
       pprDirDecl :: Decl -> Doc -> (Decl, Doc)
@@ -849,6 +859,12 @@ instance Pretty Exp where
         pprLoc loc $
         text "__builtin_va_arg(" <> ppr e <> comma <+> ppr ty <> rparen
 
+    pprPrec _ (BlockLit ty attrs block loc) =
+        pprLoc loc $
+        char '^' <> ppr ty <>
+        (if null attrs then empty else softline <> ppr attrs) <+>
+        ppr block
+
     pprPrec _ (ObjCMsg recv args varArgs loc1) =
         pprLoc loc1 $
         brackets $
@@ -954,6 +970,11 @@ instance Pretty UnOp where
     ppr Negate   = text "-"
     ppr Not      = text "~"
     ppr Lnot     = text "!"
+
+instance Pretty BlockType where
+    ppr (BlockVoid _loc)        = empty
+    ppr (BlockParam params loc) = pprLoc loc $ parens (commasep (map ppr params))
+    ppr (BlockType ty loc)      = pprLoc loc $ ppr ty
 
 instance Pretty ObjCRecv where
     ppr (ObjCRecvSuper loc)               = pprLoc loc $ text "super"

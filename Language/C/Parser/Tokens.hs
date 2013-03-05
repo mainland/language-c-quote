@@ -152,6 +152,9 @@ data Token = Teof
            | TCLwriteonly
            | TCLkernel
            
+           -- Clang (currently active is Objective-C is active)
+           | T__block
+           
            -- Objective-C
            | TObjCnamed String
            | TObjCat
@@ -180,6 +183,9 @@ data Token = Teof
            | TObjCthrow
            | TObjCtry
            | TObjCYES
+           | TObjC__weak
+           | TObjC__strong
+           | TObjC__unsafe_retained
 
            -- Antiquoting
            | Ttypename
@@ -399,6 +405,11 @@ tokenStrings = [(Tlparen,     "("),
                 (TCLkernel,    "__kernel"),
 
                 --
+                -- Clang extensions
+                --
+                (T__block                , "__block"),
+
+                --
                 -- Objective-C extensions
                 --
                 (TObjCat                 , "@"),
@@ -427,6 +438,9 @@ tokenStrings = [(Tlparen,     "("),
                 (TObjCthrow              , "throw"),
                 (TObjCtry                , "try"),
                 (TObjCYES                , "YES"),
+                (TObjC__weak             , "__weak"),
+                (TObjC__strong           , "__strong"),
+                (TObjC__unsafe_retained  , "__unsafe_retained"),
 
                 (Ttypename, "typename")
                 ]
@@ -511,6 +525,8 @@ keywords = [("auto",       Tauto,      Nothing),
             ("kernel",       TCLkernel,    Just [OpenCL]),
             ("__kernel",     TCLkernel,    Just [OpenCL]),
             
+            ("__block",             T__block,                 Just [ObjC]),
+
             ("autoreleasepool",     TObjCautoreleasepool,     Just [ObjC]),
             ("catch",               TObjCcatch,               Just [ObjC]),
             ("class",               TObjCclass,               Just [ObjC]),
@@ -534,7 +550,10 @@ keywords = [("auto",       Tauto,      Nothing),
             ("synthesize",          TObjCsynthesize,          Just [ObjC]),
             ("throw",               TObjCthrow,               Just [ObjC]),
             ("try",                 TObjCtry,                 Just [ObjC]),
-            ("YES",                 TObjCYES,                 Just [ObjC])
+            ("YES",                 TObjCYES,                 Just [ObjC]),
+            ("__weak",              TObjC__weak,              Just [ObjC]),
+            ("__strong",            TObjC__strong,            Just [ObjC]),
+            ("__unsafe_retained",   TObjC__unsafe_retained,   Just [ObjC])
            ]
 
 type ExtensionsInt = Word32
