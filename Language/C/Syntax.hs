@@ -33,6 +33,10 @@ data Storage = Tauto !SrcLoc
              | Textern !SrcLoc
              | TexternL String !SrcLoc
              | Ttypedef !SrcLoc
+             | T__block !SrcLoc                 -- Extension: clang blocks extension
+             | TObjC__weak !SrcLoc              -- Extension: Objective-C
+             | TObjC__strong !SrcLoc            -- Extension: Objective-C
+             | TObjC__unsafe_retained !SrcLoc   -- Extension: Objective-C
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data TypeQual = Tconst !SrcLoc
@@ -77,7 +81,7 @@ data TypeSpec = Tvoid !SrcLoc
               | Tstruct (Maybe Id) (Maybe [FieldGroup]) [Attr] !SrcLoc
               | Tunion (Maybe Id) (Maybe [FieldGroup]) [Attr] !SrcLoc
               | Tenum (Maybe Id) [CEnum] [Attr] !SrcLoc
-              | Tnamed Id !SrcLoc
+              | Tnamed Id [Id] !SrcLoc           -- the '[Id]' are Objective-C protocol references
               | TtypeofExp Exp !SrcLoc
               | TtypeofType Type !SrcLoc
               | Tva_list !SrcLoc
@@ -102,6 +106,7 @@ data ArraySize = ArraySize Bool Exp !SrcLoc
 
 data Decl = DeclRoot !SrcLoc
           | Ptr [TypeQual] Decl !SrcLoc
+          | BlockPtr [TypeQual] Decl !SrcLoc             -- Extension: clang blocks extension
           | Array [TypeQual] ArraySize Decl !SrcLoc
           | Proto Decl Params !SrcLoc
           | OldProto Decl [Id] !SrcLoc
@@ -171,10 +176,67 @@ data Definition  =  FuncDef Func !SrcLoc
                  |  DecDef InitGroup !SrcLoc
                  |  EscDef String !SrcLoc
                  |  ObjCClassDec [Id] !SrcLoc
+                 |  ObjCClassIface Id (Maybe Id) [Id] [ObjCIvarDecl] [ObjCIfaceDecl] [Attr] !SrcLoc
+                 |  ObjCCatIface Id (Maybe Id) [Id] [ObjCIvarDecl] [ObjCIfaceDecl] !SrcLoc
+                 |  ObjCProtDec [Id] !SrcLoc
+                 |  ObjCProtDef Id [Id] [ObjCIfaceDecl] !SrcLoc
+                 |  ObjCClassImpl Id (Maybe Id) [ObjCIvarDecl] [Definition] !SrcLoc
+                 |  ObjCCatImpl Id Id [Definition] !SrcLoc
+                 |  ObjCSynDef [(Id, Maybe Id)] !SrcLoc
+                 |  ObjCDynDef [Id] !SrcLoc
+                 |  ObjCMethDef ObjCMethodProto [BlockItem] !SrcLoc
+                 |  ObjCCompAlias Id Id !SrcLoc
+                 -- -=chak FIXME: do we need an AntiObjCMeth?
                  |  AntiFunc String !SrcLoc
                  |  AntiEsc String !SrcLoc
                  |  AntiEdecl String !SrcLoc
                  |  AntiEdecls String !SrcLoc
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data ObjCIvarDecl = ObjCIvarVisi ObjCVisibilitySpec !SrcLoc
+                  | ObjCIvarDecl FieldGroup !SrcLoc
+                  -- -=chak FIXME: needs ANTI forms
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data ObjCVisibilitySpec = ObjCPrivate !SrcLoc
+                        | ObjCPublic !SrcLoc
+                        | ObjCProtected !SrcLoc
+                        | ObjCPackage !SrcLoc
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data ObjCIfaceDecl = ObjCIfaceProp [ObjCPropAttr] FieldGroup !SrcLoc
+                   | ObjCIfaceReq ObjCMethodReq !SrcLoc
+                   | ObjCIfaceMeth ObjCMethodProto !SrcLoc
+                   | ObjCIfaceDecl InitGroup !SrcLoc
+                  -- -=chak FIXME: needs ANTI forms
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data ObjCPropAttr = ObjCGetter Id !SrcLoc
+                  | ObjCSetter Id !SrcLoc
+                  | ObjCReadonly !SrcLoc
+                  | ObjCReadwrite !SrcLoc
+                  | ObjCAssign !SrcLoc
+                  | ObjCRetain !SrcLoc
+                  | ObjCCopy !SrcLoc
+                  | ObjCNonatomic !SrcLoc
+                  | ObjCAtomic !SrcLoc
+                  | ObjCStrong !SrcLoc
+                  | ObjCWeak !SrcLoc
+                  | ObjCUnsafeRetained !SrcLoc
+                  -- -=chak FIXME: needs ANTI forms
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data ObjCMethodReq = ObjCRequired !SrcLoc
+                   | ObjCOptional !SrcLoc
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data ObjCParm = ObjCParm (Maybe Id) (Maybe Type) [Attr] (Maybe Id) !SrcLoc
+    -- -=chak FIXME: provide an ANTI form (singular and plural)
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data ObjCMethodProto = ObjCMethodProto Bool (Maybe Type) [Attr] [ObjCParm] Bool [Attr] !SrcLoc
+                       -- ^Invariant: First parameter must at least either have a selector or
+                       --  an identifier; all other parameters must have an identifier.
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data Stm  = Label Id Stm !SrcLoc
@@ -196,6 +258,11 @@ data Stm  = Label Id Stm !SrcLoc
           | Asm Bool [Attr] [String]
                      [(String, Exp)] [(String, Exp)]
                      [String] !SrcLoc
+          | ObjCTry [BlockItem] [ObjCCatch] (Maybe [BlockItem]) !SrcLoc
+            -- ^Invariant: There is either at least one 'ObjCCatch' or the finally block is present.
+          | ObjCThrow (Maybe Exp) !SrcLoc
+          | ObjCSynchronized Exp [BlockItem] !SrcLoc
+          | ObjCAutoreleasepool [BlockItem] !SrcLoc
           | AntiPragma String !SrcLoc
           | AntiStm String !SrcLoc
           | AntiStms String !SrcLoc
@@ -205,6 +272,9 @@ data BlockItem = BlockDecl InitGroup
                | BlockStm Stm
                | AntiBlockItem String !SrcLoc
                | AntiBlockItems String !SrcLoc
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data ObjCCatch = ObjCCatch (Maybe Param) [BlockItem] !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 funcProto :: Func -> InitGroup
@@ -225,6 +295,7 @@ isPtr  (Type _ decl _)  = go decl
   where
     go  (DeclRoot _)        = False
     go  (Ptr _ _ _)         = True
+    go  (BlockPtr _ _ _)    = True
     go  (Array _ _ _ _)     = True
     go  (Proto _ _ _)       = False
     go  (OldProto _ _ _)    = False
@@ -287,9 +358,19 @@ data Exp = Var Id !SrcLoc
          | CompoundLit Type [(Maybe Designation, Initializer)] !SrcLoc
          | StmExpr [BlockItem] !SrcLoc
          | BuiltinVaArg Exp Type !SrcLoc
-         | ObjCMsg ObjCRecv (Id, Maybe Exp) [(Maybe Id, Exp)] [Exp] !SrcLoc
-           -- ^Invariant: If the first argument is 'Nothing', the list of further arguments and the
-           --  list of variable arguments will be empty.
+         | BlockLit BlockType [Attr] [BlockItem] !SrcLoc             -- Extension: clang blocks extension
+         | ObjCMsg ObjCRecv [ObjCArg] [Exp] !SrcLoc
+           -- ^Invariant: First argument must at least have either a selector or an expression;
+           --  all other arguments must have an expression.
+         | ObjCLitConst (Maybe UnOp) Const !SrcLoc    -- anything, but 'StringConst'
+         | ObjCLitString [Const] !SrcLoc              -- they are all 'StringConst'
+         | ObjCLitBool Bool !SrcLoc
+         | ObjCLitArray [Exp] !SrcLoc
+         | ObjCLitDict [(Exp, Exp)] !SrcLoc
+         | ObjCLitBoxed Exp !SrcLoc
+         | ObjCEncode Type !SrcLoc
+         | ObjCProtocol Id !SrcLoc
+         | ObjCSelector String !SrcLoc
          | AntiExp String !SrcLoc
          | AntiArgs String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
@@ -335,10 +416,21 @@ data UnOp = AddrOf
           | Lnot
     deriving (Eq, Ord, Show, Data, Typeable)
 
+data BlockType = BlockVoid !SrcLoc
+               | BlockParam [Param] !SrcLoc
+               | BlockType Type !SrcLoc
+                 -- NB: Type may be something other than 'Proto', in which case clang defaults to
+                 --     regard the type as the return type and assume the arguments to be 'void'.
+    deriving (Eq, Ord, Show, Data, Typeable)
+
 data ObjCRecv = ObjCRecvSuper !SrcLoc
               | ObjCRecvExp Exp !SrcLoc
               | ObjCRecvClassName Id !SrcLoc
               | ObjCRecvTypeName Id !SrcLoc
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data ObjCArg = ObjCArg (Maybe Id) (Maybe Exp) !SrcLoc
+    -- -=chak FIXME: provide an ANTI form (singular and plural)
     deriving (Eq, Ord, Show, Data, Typeable)
 
 instance Located Id where
@@ -346,12 +438,16 @@ instance Located Id where
     locOf (AntiId _ loc)  = locOf loc
 
 instance Located Storage where
-    locOf (Tauto loc)      = locOf loc
-    locOf (Tregister loc)  = locOf loc
-    locOf (Tstatic loc)    = locOf loc
-    locOf (Textern loc)    = locOf loc
-    locOf (TexternL _ loc) = locOf loc
-    locOf (Ttypedef loc)   = locOf loc
+    locOf (Tauto loc)                  = locOf loc
+    locOf (Tregister loc)              = locOf loc
+    locOf (Tstatic loc)                = locOf loc
+    locOf (Textern loc)                = locOf loc
+    locOf (TexternL _ loc)             = locOf loc
+    locOf (Ttypedef loc)               = locOf loc
+    locOf (T__block loc)               = locOf loc
+    locOf (TObjC__weak loc)            = locOf loc
+    locOf (TObjC__strong loc)          = locOf loc
+    locOf (TObjC__unsafe_retained loc) = locOf loc
 
 instance Located TypeQual where
     locOf (Tconst loc)     = locOf loc
@@ -393,7 +489,7 @@ instance Located TypeSpec where
     locOf (Tstruct _ _ _ loc)  = locOf loc
     locOf (Tunion _ _ _ loc)   = locOf loc
     locOf (Tenum _ _ _ loc)    = locOf loc
-    locOf (Tnamed _ loc)       = locOf loc
+    locOf (Tnamed _ _ loc)     = locOf loc
     locOf (TtypeofExp _ loc)   = locOf loc
     locOf (TtypeofType _ loc)  = locOf loc
     locOf (Tva_list loc)       = locOf loc
@@ -411,6 +507,7 @@ instance Located ArraySize where
 instance Located Decl where
     locOf (DeclRoot loc)        = locOf loc
     locOf (Ptr _ _ loc)         = locOf loc
+    locOf (BlockPtr _ _ loc)    = locOf loc
     locOf (Array _ _ _ loc)     = locOf loc
     locOf (Proto _ _ loc)       = locOf loc
     locOf (OldProto _ _ loc)    = locOf loc
@@ -474,41 +571,98 @@ instance Located Func where
     locOf (OldFunc _ _ _ _ _ _ loc) = locOf loc
 
 instance Located Definition where
-    locOf (FuncDef _ loc)      = locOf loc
-    locOf (DecDef _ loc)       = locOf loc
-    locOf (EscDef _ loc)       = locOf loc
-    locOf (ObjCClassDec _ loc) = locOf loc
-    locOf (AntiFunc _ loc)     = locOf loc
-    locOf (AntiEsc _ loc)      = locOf loc
-    locOf (AntiEdecl _ loc)    = locOf loc
-    locOf (AntiEdecls _ loc)   = locOf loc
+    locOf (FuncDef _ loc)                  = locOf loc
+    locOf (DecDef _ loc)                   = locOf loc
+    locOf (EscDef _ loc)                   = locOf loc
+    locOf (ObjCClassDec _ loc)             = locOf loc
+    locOf (ObjCClassIface _ _ _ _ _ _ loc) = locOf loc
+    locOf (ObjCCatIface _ _ _ _ _ loc)     = locOf loc
+    locOf (ObjCProtDec _ loc)              = locOf loc
+    locOf (ObjCProtDef _ _ _ loc)          = locOf loc
+    locOf (ObjCClassImpl _ _ _ _ loc)      = locOf loc
+    locOf (ObjCCatImpl _ _ _ loc)          = locOf loc
+    locOf (ObjCSynDef _ loc)               = locOf loc
+    locOf (ObjCDynDef _ loc)               = locOf loc
+    locOf (ObjCMethDef _ _ loc)            = locOf loc
+    locOf (ObjCCompAlias _ _ loc)          = locOf loc
+    locOf (AntiFunc _ loc)                 = locOf loc
+    locOf (AntiEsc _ loc)                  = locOf loc
+    locOf (AntiEdecl _ loc)                = locOf loc
+    locOf (AntiEdecls _ loc)               = locOf loc
+
+instance Located ObjCIvarDecl where
+    locOf (ObjCIvarVisi _ loc) = locOf loc
+    locOf (ObjCIvarDecl _ loc) = locOf loc
+
+instance Located ObjCVisibilitySpec where
+    locOf (ObjCPrivate loc)   = locOf loc
+    locOf (ObjCPublic loc)    = locOf loc
+    locOf (ObjCProtected loc) = locOf loc
+    locOf (ObjCPackage loc)   = locOf loc
+
+instance Located ObjCIfaceDecl where
+    locOf (ObjCIfaceProp _ _ loc) = locOf loc
+    locOf (ObjCIfaceReq _ loc)    = locOf loc
+    locOf (ObjCIfaceMeth _ loc)   = locOf loc
+    locOf (ObjCIfaceDecl _ loc)   = locOf loc
+
+instance Located ObjCPropAttr where
+    locOf (ObjCGetter _ loc)       = locOf loc
+    locOf (ObjCSetter _ loc)       = locOf loc
+    locOf (ObjCReadonly loc)       = locOf loc
+    locOf (ObjCReadwrite loc)      = locOf loc
+    locOf (ObjCAssign loc)         = locOf loc
+    locOf (ObjCRetain loc)         = locOf loc
+    locOf (ObjCCopy loc)           = locOf loc
+    locOf (ObjCNonatomic loc)      = locOf loc
+    locOf (ObjCAtomic loc)         = locOf loc
+    locOf (ObjCStrong loc)         = locOf loc
+    locOf (ObjCWeak loc)           = locOf loc
+    locOf (ObjCUnsafeRetained loc) = locOf loc
+
+instance Located ObjCMethodReq where
+    locOf (ObjCRequired loc) = locOf loc
+    locOf (ObjCOptional loc) = locOf loc
+
+instance Located ObjCParm where
+    locOf (ObjCParm _ _ _ _ loc) = locOf loc
+
+instance Located ObjCMethodProto where
+    locOf (ObjCMethodProto _ _ _ _ _ _ loc) = locOf loc
 
 instance Located Stm where
-    locOf (Label _ _ loc)       = locOf loc
-    locOf (Case _ _ loc)        = locOf loc
-    locOf (Default _ loc)       = locOf loc
-    locOf (Exp _ loc)           = locOf loc
-    locOf (Block _ loc)         = locOf loc
-    locOf (If _ _ _ loc)        = locOf loc
-    locOf (Switch _ _ loc)      = locOf loc
-    locOf (While _ _ loc)       = locOf loc
-    locOf (DoWhile _ _ loc)     = locOf loc
-    locOf (For _ _ _ _ loc)     = locOf loc
-    locOf (Goto _ loc)          = locOf loc
-    locOf (Continue loc)        = locOf loc
-    locOf (Break loc)           = locOf loc
-    locOf (Return _ loc)        = locOf loc
-    locOf (Pragma _ loc)        = locOf loc
-    locOf (Asm _ _ _ _ _ _ loc) = locOf loc
-    locOf (AntiPragma _ loc)    = locOf loc
-    locOf (AntiStm _ loc)       = locOf loc
-    locOf (AntiStms _ loc)      = locOf loc
+    locOf (Label _ _ loc)             = locOf loc
+    locOf (Case _ _ loc)              = locOf loc
+    locOf (Default _ loc)             = locOf loc
+    locOf (Exp _ loc)                 = locOf loc
+    locOf (Block _ loc)               = locOf loc
+    locOf (If _ _ _ loc)              = locOf loc
+    locOf (Switch _ _ loc)            = locOf loc
+    locOf (While _ _ loc)             = locOf loc
+    locOf (DoWhile _ _ loc)           = locOf loc
+    locOf (For _ _ _ _ loc)           = locOf loc
+    locOf (Goto _ loc)                = locOf loc
+    locOf (Continue loc)              = locOf loc
+    locOf (Break loc)                 = locOf loc
+    locOf (Return _ loc)              = locOf loc
+    locOf (Pragma _ loc)              = locOf loc
+    locOf (Asm _ _ _ _ _ _ loc)       = locOf loc
+    locOf (ObjCTry _ _ _ loc)         = locOf loc
+    locOf (ObjCThrow _ loc)           = locOf loc
+    locOf (ObjCSynchronized _ _ loc)  = locOf loc
+    locOf (ObjCAutoreleasepool _ loc) = locOf loc
+    locOf (AntiPragma _ loc)          = locOf loc
+    locOf (AntiStm _ loc)             = locOf loc
+    locOf (AntiStms _ loc)            = locOf loc
 
 instance Located BlockItem where
     locOf (BlockDecl decl)       = locOf decl
     locOf (BlockStm stm)         = locOf stm
     locOf (AntiBlockItem _ loc)  = locOf loc
     locOf (AntiBlockItems _ loc) = locOf loc
+
+instance Located ObjCCatch where
+    locOf (ObjCCatch _ _ loc) = locOf loc
 
 instance Located Const where
     locOf (IntConst _ _ _ loc)          = locOf loc
@@ -557,15 +711,33 @@ instance Located Exp where
     locOf (CompoundLit _ _ loc)   = locOf loc
     locOf (StmExpr _ loc)         = locOf loc
     locOf (BuiltinVaArg _ _ loc)  = locOf loc
-    locOf (ObjCMsg _ _ _ _ loc)   = locOf loc
+    locOf (BlockLit _ _ _ loc)    = locOf loc
+    locOf (ObjCMsg _ _ _ loc)     = locOf loc
+    locOf (ObjCLitConst _ _ loc)  = locOf loc
+    locOf (ObjCLitString _ loc)   = locOf loc
+    locOf (ObjCLitBool _ loc)     = locOf loc
+    locOf (ObjCLitArray _ loc)    = locOf loc
+    locOf (ObjCLitDict _ loc)     = locOf loc
+    locOf (ObjCLitBoxed _ loc)    = locOf loc
+    locOf (ObjCEncode _ loc)      = locOf loc
+    locOf (ObjCProtocol _ loc)    = locOf loc
+    locOf (ObjCSelector _ loc)    = locOf loc
     locOf (AntiExp _ loc)         = locOf loc
     locOf (AntiArgs _ loc)        = locOf loc
+
+instance Located BlockType where
+    locOf (BlockVoid loc)    = locOf loc
+    locOf (BlockParam _ loc) = locOf loc
+    locOf (BlockType _ loc)  = locOf loc
 
 instance Located ObjCRecv where
     locOf (ObjCRecvSuper loc)       = locOf loc
     locOf (ObjCRecvExp _ loc)       = locOf loc
     locOf (ObjCRecvClassName _ loc) = locOf loc
     locOf (ObjCRecvTypeName _ loc)  = locOf loc
+
+instance Located ObjCArg where
+    locOf (ObjCArg _ _ loc) = locOf loc
 
 ctypedef :: Id -> Decl -> [Attr] -> Typedef
 ctypedef ident decl attrs =

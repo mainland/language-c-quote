@@ -238,14 +238,25 @@ identifier beg end =
     ident :: String
     ident = inputString beg end
 
+      -- NB: Due to the format of the keyword table, the lexer can't currently produce different
+      --     keyword tokens for the same lexeme in dependence on the active language extension.
+      --     We need to distinguish between the 'private' keyword of OpenCL and Objective-C, though,
+      --     to avoid a large number of shift-reduce conflicts. Hence, the ugly special case below.
     keyword :: Token -> P (L Token)
+    keyword TCLprivate =
+        do isObjC <- useExts objcExts
+           if isObjC
+             then
+               return $ locateTok beg end TObjCprivate
+             else
+               return $ locateTok beg end TCLprivate
     keyword tok =
         return $ locateTok beg end tok
 
     nonKeyword :: P (L Token)
     nonKeyword = do
-        typeTest  <- isTypedef ident
-        classTest <- isTypedef ident
+        typeTest  <- isTypedef  ident
+        classTest <- isClassdef ident
         return $
           if typeTest
           then locateTok beg end (Tnamed ident)

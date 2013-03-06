@@ -1,7 +1,8 @@
 -- |
 -- Module      :  Language.C.Parser.Tokens
 -- Copyright   :  (c) Harvard University 2006-2011
---                (c) Geoffrey Mainland 2011-2012
+--                (c) Geoffrey Mainland 2011-2013
+--                (c) Manuel M T Chakravarty 2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 
@@ -151,10 +152,40 @@ data Token = Teof
            | TCLwriteonly
            | TCLkernel
            
+           -- Clang (currently active is Objective-C is active)
+           | T__block
+           
            -- Objective-C
            | TObjCnamed String
            | TObjCat
+           | TObjCautoreleasepool
+           | TObjCcatch
            | TObjCclass
+           | TObjCcompatibility_alias
+           | TObjCdynamic
+           | TObjCencode
+           | TObjCend
+           | TObjCfinally
+           | TObjCimplementation
+           | TObjCinterface
+           | TObjCNO
+           | TObjCprivate
+           | TObjCoptional
+           | TObjCpublic
+           | TObjCproperty
+           | TObjCprotected
+           | TObjCprotocol
+           | TObjCpackage
+           | TObjCrequired
+           | TObjCselector
+           | TObjCsynchronized
+           | TObjCsynthesize
+           | TObjCthrow
+           | TObjCtry
+           | TObjCYES
+           | TObjC__weak
+           | TObjC__strong
+           | TObjC__unsafe_retained
 
            -- Antiquoting
            | Ttypename
@@ -211,7 +242,45 @@ instance Show Token where
     show (TcharConst (s, _))            = s
     show (TstringConst (s, _))          = s
     show (Tidentifier s)                = s
-    show t = fromMaybe (error "internal error: unknown token")
+    show (Tnamed s)                     = s
+    show (TObjCnamed s)                 = s
+
+    show (Tanti_id s)                   = "$id:" ++ s
+    show (Tanti_int s)                  = "$int:" ++ s
+    show (Tanti_uint s)                 = "$uint:" ++ s
+    show (Tanti_lint s)                 = "$lint:" ++ s
+    show (Tanti_ulint s)                = "$ulint:" ++ s
+    show (Tanti_llint s)                = "$llint:" ++ s
+    show (Tanti_ullint s)               = "$ullint:" ++ s
+    show (Tanti_float s)                = "$float:" ++ s
+    show (Tanti_double s)               = "$double:" ++ s
+    show (Tanti_long_double s)          = "$longdouble:" ++ s
+    show (Tanti_char s)                 = "$char:" ++ s
+    show (Tanti_string s)               = "$string:" ++ s
+    show (Tanti_exp s)                  = "$exp:" ++ s
+    show (Tanti_func s)                 = "$func:" ++ s
+    show (Tanti_args s)                 = "$args:" ++ s
+    show (Tanti_decl s)                 = "$decl:" ++ s
+    show (Tanti_decls s)                = "$decls:" ++ s
+    show (Tanti_sdecl s)                = "$sdecl:" ++ s
+    show (Tanti_sdecls s)               = "$sdecls:" ++ s
+    show (Tanti_enum s)                 = "$enum:" ++ s
+    show (Tanti_enums s)                = "$enums:" ++ s
+    show (Tanti_esc s)                  = "$esc:" ++ s
+    show (Tanti_edecl s)                = "$edecl:" ++ s
+    show (Tanti_edecls s)               = "$edecls:" ++ s
+    show (Tanti_item s)                 = "$item:" ++ s
+    show (Tanti_items s)                = "$items:" ++ s
+    show (Tanti_stm s)                  = "$stm:" ++ s
+    show (Tanti_stms s)                 = "$stms:" ++ s
+    show (Tanti_type s)                 = "$type:" ++ s
+    show (Tanti_spec s)                 = "$spec:" ++ s
+    show (Tanti_param s)                = "$param:" ++ s
+    show (Tanti_params s)               = "$params:" ++ s
+    show (Tanti_pragma s)               = "$pragma:" ++ s
+    show (Tanti_init s)                 = "$init:" ++ s
+    show (Tanti_inits s)                = "$inits:" ++ s
+    show t = fromMaybe (error "language-c-quote: internal error: unknown token")
                        (lookup t tokenStrings)
 
 tokenStrings :: [(Token, String)]
@@ -327,7 +396,7 @@ tokenStrings = [(Tlparen,     "("),
                 --
                 -- OpenCL extensions
                 --
-                (TCLprivate,   "__private"),
+                (TCLprivate,   "private"),    -- must be without '__' prefix for Objective-C
                 (TCLlocal,     "__local"),
                 (TCLglobal,    "__global"),
                 (TCLconstant,  "__constant"),
@@ -336,10 +405,44 @@ tokenStrings = [(Tlparen,     "("),
                 (TCLkernel,    "__kernel"),
 
                 --
+                -- Clang extensions
+                --
+                (T__block                , "__block"),
+
+                --
                 -- Objective-C extensions
                 --
-                (TObjCat,    "@"),
-                (TObjCclass, "class")
+                (TObjCat                 , "@"),
+                (TObjCautoreleasepool    , "autoreleasepool"),
+                (TObjCcatch              , "catch"),
+                (TObjCclass              , "class"),
+                (TObjCcompatibility_alias, "compatibility_alias"),
+                (TObjCdynamic            , "dynamic"),
+                (TObjCencode             , "encode"),
+                (TObjCend                , "end"),
+                (TObjCfinally            , "finally"),
+                (TObjCimplementation     , "implementation"),
+                (TObjCinterface          , "interface"),
+                (TObjCNO                 , "NO"),
+                (TObjCoptional           , "optional"),
+                (TObjCprivate            , "private"),
+                (TObjCpublic             , "public"),
+                (TObjCproperty           , "property"),
+                (TObjCprotected          , "protected"),
+                (TObjCprotocol           , "protocol"),
+                (TObjCpackage            , "package"),
+                (TObjCrequired           , "required"),
+                (TObjCselector           , "selector"),
+                (TObjCsynchronized       , "synchronized"),
+                (TObjCsynthesize         , "synthesize"),
+                (TObjCthrow              , "throw"),
+                (TObjCtry                , "try"),
+                (TObjCYES                , "YES"),
+                (TObjC__weak             , "__weak"),
+                (TObjC__strong           , "__strong"),
+                (TObjC__unsafe_retained  , "__unsafe_retained"),
+
+                (Ttypename, "typename")
                 ]
 
 keywords :: [(String,      Token,      Maybe [Extensions])]
@@ -407,7 +510,7 @@ keywords = [("auto",       Tauto,      Nothing),
             ("__restrict__", TCUDArestrict, Just [CUDA]),
             ("__noinline__", TCUDAnoinline, Just [CUDA]),
 
-            ("private",      TCLprivate,   Just [OpenCL]),
+            ("private",      TCLprivate,   Just [OpenCL, ObjC]),  -- see Lexer.identifier for 'TObjCprivate'
             ("__private",    TCLprivate,   Just [OpenCL]),
             ("local",        TCLlocal,     Just [OpenCL]),
             ("__local",      TCLlocal,     Just [OpenCL]),
@@ -422,7 +525,35 @@ keywords = [("auto",       Tauto,      Nothing),
             ("kernel",       TCLkernel,    Just [OpenCL]),
             ("__kernel",     TCLkernel,    Just [OpenCL]),
             
-            ("class", TObjCclass, Just [ObjC])
+            ("__block",             T__block,                 Just [ObjC]),
+
+            ("autoreleasepool",     TObjCautoreleasepool,     Just [ObjC]),
+            ("catch",               TObjCcatch,               Just [ObjC]),
+            ("class",               TObjCclass,               Just [ObjC]),
+            ("compatibility_alias", TObjCcompatibility_alias, Just [ObjC]),
+            ("dynamic",             TObjCdynamic,             Just [ObjC]),
+            ("encode",              TObjCencode,              Just [ObjC]),
+            ("end",                 TObjCend,                 Just [ObjC]),
+            ("finally",             TObjCfinally,             Just [ObjC]),
+            ("implementation",      TObjCimplementation,      Just [ObjC]),
+            ("interface",           TObjCinterface,           Just [ObjC]),
+            ("NO",                  TObjCNO,                  Just [ObjC]),
+            ("optional",            TObjCoptional,            Just [ObjC]),
+            ("public",              TObjCpublic,              Just [ObjC]),
+            ("property",            TObjCproperty,            Just [ObjC]),
+            ("protected",           TObjCprotected,           Just [ObjC]),
+            ("package",             TObjCpackage,             Just [ObjC]),
+            ("protocol",            TObjCprotocol,            Just [ObjC]),
+            ("required",            TObjCrequired,            Just [ObjC]),
+            ("selector",            TObjCselector,            Just [ObjC]),
+            ("synchronized",        TObjCsynchronized,        Just [ObjC]),
+            ("synthesize",          TObjCsynthesize,          Just [ObjC]),
+            ("throw",               TObjCthrow,               Just [ObjC]),
+            ("try",                 TObjCtry,                 Just [ObjC]),
+            ("YES",                 TObjCYES,                 Just [ObjC]),
+            ("__weak",              TObjC__weak,              Just [ObjC]),
+            ("__strong",            TObjC__strong,            Just [ObjC]),
+            ("__unsafe_retained",   TObjC__unsafe_retained,   Just [ObjC])
            ]
 
 type ExtensionsInt = Word32
