@@ -24,7 +24,7 @@ tests = [exp_id, exp_int, exp_float, exp_char, exp_string,
          exp_exp, exp_func, exp_args, exp_decl, exp_sdecl,
          exp_enum, exp_edecl, exp_stm, exp_param, exp_ty,
          pat_args, exp_hexp,
-         exp_init, exp_inits]
+         exp_init, exp_inits, exp_item]
 
 exp_id :: Test
 exp_id = testCase "exp id" $ [cexp|$id:ident|] @=? [cexp|x|]
@@ -183,3 +183,11 @@ exp_inits = testCase "initializers" $
   where
     initializer1 = [cinit|{.d = 1}|]
     initializer2 = [cinit|{.a = 10}|]
+
+exp_item :: Test
+exp_item = testCase "exp item" $
+    [cfun|int add(int x) { int y = 2; return x + y; }|]
+      @=? [cfun|int add(int x) { $items:([item1, item2]) }|]
+  where
+    item1 = [citem|int y = 2;|]
+    item2 = [citem|return x + y;|]

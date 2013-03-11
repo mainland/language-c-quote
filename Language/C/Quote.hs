@@ -38,6 +38,9 @@
 --
 -- [@cstm@] Statement, of type @'Stm'@.
 --
+-- [@citem@] Block item, of type @'BlockItem'@. A block item is either a
+-- declaration or a statement.
+--
 -- [@cfun@] Function definition, of type @'Func'@.
 --
 -- [@cinit@] Initializer, of type @'Initializer'@.
