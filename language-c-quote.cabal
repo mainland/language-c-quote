@@ -68,7 +68,7 @@ library
     Language.C.Smart
     Language.C.Syntax
 
-  ghc-options: -Wall -Werror
+  ghc-options: -Wall
 
 test-suite unit
   type:             exitcode-stdio-1.0
