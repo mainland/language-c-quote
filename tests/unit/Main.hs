@@ -179,7 +179,7 @@ exp_init = testCase "initializer" $
 
 exp_inits :: Test
 exp_inits = testCase "initializers" $
-    [cinit|{$init:initializer1, $init:initializer2}|] @=? [cinit|{{.d = 1},{.a = 10}}|]
+    [cinit|{$inits:([initializer1, initializer2])}|] @=? [cinit|{{.d = 1},{.a = 10}}|]
   where
     initializer1 = [cinit|{.d = 1}|]
     initializer2 = [cinit|{.a = 10}|]

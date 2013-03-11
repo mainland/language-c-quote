@@ -106,10 +106,10 @@ qqInitializerE :: C.Initializer -> Maybe (Q Exp)
 qqInitializerE (C.AntiInit v _)  = Just $ antiVarE v
 qqInitializerE _                 = Nothing
 
-qqInitializerListE :: [C.Initializer] -> Maybe (Q Exp)
+qqInitializerListE :: [(Maybe C.Designation, C.Initializer)] -> Maybe (Q Exp)
 qqInitializerListE [] = Just [|[]|]
-qqInitializerListE (C.AntiInits v _ : fields) =
-    Just [|$(antiVarE v) ++ $(dataToExpQ qqExp fields)|]
+qqInitializerListE ((Nothing, C.AntiInits v _) : fields) =
+    Just [|[(Nothing, init) | init <- $(antiVarE v)] ++ $(dataToExpQ qqExp fields)|]
 qqInitializerListE (field : fields) =
     Just [|$(dataToExpQ qqExp field) : $(dataToExpQ qqExp fields)|]
 
