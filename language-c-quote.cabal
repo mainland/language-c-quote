@@ -1,5 +1,5 @@
 name:          language-c-quote
-version:       0.7.1
+version:       0.7.2
 cabal-version: >= 1.10
 license:       BSD3
 license-file:  LICENSE
