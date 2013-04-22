@@ -497,7 +497,7 @@ instance Pretty ObjCIfaceDecl where
         text "@property"
         <+> case attrs of
               [] -> empty
-              _  -> parensList (map ppr attrs)
+              _  -> parensList (map ppr attrs) <> space
         <> ppr field
         <> semi
     ppr (ObjCIfaceReq req loc)          
@@ -529,12 +529,11 @@ instance Pretty ObjCMethodReq where
 instance Pretty ObjCParm where
     ppr (ObjCParm sel ty attrs arg loc)
       = pprLoc loc $
-        maybe empty ppr sel
-        <> case (sel, arg) of
-             (Nothing , Nothing) -> error $ "pretty printing 'ObjCParm': empty " ++ show loc
-             (Just sid, Nothing) -> ppr sid
-             (_       , Just pid) 
-               -> maybe empty ppr sel <> colon <> maybe empty (parens . ppr) ty <> ppr attrs <> ppr pid
+        case (sel, arg) of
+         (Nothing , Nothing) -> error $ "pretty printing 'ObjCParm': empty " ++ show loc
+         (Just sid, Nothing) -> ppr sid
+         (_       , Just pid) 
+           -> maybe empty ppr sel <> colon <> maybe empty (parens . ppr) ty <> ppr attrs <> ppr pid
 
 instance Pretty ObjCMethodProto where
     ppr (ObjCMethodProto isClassMeth resTy attrs1 parms vargs attrs2 loc) 
