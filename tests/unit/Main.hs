@@ -219,7 +219,7 @@ exp_item = testCase "exp item" $
 --   imaginary quad, imaginary quadn, floatnxm, doublenxm
 
 ocl_ty :: Test
-ocl_ty =  testCase "OpenCL Types" $ mapM_ refl
+ocl_ty =  testCase "OpenCL Types" $ mapM_ refl $
   [ -- Bultin Scalar types:
     [OCL.cty|bool|]
   , [OCL.cty|char|]
@@ -239,9 +239,8 @@ ocl_ty =  testCase "OpenCL Types" $ mapM_ refl
   , [OCL.cty|half|]
   , [OCL.cty|size_t|]
   , [OCL.cty|ptrdiff_t|]
-  , [OCL.cty|intdiff_t|]
-  , [OCL.cty|intprt_t|]
-  , [OCL.cty|uintprt_t|]
+  , [OCL.cty|intptr_t|]
+  , [OCL.cty|uintptr_t|]
   , [OCL.cty|void|]
   ] ++
   -- Builtin vector types (and reserved vector types)
