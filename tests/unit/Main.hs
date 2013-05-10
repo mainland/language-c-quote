@@ -1,13 +1,18 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Main where
 
 import Test.Framework
 import Test.Framework.Providers.HUnit
-import Test.HUnit ((@=?))
+import Test.HUnit ((@=?), listAssert)
+
+import Language.Haskell.TH.Lib
+import Language.Haskell.TH.Quote
 
 import Language.C.Quote.C
+import qualified Language.C.Quote.OpenCL as OCL
 import System.Exit (exitFailure, exitSuccess)
 
 #if !MIN_VERSION_template_haskell(2,7,0)
@@ -24,7 +29,7 @@ tests = [exp_id, exp_int, exp_float, exp_char, exp_string,
          exp_exp, exp_func, exp_args, exp_decl, exp_sdecl,
          exp_enum, exp_edecl, exp_stm, exp_param, exp_ty,
          pat_args, exp_hexp,
-         exp_init, exp_inits, exp_item]
+         exp_init, exp_inits, exp_item, ocl_ty]
 
 exp_id :: Test
 exp_id = testCase "exp id" $ [cexp|$id:ident|] @=? [cexp|x|]
@@ -191,3 +196,73 @@ exp_item = testCase "exp item" $
   where
     item1 = [citem|int y = 2;|]
     item2 = [citem|return x + y;|]
+
+-------------------------------------------------------------------------------
+-- OpenCL tests
+-------------------------------------------------------------------------------
+
+-- | Make sure all the OpenCL types and reserved types parse with OCL.cty
+-- As of OpenCL 1.2 the types are: http://www.khronos.org/files/opencl-1-2-quick-reference-card.pdf
+-- reproduced here: 
+--   * Builtin Scalar types: bool, char, unsigned char, uchar, short, unsigned short, ushort,
+--   int, unsigned int, uint, long, unsigned long, ulong, float, double, half, size_t, 
+--   ptrdiff_t, intptr_t, uintptr_t, void
+--   * Bultin Vector data types of sizes with n = 2, 3, 4, 8, or 16:
+--   charn, ucharn, shortn, ushortn, intn, uintn, longn, ulongn, floatn, doublen
+--   * Other builtin types:
+--   image2d_t, image3d_t, image2d_array_t, image1d_t, image1d_buffer_t, image1d_array_t,
+--   sampler_t, event_t 
+--   * Reserved types with n,m = 2,3,4,8, or 16:
+--   booln, halfn, quad, quadn, complex half, complex halfn, imaginary half, imaginary halfn,
+--   complex float, complex floatn, imaginary float, imaginary floatn, complex double,
+--   complex doublen, imaginary double, imaginary doublen, complex quad, complex quadn,
+--   imaginary quad, imaginary quadn, floatnxm, doublenxm
+
+ocl_ty :: Test
+ocl_ty =  testCase "OpenCL Types" $ mapM_ refl $
+  [ -- Bultin Scalar types:
+    [OCL.cty|bool|]
+  , [OCL.cty|char|]
+  , [OCL.cty|unsigned char|]
+  , [OCL.cty|uchar|]
+  , [OCL.cty|short|]
+  , [OCL.cty|unsigned short|]
+  , [OCL.cty|ushort|]
+  , [OCL.cty|int|]
+  , [OCL.cty|unsigned int|]
+  , [OCL.cty|uint|]
+  , [OCL.cty|long|]
+  , [OCL.cty|unsigned long|]
+  , [OCL.cty|ulong|]
+  , [OCL.cty|float|]
+  , [OCL.cty|double|]
+  , [OCL.cty|half|]
+  , [OCL.cty|size_t|]
+  , [OCL.cty|ptrdiff_t|]
+  , [OCL.cty|intptr_t|]
+  , [OCL.cty|uintptr_t|]
+  , [OCL.cty|void|]
+  ] ++
+  -- Builtin vector types (and reserved vector types)
+  $(let mkTypeNs ts ns = listE $ [ quoteExp OCL.cty (t ++ show n) | t <- ts, n <- ns ]
+    in  mkTypeNs ["char","uchar","short","int","long","ulong","float","double"
+                 ,"bool","half","quad"]
+                 [2,3,4,8,16]
+  ) ++
+  -- Other builtin types:
+  [ [OCL.cty|image2d_t|]
+  , [OCL.cty|image3d_t|]
+  , [OCL.cty|image2d_array_t|]
+  , [OCL.cty|image1d_t|]
+  , [OCL.cty|image1d_buffer_t|]
+  , [OCL.cty|image1d_array_t|]
+  , [OCL.cty|sampler_t|]
+  , [OCL.cty|event_t|]
+  ] ++
+  -- matrix reserved types:
+  $(let mkTypeNxMs ts ns = listE $ [ quoteExp OCL.cty (t ++ show n ++ "x" ++ show m)
+                                   | t <- ts, n <- ns, m <- ns ]
+    in  mkTypeNxMs ["float", "double"] [2,3,4,8,16]
+  )
+  -- TODO: add complex and imaginary reserved types
+  where refl x = x @=? x
