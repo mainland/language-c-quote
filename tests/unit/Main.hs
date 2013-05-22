@@ -7,7 +7,9 @@ import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.HUnit ((@=?))
 
+import Data.Loc (SrcLoc, noLoc)
 import Language.C.Quote.C
+import qualified Language.C.Syntax as C
 import System.Exit (exitFailure, exitSuccess)
 
 #if !MIN_VERSION_template_haskell(2,7,0)
@@ -27,9 +29,16 @@ tests = [exp_id, exp_int, exp_float, exp_char, exp_string,
          exp_init, exp_inits, exp_item]
 
 exp_id :: Test
-exp_id = testCase "exp id" $ [cexp|$id:ident|] @=? [cexp|x|]
+exp_id = testCase "exp id" $ [cexp|$id:f($id:x, $id:y)|] @=? [cexp|f(x, y)|]
   where
-    ident = "x"
+    f :: String
+    f = "f"
+
+    x :: SrcLoc -> C.Id
+    x = C.Id "x"
+
+    y :: C.Id
+    y = C.Id "y" noLoc
 
 exp_int :: Test
 exp_int = testCase "exp int" $

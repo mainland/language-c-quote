@@ -40,6 +40,18 @@ import Language.Haskell.TH.Syntax
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
 
+class ToIdent a where
+    toIdent :: a -> SrcLoc -> C.Id
+
+instance ToIdent C.Id where
+    toIdent ident _ = ident
+
+instance ToIdent (SrcLoc -> C.Id) where
+    toIdent ident = ident
+
+instance ToIdent String where
+    toIdent s loc = C.Id s loc
+
 class ToExp a where
     toExp :: a -> SrcLoc -> C.Exp
 
@@ -77,7 +89,7 @@ qqStringE :: String -> Maybe (Q Exp)
 qqStringE s = Just $ litE $ stringL s
 
 qqIdE :: C.Id -> Maybe (Q Exp)
-qqIdE (C.AntiId v loc)  = Just [|C.Id $(antiVarE v) $(qqLocE loc)|]
+qqIdE (C.AntiId v loc)  = Just [|toIdent $(antiVarE v) $(qqLocE loc)|]
 qqIdE _                 = Nothing
 
 qqDeclSpecE :: C.DeclSpec -> Maybe (Q Exp)
