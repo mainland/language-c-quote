@@ -31,11 +31,16 @@ exts = [C.OpenCL]
 
 typenames :: [String]
 typenames =
-    concatMap typeN
-    ["char", "uchar", "short", "ushort", "int", "uint",
-     "long" , "ulong", "float", "double", "bool", "half", "quad"] ++
-    ["uchar", "ushort", "uint", "ulong",
-    "half", "quad", "image2d_t", "image3d_t", "sampler_t", "event_t"]
+    ["bool", "char", "uchar", "short", "ushort", "int", "uint",
+     "long" , "ulong", "float", "half"]
+    ++ ["size_t", "ptrdiff_t", "intptr_t", "uintpyt_t", "void"]
+    ++ concatMap typeN ["char", "uchar", "short", "ushort",
+                        "int", "uint", "long", "ulong", "float"]
+    ++ ["image2d_t", "image3d_t", "sampler_t", "event_t"]
+    -- OpenCL 1.2
+    ++ ["double"]
+    ++ concatMap typeN ["double"]
+    ++ ["image2d_array_t", "image1d_t", "image1d_buffer_t", "image1d_array_t"]
 
 typeN :: String -> [String]
 typeN typename = [typename ++ show n | n <- [2, 3, 4, 8, 16 :: Integer]]
