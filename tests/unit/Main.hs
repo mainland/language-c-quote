@@ -22,7 +22,11 @@ main :: IO ()
 main = defaultMain tests
 
 tests :: [Test]
-tests = [exp_id, exp_int, exp_float, exp_char, exp_string,
+tests = [exp_id,
+         exp_int,
+         exp_octint,
+         exp_hexint, exp_hexint_u, exp_hexint_ul, exp_hexint_ull,
+         exp_float, exp_char, exp_string,
          exp_exp, exp_func, exp_args, exp_decl, exp_sdecl,
          exp_enum, exp_edecl, exp_stm, exp_param, exp_ty,
          pat_args, exp_hexp,
@@ -47,6 +51,26 @@ exp_int = testCase "exp int" $
       @=? [cexp|1 + 1U + 1L + 1UL|]
   where
     one = 1
+
+exp_octint :: Test
+exp_octint = testCase "exp octint" $
+    (C.Const (C.IntConst "010" C.Signed 8 noLoc) noLoc) @=? [cexp|010|]
+
+exp_hexint :: Test
+exp_hexint = testCase "exp hexint" $
+    (C.Const (C.IntConst "0x10" C.Signed 16 noLoc) noLoc) @=? [cexp|0x10|]
+
+exp_hexint_u :: Test
+exp_hexint_u = testCase "exp hexint_u" $
+    (C.Const (C.IntConst "0x10U" C.Unsigned 16 noLoc) noLoc) @=? [cexp|0x10U|]
+
+exp_hexint_ul :: Test
+exp_hexint_ul = testCase "exp hexint_ul" $
+    (C.Const (C.LongIntConst "0x10UL" C.Unsigned 16 noLoc) noLoc) @=? [cexp|0x10UL|]
+
+exp_hexint_ull :: Test
+exp_hexint_ull = testCase "exp hexint_ull" $
+    (C.Const (C.LongLongIntConst "0x10ULL" C.Unsigned 16 noLoc) noLoc) @=? [cexp|0x10ULL|]
 
 exp_float :: Test
 exp_float = testCase "exp float" $
