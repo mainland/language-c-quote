@@ -84,6 +84,7 @@ c :-
  "$ulint:"   / { allowAnti } { lexAnti Tanti_ulint }
  "$llint:"   / { allowAnti } { lexAnti Tanti_llint }
  "$ullint:"  / { allowAnti } { lexAnti Tanti_ullint }
+ "$hexint:"  / { allowAnti } { lexAnti Tanti_hexint }
  "$float:"   / { allowAnti } { lexAnti Tanti_float }
  "$double:"  / { allowAnti } { lexAnti Tanti_double }
  "$ldouble:" / { allowAnti } { lexAnti Tanti_long_double }

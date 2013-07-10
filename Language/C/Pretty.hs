@@ -735,6 +735,7 @@ instance Pretty Const where
     ppr (AntiULInt v _)       = pprAnti "ulint"   v
     ppr (AntiLInt v _)        = pprAnti "lint"    v
     ppr (AntiULLInt v _)      = pprAnti "ullint"  v
+    ppr (AntiHEXInt v _)      = pprAnti "hexint"  v
     ppr (AntiLLInt v _)       = pprAnti "llint"   v
     ppr (AntiUInt v _)        = pprAnti "uint"    v
     ppr (AntiInt v _)         = pprAnti "int"     v

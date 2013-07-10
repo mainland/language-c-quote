@@ -44,10 +44,11 @@ exp_id = testCase "exp id" $ [cexp|$id:f($id:x, $id:y)|] @=? [cexp|f(x, y)|]
 
 exp_int :: Test
 exp_int = testCase "exp int" $
-    [cexp|$int:one + $uint:one + $lint:one + $ulint:one|]
-      @=? [cexp|1 + 1U + 1L + 1UL|]
+    [cexp|$int:one + $uint:one + $lint:one + $ulint:one + $hexint:sixteen|]
+      @=? [cexp|1 + 1U + 1L + 1UL + 0x10|]
   where
     one = 1
+    sixteen = 16
 
 exp_octint :: Test
 exp_octint = testCase "exp octint" $

@@ -21,6 +21,7 @@ module Language.C.Quote.Base (
 
 import Control.Monad ((>=>))
 import qualified Data.ByteString.Char8 as B
+import Numeric
 import Data.Data (Data(..))
 import Data.Generics (extQ)
 import Data.Loc
@@ -198,6 +199,11 @@ qqConstE = go
                            (fromIntegral $(antiVarE v))
                            $(qqLocE loc)|]
 
+    go (C.AntiHEXInt v loc) =
+        Just [|C.IntConst      ("0x" ++ $(hexConst (antiVarE v))) C.Signed
+                               (fromIntegral $(antiVarE v))
+                               $(qqLocE loc)|]
+
     go (C.AntiLInt v loc) =
         Just [|C.LongIntConst  ($(intConst (antiVarE v)) ++ "L") C.Signed
                                (fromIntegral $(antiVarE v))
@@ -245,6 +251,9 @@ qqConstE = go
 
     intConst :: ExpQ -> ExpQ
     intConst e = [|show $(e)|]
+
+    hexConst :: ExpQ -> ExpQ
+    hexConst e = [|showHex $(e) ""|]
 
     floatConst :: ExpQ -> ExpQ
     floatConst e = [|show (fromRational $(e) :: Double)|]
