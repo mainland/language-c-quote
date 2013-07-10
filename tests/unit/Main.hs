@@ -22,7 +22,7 @@ main :: IO ()
 main = defaultMain tests
 
 tests :: [Test]
-tests = [exp_id, exp_int, exp_float, exp_char, exp_string,
+tests = [exp_id, exp_int, exp_oct, exp_hex, exp_float, exp_char, exp_string,
          exp_exp, exp_func, exp_args, exp_decl, exp_sdecl,
          exp_enum, exp_edecl, exp_stm, exp_param, exp_ty,
          pat_args, exp_hexp,
@@ -46,6 +46,14 @@ exp_int = testCase "exp int" $
       @=? [cexp|1 + 1U + 1L + 1UL|]
   where
     one = 1
+
+exp_oct :: Test
+exp_oct = testCase "exp oct" $
+    (C.Const (C.IntConst "010" C.Signed 8 noLoc) noLoc) @=? [cexp|010|]
+
+exp_hex :: Test
+exp_hex = testCase "exp hex" $
+    (C.Const (C.IntConst "0x10" C.Signed 16 noLoc) noLoc) @=? [cexp|0x10|]
 
 exp_float :: Test
 exp_float = testCase "exp float" $
