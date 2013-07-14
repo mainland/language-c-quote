@@ -199,6 +199,27 @@ qqConstE = go
                            (fromIntegral $(antiVarE v))
                            $(qqLocE loc)|]
 
+    go (C.AntiLInt v loc) =
+        Just [|C.LongIntConst  ($(intConst (antiVarE v)) ++ "L") C.Signed
+                               (fromIntegral $(antiVarE v))
+                               $(qqLocE loc)|]
+
+    go (C.AntiULInt v loc) =
+        Just [|C.LongIntConst  ($(intConst (antiVarE v)) ++ "UL") C.Unsigned
+                               (fromIntegral $(antiVarE v))
+                               $(qqLocE loc)|]
+
+    go (C.AntiLLInt v loc) =
+        Just [|C.LongLongIntConst  ($(intConst (antiVarE v)) ++ "LL") C.Signed
+                               (fromIntegral $(antiVarE v))
+                               $(qqLocE loc)|]
+
+    go (C.AntiULLInt v loc) =
+        Just [|C.LongLongIntConst  ($(intConst (antiVarE v)) ++ "ULL") C.Unsigned
+                               (fromIntegral $(antiVarE v))
+                               $(qqLocE loc)|]
+
+
     go (C.AntiHexInt v loc) =
         Just [|C.IntConst      ("0x" ++ $(hexConst (antiVarE v))) C.Signed
                                (fromIntegral $(antiVarE v))
@@ -228,27 +249,6 @@ qqConstE = go
         Just [|C.LongLongIntConst  ("0x" ++ $(hexConst (antiVarE v)) ++ "ULL") C.Unsigned
                                (fromIntegral $(antiVarE v))
                                $(qqLocE loc)|]
-
-    go (C.AntiLInt v loc) =
-        Just [|C.LongIntConst  ($(intConst (antiVarE v)) ++ "L") C.Signed
-                               (fromIntegral $(antiVarE v))
-                               $(qqLocE loc)|]
-
-    go (C.AntiULInt v loc) =
-        Just [|C.LongIntConst  ($(intConst (antiVarE v)) ++ "UL") C.Unsigned
-                               (fromIntegral $(antiVarE v))
-                               $(qqLocE loc)|]
-
-    go (C.AntiLLInt v loc) =
-        Just [|C.LongLongIntConst  ($(intConst (antiVarE v)) ++ "LL") C.Signed
-                               (fromIntegral $(antiVarE v))
-                               $(qqLocE loc)|]
-
-    go (C.AntiULLInt v loc) =
-        Just [|C.LongLongIntConst  ($(intConst (antiVarE v)) ++ "ULL") C.Unsigned
-                               (fromIntegral $(antiVarE v))
-                               $(qqLocE loc)|]
-
 
 
     go (C.AntiFloat v loc) =
