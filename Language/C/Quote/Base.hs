@@ -220,12 +220,12 @@ qqConstE = go
                                $(qqLocE loc)|]
 
     go (C.AntiLLHexInt v loc) =
-        Just [|C.LongIntConst  ("0x" ++ $(hexConst (antiVarE v)) ++ "LL") C.Signed
+        Just [|C.LongLongIntConst  ("0x" ++ $(hexConst (antiVarE v)) ++ "LL") C.Signed
                                (fromIntegral $(antiVarE v))
                                $(qqLocE loc)|]
 
     go (C.AntiULLHexInt v loc) =
-        Just [|C.LongIntConst  ("0x" ++ $(hexConst (antiVarE v)) ++ "ULL") C.Unsigned
+        Just [|C.LongLongIntConst  ("0x" ++ $(hexConst (antiVarE v)) ++ "ULL") C.Unsigned
                                (fromIntegral $(antiVarE v))
                                $(qqLocE loc)|]
 
