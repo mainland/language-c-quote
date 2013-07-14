@@ -84,6 +84,12 @@ c :-
  "$ulint:"   / { allowAnti } { lexAnti Tanti_ulint }
  "$llint:"   / { allowAnti } { lexAnti Tanti_llint }
  "$ullint:"  / { allowAnti } { lexAnti Tanti_ullint }
+ "$hexint:"  / { allowAnti } { lexAnti Tanti_hexint }
+ "$uhexint:" / { allowAnti } { lexAnti Tanti_uhexint }
+ "$lhexint:" / { allowAnti } { lexAnti Tanti_lhexint }
+ "$ulhexint:" / { allowAnti } { lexAnti Tanti_ulhexint }
+ "$llhexint:" / { allowAnti } { lexAnti Tanti_llhexint }
+ "$ullhexint:" / { allowAnti } { lexAnti Tanti_ullhexint }
  "$float:"   / { allowAnti } { lexAnti Tanti_float }
  "$double:"  / { allowAnti } { lexAnti Tanti_double }
  "$ldouble:" / { allowAnti } { lexAnti Tanti_long_double }
@@ -375,22 +381,22 @@ lexCharEscape = do
       c -> return c
 
 lexInteger :: Int -> Radix -> Action
-lexInteger ndrop radix beg end =
+lexInteger ndrop radix@(_, isRadixDigit, _) beg end =
     case i of
       [n] -> return $ locateTok beg end (toToken n)
       _   -> fail "bad parse for integer"
   where
     num :: String
-    num = (takeWhile isDigit . drop ndrop)  s
+    num = (takeWhile isRadixDigit . drop ndrop)  s
 
     suffix :: String
-    suffix = (map toLower . takeWhile (not . isDigit) . reverse) s
+    suffix = (map toLower . takeWhile (not . isRadixDigit) . reverse) s
 
     s :: String
     s = inputString beg end
 
     i :: [Integer]
-    i = do  (n, _) <- readInteger radix s
+    i = do  (n, _) <- readInteger radix num
             return n
 
     toToken :: Integer -> Token

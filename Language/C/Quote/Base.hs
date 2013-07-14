@@ -21,6 +21,7 @@ module Language.C.Quote.Base (
 
 import Control.Monad ((>=>))
 import qualified Data.ByteString.Char8 as B
+import Numeric
 import Data.Data (Data(..))
 import Data.Generics (extQ)
 import Data.Loc
@@ -209,15 +210,45 @@ qqConstE = go
                                $(qqLocE loc)|]
 
     go (C.AntiLLInt v loc) =
-        Just [|C.LongIntConst  ($(intConst (antiVarE v)) ++ "LL") C.Signed
+        Just [|C.LongLongIntConst  ($(intConst (antiVarE v)) ++ "LL") C.Signed
                                (fromIntegral $(antiVarE v))
                                $(qqLocE loc)|]
 
     go (C.AntiULLInt v loc) =
-        Just [|C.LongIntConst  ($(intConst (antiVarE v)) ++ "ULL") C.Unsigned
+        Just [|C.LongLongIntConst  ($(intConst (antiVarE v)) ++ "ULL") C.Unsigned
                                (fromIntegral $(antiVarE v))
                                $(qqLocE loc)|]
 
+
+    go (C.AntiHexInt v loc) =
+        Just [|C.IntConst      ("0x" ++ $(hexConst (antiVarE v))) C.Signed
+                               (fromIntegral $(antiVarE v))
+                               $(qqLocE loc)|]
+
+    go (C.AntiUHexInt v loc) =
+        Just [|C.IntConst      ("0x" ++ $(hexConst (antiVarE v)) ++ "U") C.Unsigned
+                               (fromIntegral $(antiVarE v))
+                               $(qqLocE loc)|]
+
+    go (C.AntiLHexInt v loc) =
+        Just [|C.LongIntConst  ("0x" ++ $(hexConst (antiVarE v)) ++ "L") C.Signed
+                               (fromIntegral $(antiVarE v))
+                               $(qqLocE loc)|]
+
+    go (C.AntiULHexInt v loc) =
+        Just [|C.LongIntConst  ("0x" ++ $(hexConst (antiVarE v)) ++ "UL") C.Unsigned
+                               (fromIntegral $(antiVarE v))
+                               $(qqLocE loc)|]
+
+    go (C.AntiLLHexInt v loc) =
+        Just [|C.LongLongIntConst  ("0x" ++ $(hexConst (antiVarE v)) ++ "LL") C.Signed
+                               (fromIntegral $(antiVarE v))
+                               $(qqLocE loc)|]
+
+    go (C.AntiULLHexInt v loc) =
+        Just [|C.LongLongIntConst  ("0x" ++ $(hexConst (antiVarE v)) ++ "ULL") C.Unsigned
+                               (fromIntegral $(antiVarE v))
+                               $(qqLocE loc)|]
 
 
     go (C.AntiFloat v loc) =
@@ -245,6 +276,9 @@ qqConstE = go
 
     intConst :: ExpQ -> ExpQ
     intConst e = [|show $(e)|]
+
+    hexConst :: ExpQ -> ExpQ
+    hexConst e = [|showHex $(e) ""|]
 
     floatConst :: ExpQ -> ExpQ
     floatConst e = [|show (fromRational $(e) :: Double)|]

@@ -93,6 +93,24 @@
 -- [@ullint@] An @unsigned long long integer@ constant. The argument must be an
 -- instance of @'Integral'@.
 --
+-- [@hexint@] An @integer@ constant. The argument must be an instance of
+-- @'Integral'@. The constant is represented in hexadecimal.
+--
+-- [@uhexint@] An @unsigned integer@ constant. The argument must be an instance
+-- of @'Integral'@. The constant is represented in hexadecimal.
+--
+-- [@lhexint@] An @long integer@ constant. The argument must be an instance of
+-- @'Integral'@. The constant is represented in hexadecimal.
+--
+-- [@ulhexint@] An @unsigned long integer@ constant. The argument must be an
+-- instance of @'Integral'@. The constant is represented in hexadecimal.
+--
+-- [@llhexint@] A @long long integer@ constant. The argument must be an
+-- instance of @'Integral'@. The constant is represented in hexadecimal.
+--
+-- [@ullhexint@] A @unsigned long long integer@ constant. The argument must be
+-- an instance of @'Integral'@. The constant is represented in hexadecimal.
+--
 -- [@float@] A @float@ constant. The argument must be an instance of
 -- @'Fractional'@.
 --
