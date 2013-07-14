@@ -198,6 +198,11 @@ data Token = Teof
            | Tanti_llint String
            | Tanti_ullint String
            | Tanti_hexint String
+           | Tanti_uhexint String
+           | Tanti_lhexint String
+           | Tanti_ulhexint String
+           | Tanti_llhexint String
+           | Tanti_ullhexint String
            | Tanti_float String
            | Tanti_double String
            | Tanti_long_double String
@@ -254,6 +259,11 @@ instance Show Token where
     show (Tanti_llint s)                = "$llint:" ++ s
     show (Tanti_ullint s)               = "$ullint:" ++ s
     show (Tanti_hexint s)               = "$hexint:" ++ s
+    show (Tanti_uhexint s)              = "$uhexint:" ++ s
+    show (Tanti_lhexint s)              = "$lhexint:" ++ s
+    show (Tanti_ulhexint s)             = "$ulhexint:" ++ s
+    show (Tanti_llhexint s)             = "$llhexint:" ++ s
+    show (Tanti_ullhexint s)            = "$ullhexint:" ++ s
     show (Tanti_float s)                = "$float:" ++ s
     show (Tanti_double s)               = "$double:" ++ s
     show (Tanti_long_double s)          = "$longdouble:" ++ s

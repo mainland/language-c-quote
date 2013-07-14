@@ -209,6 +209,11 @@ import qualified Language.C.Syntax as C
  ANTI_LLINT       { L _ (T.Tanti_llint _) }
  ANTI_ULLINT      { L _ (T.Tanti_ullint _) }
  ANTI_HEXINT      { L _ (T.Tanti_hexint _) }
+ ANTI_UHEXINT     { L _ (T.Tanti_uhexint _) }
+ ANTI_LHEXINT     { L _ (T.Tanti_lhexint _) }
+ ANTI_ULHEXINT    { L _ (T.Tanti_ulhexint _) }
+ ANTI_LLHEXINT    { L _ (T.Tanti_llhexint _) }
+ ANTI_ULLHEXINT   { L _ (T.Tanti_ullhexint _) }
  ANTI_FLOAT       { L _ (T.Tanti_float _) }
  ANTI_DOUBLE      { L _ (T.Tanti_double _) }
  ANTI_LONG_DOUBLE { L _ (T.Tanti_long_double _) }
@@ -353,7 +358,12 @@ constant :
   | ANTI_ULINT        { AntiULInt (getANTI_ULINT $1) (srclocOf $1) }
   | ANTI_LLINT        { AntiLLInt (getANTI_LLINT $1) (srclocOf $1) }
   | ANTI_ULLINT       { AntiULLInt (getANTI_ULLINT $1) (srclocOf $1) }
-  | ANTI_HEXINT       { AntiHEXInt (getANTI_HEXINT $1) (srclocOf $1) }
+  | ANTI_HEXINT       { AntiHexInt (getANTI_HEXINT $1) (srclocOf $1) }
+  | ANTI_UHEXINT      { AntiUHexInt (getANTI_UHEXINT $1) (srclocOf $1) }
+  | ANTI_LHEXINT      { AntiLHexInt (getANTI_LHEXINT $1) (srclocOf $1) }
+  | ANTI_ULHEXINT     { AntiULHexInt (getANTI_ULHEXINT $1) (srclocOf $1) }
+  | ANTI_LLHEXINT     { AntiLLHexInt (getANTI_LLHEXINT $1) (srclocOf $1) }
+  | ANTI_ULLHEXINT    { AntiULLHexInt (getANTI_ULLHEXINT $1) (srclocOf $1) }
   | ANTI_FLOAT        { AntiFloat (getANTI_FLOAT $1) (srclocOf $1) }
   | ANTI_DOUBLE       { AntiDouble (getANTI_DOUBLE $1) (srclocOf $1) }
   | ANTI_LONG_DOUBLE  { AntiLongDouble (getANTI_LONG_DOUBLE $1) (srclocOf $1) }
@@ -2596,6 +2606,11 @@ getANTI_ULINT       (L _ (T.Tanti_ulint v))       = v
 getANTI_LLINT       (L _ (T.Tanti_llint v))       = v
 getANTI_ULLINT      (L _ (T.Tanti_ullint v))      = v
 getANTI_HEXINT      (L _ (T.Tanti_hexint v))      = v
+getANTI_UHEXINT     (L _ (T.Tanti_uhexint v))     = v
+getANTI_LHEXINT     (L _ (T.Tanti_lhexint v))     = v
+getANTI_ULHEXINT    (L _ (T.Tanti_ulhexint v))    = v
+getANTI_LLHEXINT    (L _ (T.Tanti_llhexint v))    = v
+getANTI_ULLHEXINT   (L _ (T.Tanti_ullhexint v))   = v
 getANTI_FLOAT       (L _ (T.Tanti_float v))       = v
 getANTI_DOUBLE      (L _ (T.Tanti_double v))      = v
 getANTI_LONG_DOUBLE (L _ (T.Tanti_long_double v)) = v

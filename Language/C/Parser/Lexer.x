@@ -85,6 +85,11 @@ c :-
  "$llint:"   / { allowAnti } { lexAnti Tanti_llint }
  "$ullint:"  / { allowAnti } { lexAnti Tanti_ullint }
  "$hexint:"  / { allowAnti } { lexAnti Tanti_hexint }
+ "$uhexint:" / { allowAnti } { lexAnti Tanti_uhexint }
+ "$lhexint:" / { allowAnti } { lexAnti Tanti_lhexint }
+ "$ulhexint:" / { allowAnti } { lexAnti Tanti_ulhexint }
+ "$llhexint:" / { allowAnti } { lexAnti Tanti_llhexint }
+ "$ullhexint:" / { allowAnti } { lexAnti Tanti_ullhexint }
  "$float:"   / { allowAnti } { lexAnti Tanti_float }
  "$double:"  / { allowAnti } { lexAnti Tanti_double }
  "$ldouble:" / { allowAnti } { lexAnti Tanti_long_double }
