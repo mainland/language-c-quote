@@ -209,12 +209,12 @@ qqConstE = go
                                $(qqLocE loc)|]
 
     go (C.AntiLLInt v loc) =
-        Just [|C.LongIntConst  ($(intConst (antiVarE v)) ++ "LL") C.Signed
+        Just [|C.LongLongIntConst  ($(intConst (antiVarE v)) ++ "LL") C.Signed
                                (fromIntegral $(antiVarE v))
                                $(qqLocE loc)|]
 
     go (C.AntiULLInt v loc) =
-        Just [|C.LongIntConst  ($(intConst (antiVarE v)) ++ "ULL") C.Unsigned
+        Just [|C.LongLongIntConst  ($(intConst (antiVarE v)) ++ "ULL") C.Unsigned
                                (fromIntegral $(antiVarE v))
                                $(qqLocE loc)|]
 

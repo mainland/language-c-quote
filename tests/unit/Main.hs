@@ -47,8 +47,8 @@ exp_id = testCase "exp id" $
 
 exp_int :: Test
 exp_int = testCase "exp int" $
-    [cexp|$int:one + $uint:one + $lint:one + $ulint:one|]
-      @=? [cexp|1 + 1U + 1L + 1UL|]
+    [cexp|$int:one + $uint:one + $lint:one + $ulint:one + $llint:one + $ullint:one|]
+      @=? [cexp|1 + 1U + 1L + 1UL + 1LL + 1ULL|]
   where
     one = 1
 
