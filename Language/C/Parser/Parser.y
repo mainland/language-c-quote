@@ -2219,8 +2219,8 @@ objc_property_attr_list :: { RevList ObjCPropAttr }
 objc_property_attr_list :
     objc_property_attr
       { rsingleton $1 }
-  | objc_property_attr_list objc_property_attr
-      { rcons $2 $1 }
+  | objc_property_attr_list ',' objc_property_attr
+      { rcons $3 $1 }
 
 objc_property_attr :: { ObjCPropAttr }
 objc_property_attr :
