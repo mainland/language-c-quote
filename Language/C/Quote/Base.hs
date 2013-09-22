@@ -16,6 +16,7 @@
 
 module Language.C.Quote.Base (
     ToExp(..),
+    ToIdent(..),
     quasiquote
   ) where
 
