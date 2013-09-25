@@ -225,6 +225,8 @@ data Token = Teof
            | Tanti_pragma String
            | Tanti_init String
            | Tanti_inits String
+           | Tanti_prop String
+           | Tanti_props String
     deriving (Ord, Eq)
 
 instance Pretty Token where
@@ -280,6 +282,8 @@ instance Show Token where
     show (Tanti_pragma s)               = "$pragma:" ++ s
     show (Tanti_init s)                 = "$init:" ++ s
     show (Tanti_inits s)                = "$inits:" ++ s
+    show (Tanti_prop s)                 = "$prop:" ++ s
+    show (Tanti_props s)                = "$props:" ++ s
     show t = fromMaybe (error "language-c-quote: internal error: unknown token")
                        (lookup t tokenStrings)
 

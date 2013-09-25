@@ -113,6 +113,8 @@ c :-
  "$init:"    / { allowAnti } { lexAnti Tanti_init }
  "$inits:"   / { allowAnti } { lexAnti Tanti_inits }
  "$"         / { allowAnti } { lexAnti Tanti_exp }
+ "$prop:"    / { allowAnti } { lexAnti Tanti_prop }
+ "$props:"    / { allowAnti } { lexAnti Tanti_props }
 }
 
 <0> {

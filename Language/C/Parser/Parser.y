@@ -236,6 +236,8 @@ import qualified Language.C.Syntax as C
  ANTI_PRAGMA      { L _ (T.Tanti_pragma _) }
  ANTI_INIT        { L _ (T.Tanti_init _) }
  ANTI_INITS       { L _ (T.Tanti_inits _) }
+ ANTI_PROP        { L _ (T.Tanti_prop _) }
+ ANTI_PROPS       { L _ (T.Tanti_props _) }
 
 -- Three shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
@@ -264,6 +266,8 @@ import qualified Language.C.Syntax as C
 
 %name parseUnit       translation_unit
 %name parseFunc       function_definition
+
+%name parsePropDecl   objc_property_decl
 
 %right NAMED OBJCNAMED
 %%
@@ -2199,8 +2203,8 @@ objc_interface_decl_list :
       { rnil }
   | objc_interface_decl_list ';'
       { $1 }
-  | objc_interface_decl_list objc_property_decl
-      { rcons $2 $1 }
+  | objc_interface_decl_list objc_property_decl_list
+      { rappend $2 $1 }
   | objc_interface_decl_list objc_method_requirement
       { rcons (ObjCIfaceReq $2 (srclocOf $2)) $1 }
   | objc_interface_decl_list objc_method_proto ';' 
@@ -2208,12 +2212,20 @@ objc_interface_decl_list :
   | objc_interface_decl_list declaration
       { rcons (ObjCIfaceDecl $2 (srclocOf $2)) $1 }
 
+objc_property_decl_list :: { RevList ObjCIfaceDecl }
+objc_property_decl_list :
+    objc_property_decl
+      { rsingleton $1 }
+  | ANTI_PROPS
+      { rsingleton (AntiProps (getANTI_PROPS $1) (srclocOf $1)) }
 objc_property_decl :: { ObjCIfaceDecl }
 objc_property_decl :
     '@' 'property' struct_declaration
       { ObjCIfaceProp [] $3 ($1 `srcspan` $3) }
   | '@' 'property' '(' objc_property_attr_list ')' struct_declaration
       { ObjCIfaceProp (rev $4) $6 ($1 `srcspan` $6) }
+  | ANTI_PROP
+      { AntiProp (getANTI_PROP $1) (srclocOf $1) }
 
 objc_property_attr_list :: { RevList ObjCPropAttr }
 objc_property_attr_list :
@@ -2621,6 +2633,8 @@ getANTI_PARAMS      (L _ (T.Tanti_params v))      = v
 getANTI_PRAGMA      (L _ (T.Tanti_pragma v))      = v
 getANTI_INIT        (L _ (T.Tanti_init v))        = v
 getANTI_INITS        (L _ (T.Tanti_inits v))      = v
+getANTI_PROP        (L _ (T.Tanti_prop v))        = v
+getANTI_PROPS        (L _ (T.Tanti_props v))      = v
 
 lexer :: (L T.Token -> P a) -> P a
 lexer cont = do
@@ -3164,4 +3178,8 @@ rev xs = go [] xs
   where
     go  l  RNil          = l
     go  l  (RCons x xs)  = go (x : l) xs
+
+rappend :: RevList a -> RevList a -> RevList a
+rappend RNil ys = ys
+rappend (RCons x xs) ys = RCons x $ rappend xs ys
 }

@@ -208,6 +208,8 @@ data ObjCIfaceDecl = ObjCIfaceProp [ObjCPropAttr] FieldGroup !SrcLoc
                    | ObjCIfaceReq ObjCMethodReq !SrcLoc
                    | ObjCIfaceMeth ObjCMethodProto !SrcLoc
                    | ObjCIfaceDecl InitGroup !SrcLoc
+                   | AntiProp String !SrcLoc
+                   | AntiProps String !SrcLoc
                   -- -=chak FIXME: needs ANTI forms
     deriving (Eq, Ord, Show, Data, Typeable)
 
@@ -605,6 +607,8 @@ instance Located ObjCIfaceDecl where
     locOf (ObjCIfaceReq _ loc)    = locOf loc
     locOf (ObjCIfaceMeth _ loc)   = locOf loc
     locOf (ObjCIfaceDecl _ loc)   = locOf loc
+    locOf (AntiProp _ loc)        = locOf loc
+    locOf (AntiProps _ loc)       = locOf loc
 
 instance Located ObjCPropAttr where
     locOf (ObjCGetter _ loc)       = locOf loc
