@@ -115,6 +115,14 @@ c :-
  "$"         / { allowAnti } { lexAnti Tanti_exp }
  "$prop:"    / { allowAnti } { lexAnti Tanti_prop }
  "$props:"    / { allowAnti } { lexAnti Tanti_props }
+ "$dictelems:"     / { allowAnti } { lexAnti Tanti_dicts }
+ "$propattr:"     / { allowAnti } { lexAnti Tanti_prop_attr }
+ "$propattrs:"     / { allowAnti } { lexAnti Tanti_prop_attrs }
+ "$methodparam:"     / { allowAnti } { lexAnti Tanti_objc_param }
+ "$methodparams:"     / { allowAnti } { lexAnti Tanti_objc_params }
+ "$methodproto:"     / { allowAnti } { lexAnti Tanti_objc_method_proto }
+ "$methoddef:"     / { allowAnti } { lexAnti Tanti_objc_method_defn }
+ "$methoddefs:"     / { allowAnti } { lexAnti Tanti_objc_method_defns }
 }
 
 <0> {

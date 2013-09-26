@@ -238,6 +238,14 @@ import qualified Language.C.Syntax as C
  ANTI_INITS       { L _ (T.Tanti_inits _) }
  ANTI_PROP        { L _ (T.Tanti_prop _) }
  ANTI_PROPS       { L _ (T.Tanti_props _) }
+ ANTI_DICTS        { L _ (T.Tanti_dicts _) }
+ ANTI_PROP_ATTR        { L _ (T.Tanti_prop_attr _) }
+ ANTI_PROP_ATTRS        { L _ (T.Tanti_prop_attrs _) }
+ ANTI_OBJC_PARAM        { L _ (T.Tanti_objc_param _) }
+ ANTI_OBJC_PARAMS        { L _ (T.Tanti_objc_params _) }
+ ANTI_OBJC_METHOD_PROTO        { L _ (T.Tanti_objc_method_proto _) }
+ ANTI_OBJC_METHOD_DEFN        { L _ (T.Tanti_objc_method_defn _) }
+ ANTI_OBJC_METHOD_DEFNS        { L _ (T.Tanti_objc_method_defns _) }
 
 -- Three shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
@@ -268,6 +276,11 @@ import qualified Language.C.Syntax as C
 %name parseFunc       function_definition
 
 %name parsePropDecl   objc_property_decl
+%name parseDictElem objc_key_value 
+%name parsePropAttr objc_property_attr 
+%name parseObjcMethodArg objc_method_arg
+%name parseObjcMethodProto objc_method_proto
+%name parseObjcMethodDefn objc_method_definition
 
 %right NAMED OBJCNAMED
 %%
@@ -628,12 +641,19 @@ assignment_expression_list :
   | assignment_expression_list ',' assignment_expression
       { rcons $3 $1 }
 
-objc_key_value_list :: { RevList (Exp, Exp) }
+objc_key_value_list :: { RevList ObjcDictElem }
 objc_key_value_list :
     assignment_expression ':' assignment_expression
-      { rsingleton ($1, $3) }
+      { rsingleton $ ObjcDictElem ($1, $3) ($1 `srcspan` $3) }
+  | ANTI_DICTS 
+      { rsingleton (AntiDictElems (getANTI_DICTS $1) (srclocOf $1)) }
   | objc_key_value_list ',' assignment_expression ':' assignment_expression
-      { rcons ($3, $5) $1 }
+      { rcons (ObjcDictElem ($3, $5) ($3 `srcspan` $5)) $1 }
+
+objc_key_value :: { ObjcDictElem }
+objc_key_value :
+    assignment_expression ':' assignment_expression
+      { ObjcDictElem ($1, $3) ($1 `srcspan` $3) }
 
 objc_string_literal_list :: { RevList Const }
 objc_string_literal_list :
@@ -2231,8 +2251,10 @@ objc_property_attr_list :: { RevList ObjCPropAttr }
 objc_property_attr_list :
     objc_property_attr
       { rsingleton $1 }
-  | objc_property_attr_list objc_property_attr
-      { rcons $2 $1 }
+  | objc_property_attr_list ',' objc_property_attr
+      { rcons $3 $1 }
+  | ANTI_PROP_ATTRS
+      { rsingleton (AntiAttrs (getANTI_PROP_ATTRS $1) (srclocOf $1)) }
 
 objc_property_attr :: { ObjCPropAttr }
 objc_property_attr :
@@ -2257,6 +2279,8 @@ objc_property_attr :
            Id "weak" _            -> return $ ObjCWeak (srclocOf $1) 
            Id "unsafe_retained" _ -> return $ ObjCUnsafeRetained (srclocOf $1) 
            _                      -> expectedObjCPropertyAttr (locOf $1) }
+  | ANTI_PROP_ATTR
+     { AntiAttr (getANTI_PROP_ATTR $1) (srclocOf $1) }
 
 objc_method_requirement :: { ObjCMethodReq }
 objc_method_requirement :
@@ -2275,6 +2299,8 @@ objc_method_proto :
       { let (res, attrs, parms, hasVargs) = $2
         in
         ObjCMethodProto True res attrs parms hasVargs $3 ($1 `srcspan` $3) }
+  | ANTI_OBJC_METHOD_PROTO
+      { AntiObjCMethodProto (getANTI_OBJC_METHOD_PROTO $1) (srclocOf $1) }
 
 objc_method_decl :: { (Maybe Type, [Attr], [ObjCParm], Bool) }
 objc_method_decl :
@@ -2300,6 +2326,8 @@ objc_method_arg_list :
       { rsingleton $1 }
   | objc_method_arg_list objc_method_arg
       { rcons $2 $1 }
+  | ANTI_OBJC_PARAMS
+      { rsingleton (AntiObjCParms (getANTI_OBJC_PARAMS $1) (srclocOf $1)) }
 
 objc_method_arg :: { ObjCParm }
 objc_method_arg :
@@ -2311,6 +2339,8 @@ objc_method_arg :
       { ObjCParm (Just $1) Nothing   $3 (Just $4) ($1 `srcspan` $4) }
   |               ':'               attributes_opt identifier
       { ObjCParm Nothing   Nothing   $2 (Just $3) ($1 `srcspan` $3) }
+  |   ANTI_OBJC_PARAM
+      { AntiObjCParm (getANTI_OBJC_PARAM $1) (srclocOf $1) }
 
 -- Objective-C extension: protocol declaration
 --
@@ -2456,6 +2486,10 @@ objc_method_definition :
         in
         ObjCMethDef $1 stmts ($1 `srcspan` loc)
       }
+  | ANTI_OBJC_METHOD_DEFN
+      { AntiObjCMeth (getANTI_OBJC_METHOD_DEFN $1) (srclocOf $1) }
+
+  | ANTI_OBJC_METHOD_DEFNS { AntiObjCMeths (getANTI_OBJC_METHOD_DEFNS $1) (srclocOf $1) }
 
 -- Objective-C extension: compatibility alias
 --
@@ -2635,6 +2669,14 @@ getANTI_INIT        (L _ (T.Tanti_init v))        = v
 getANTI_INITS        (L _ (T.Tanti_inits v))      = v
 getANTI_PROP        (L _ (T.Tanti_prop v))        = v
 getANTI_PROPS        (L _ (T.Tanti_props v))      = v
+getANTI_DICTS        (L _ (T.Tanti_dicts v))        = v
+getANTI_PROP_ATTR        (L _ (T.Tanti_prop_attr v))        = v
+getANTI_PROP_ATTRS        (L _ (T.Tanti_prop_attrs v))        = v
+getANTI_OBJC_PARAM        (L _ (T.Tanti_objc_param v))        = v
+getANTI_OBJC_PARAMS        (L _ (T.Tanti_objc_params v))        = v
+getANTI_OBJC_METHOD_PROTO        (L _ (T.Tanti_objc_method_proto v))        = v
+getANTI_OBJC_METHOD_DEFN        (L _ (T.Tanti_objc_method_defn v))         = v
+getANTI_OBJC_METHOD_DEFNS        (L _ (T.Tanti_objc_method_defns v))         = v
 
 lexer :: (L T.Token -> P a) -> P a
 lexer cont = do

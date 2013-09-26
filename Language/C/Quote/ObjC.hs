@@ -20,7 +20,12 @@ module Language.C.Quote.ObjC (
     citem,
     cunit,
     cfun,
-    propdecl
+    propdecl,
+    ocdictelem,
+    ocpropattr,
+    ocmethodparam,
+    ocmethodproto,
+    ocmethoddef
   ) where
 
 import qualified Language.C.Parser as P
@@ -35,7 +40,8 @@ typenames :: [String]
 typenames = ["id"]
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, csdecl, cstm :: QuasiQuoter
-citem, cty, cunit, propdecl :: QuasiQuoter
+citem, cty, cunit, propdecl, ocdictelem, ocpropattr, ocmethodparam, ocmethodproto :: QuasiQuoter
+ocmethoddef :: QuasiQuoter
 cdecl  = quasiquote exts typenames P.parseDecl
 cedecl = quasiquote exts typenames P.parseEdecl
 cenum  = quasiquote exts typenames P.parseEnum
@@ -49,3 +55,8 @@ citem  = quasiquote exts typenames P.parseBlockItem
 cty    = quasiquote exts typenames P.parseType
 cunit  = quasiquote exts typenames P.parseUnit
 propdecl = quasiquote exts typenames P.parsePropDecl
+ocdictelem = quasiquote exts typenames P.parseDictElem
+ocpropattr = quasiquote exts typenames P.parsePropAttr
+ocmethodparam = quasiquote exts typenames P.parseObjcMethodArg
+ocmethodproto = quasiquote exts typenames P.parseObjcMethodProto
+ocmethoddef = quasiquote exts typenames P.parseObjcMethodDefn

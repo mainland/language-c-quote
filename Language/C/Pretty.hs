@@ -469,6 +469,8 @@ instance Pretty Definition where
     ppr (AntiEsc v _)     = pprAnti "esc" v
     ppr (AntiEdecls v _)  = pprAnti "edecls" v
     ppr (AntiEdecl v _)   = pprAnti "edecl" v
+    ppr (AntiObjCMeth v _)   = pprAnti "methdef" v
+    ppr (AntiObjCMeths v _)   = pprAnti "methdefs" v
 
     pprList ds = stack (map ppr ds) <> line
 
@@ -523,6 +525,9 @@ instance Pretty ObjCPropAttr where
     ppr (ObjCStrong loc)         = pprLoc loc $ text "strong"
     ppr (ObjCWeak loc)           = pprLoc loc $ text "weak"
     ppr (ObjCUnsafeRetained loc) = pprLoc loc $ text "unsafe_retained"
+    ppr (ObjCUnsafeRetained loc) = pprLoc loc $ text "unsafe_retained"
+    ppr (AntiAttr v _) = pprAnti "propattr" v
+    ppr (AntiAttrs v _) = pprAnti "propattrs" v
 
 instance Pretty ObjCMethodReq where
     ppr (ObjCRequired _loc) = text "@required"
@@ -536,6 +541,8 @@ instance Pretty ObjCParm where
          (Just sid, Nothing) -> ppr sid
          (_       , Just pid) 
            -> maybe empty ppr sel <> colon <> maybe empty (parens . ppr) ty <> ppr attrs <> ppr pid
+    ppr (AntiObjCParm p _) = pprAnti "Objc Param" p
+    ppr (AntiObjCParms v _) = pprAnti "Objc Params" v
 
 instance Pretty ObjCMethodProto where
     ppr (ObjCMethodProto isClassMeth resTy attrs1 parms vargs attrs2 loc) 
@@ -548,6 +555,7 @@ instance Pretty ObjCMethodProto where
         <> spread (map ppr parms) 
         <> if vargs then text ", ..." else empty
         <> ppr attrs2
+    ppr (AntiObjCMethodProto p _) = pprAnti "Objc Method Prototype" p
 
 instance Pretty Stm where
     ppr (Label ident stm sloc) =
@@ -909,7 +917,7 @@ instance Pretty Exp where
     pprPrec _ (ObjCLitDict as loc) =
         srcloc loc <>
         char '@' <> braces
-          (commasep (map (\(l, r) -> ppr l <+> colon <+> ppr r) as))
+          (commasep (map ppr as))
 
     pprPrec _ (ObjCLitBoxed e loc) =
         srcloc loc <>
@@ -929,7 +937,11 @@ instance Pretty Exp where
 
     pprPrec _ (AntiArgs v _)  = pprAnti "args"  v
 
-    pprPrec _ (AntiExp v _)   = pprAnti "var"  v
+    pprPrec _ (AntiExp v _)   = pprAnti "var"  v 
+
+instance Pretty ObjcDictElem where
+    pprPrec _ (ObjcDictElem (l,r) _) = ppr l <+> colon <+> ppr r     
+    pprPrec _ (AntiDictElems v _) = pprAnti "dictelems" v    
 
 instance Pretty BinOp where
     ppr Add  = text "+"
