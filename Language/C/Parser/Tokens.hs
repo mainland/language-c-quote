@@ -225,6 +225,16 @@ data Token = Teof
            | Tanti_pragma String
            | Tanti_init String
            | Tanti_inits String
+           | Tanti_prop String
+           | Tanti_props String
+           | Tanti_dicts String
+           | Tanti_prop_attr String
+           | Tanti_prop_attrs String
+           | Tanti_objc_param String
+           | Tanti_objc_params String
+           | Tanti_objc_method_proto String
+           | Tanti_objc_method_defn String
+           | Tanti_objc_method_defns String
     deriving (Ord, Eq)
 
 instance Pretty Token where
@@ -280,6 +290,16 @@ instance Show Token where
     show (Tanti_pragma s)               = "$pragma:" ++ s
     show (Tanti_init s)                 = "$init:" ++ s
     show (Tanti_inits s)                = "$inits:" ++ s
+    show (Tanti_prop s)                 = "$prop:" ++ s
+    show (Tanti_props s)                = "$props:" ++ s
+    show (Tanti_dicts s)                = "$dictelems:" ++ s
+    show (Tanti_prop_attr s)                = "$propattr:" ++ s
+    show (Tanti_prop_attrs s)                = "$propattrs:" ++ s
+    show (Tanti_objc_param s)                = "$methodparam:" ++ s
+    show (Tanti_objc_params s)                = "$methodparams:" ++ s
+    show (Tanti_objc_method_proto s)                = "$methodproto:" ++ s
+    show (Tanti_objc_method_defn s)                = "$methodproto:" ++ s
+    show (Tanti_objc_method_defns s)                = "$methodproto:" ++ s
     show t = fromMaybe (error "language-c-quote: internal error: unknown token")
                        (lookup t tokenStrings)
 

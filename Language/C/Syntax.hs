@@ -191,6 +191,8 @@ data Definition  =  FuncDef Func !SrcLoc
                  |  AntiEsc String !SrcLoc
                  |  AntiEdecl String !SrcLoc
                  |  AntiEdecls String !SrcLoc
+                 |  AntiObjCMeth String !SrcLoc
+                 |  AntiObjCMeths String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data ObjCIvarDecl = ObjCIvarVisi ObjCVisibilitySpec !SrcLoc
@@ -208,6 +210,8 @@ data ObjCIfaceDecl = ObjCIfaceProp [ObjCPropAttr] FieldGroup !SrcLoc
                    | ObjCIfaceReq ObjCMethodReq !SrcLoc
                    | ObjCIfaceMeth ObjCMethodProto !SrcLoc
                    | ObjCIfaceDecl InitGroup !SrcLoc
+                   | AntiProp String !SrcLoc
+                   | AntiProps String !SrcLoc
                   -- -=chak FIXME: needs ANTI forms
     deriving (Eq, Ord, Show, Data, Typeable)
 
@@ -223,6 +227,8 @@ data ObjCPropAttr = ObjCGetter Id !SrcLoc
                   | ObjCStrong !SrcLoc
                   | ObjCWeak !SrcLoc
                   | ObjCUnsafeRetained !SrcLoc
+                  | AntiAttr String !SrcLoc
+                  | AntiAttrs String !SrcLoc
                   -- -=chak FIXME: needs ANTI forms
     deriving (Eq, Ord, Show, Data, Typeable)
 
@@ -231,10 +237,13 @@ data ObjCMethodReq = ObjCRequired !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data ObjCParm = ObjCParm (Maybe Id) (Maybe Type) [Attr] (Maybe Id) !SrcLoc
+                | AntiObjCParm String !SrcLoc
+                | AntiObjCParms String !SrcLoc
     -- -=chak FIXME: provide an ANTI form (singular and plural)
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data ObjCMethodProto = ObjCMethodProto Bool (Maybe Type) [Attr] [ObjCParm] Bool [Attr] !SrcLoc
+                     | AntiObjCMethodProto String !SrcLoc
                        -- ^Invariant: First parameter must at least either have a selector or
                        --  an identifier; all other parameters must have an identifier.
     deriving (Eq, Ord, Show, Data, Typeable)
@@ -275,6 +284,10 @@ data BlockItem = BlockDecl InitGroup
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data ObjCCatch = ObjCCatch (Maybe Param) [BlockItem] !SrcLoc
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data ObjcDictElem = ObjcDictElem (Exp, Exp) !SrcLoc
+                  | AntiDictElems String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 funcProto :: Func -> InitGroup
@@ -366,7 +379,7 @@ data Exp = Var Id !SrcLoc
          | ObjCLitString [Const] !SrcLoc              -- they are all 'StringConst'
          | ObjCLitBool Bool !SrcLoc
          | ObjCLitArray [Exp] !SrcLoc
-         | ObjCLitDict [(Exp, Exp)] !SrcLoc
+         | ObjCLitDict [ObjcDictElem] !SrcLoc
          | ObjCLitBoxed Exp !SrcLoc
          | ObjCEncode Type !SrcLoc
          | ObjCProtocol Id !SrcLoc
@@ -589,6 +602,8 @@ instance Located Definition where
     locOf (AntiEsc _ loc)                  = locOf loc
     locOf (AntiEdecl _ loc)                = locOf loc
     locOf (AntiEdecls _ loc)               = locOf loc
+    locOf (AntiObjCMeth _ loc)               = locOf loc
+    locOf (AntiObjCMeths _ loc)               = locOf loc
 
 instance Located ObjCIvarDecl where
     locOf (ObjCIvarVisi _ loc) = locOf loc
@@ -605,6 +620,8 @@ instance Located ObjCIfaceDecl where
     locOf (ObjCIfaceReq _ loc)    = locOf loc
     locOf (ObjCIfaceMeth _ loc)   = locOf loc
     locOf (ObjCIfaceDecl _ loc)   = locOf loc
+    locOf (AntiProp _ loc)        = locOf loc
+    locOf (AntiProps _ loc)       = locOf loc
 
 instance Located ObjCPropAttr where
     locOf (ObjCGetter _ loc)       = locOf loc
@@ -619,6 +636,8 @@ instance Located ObjCPropAttr where
     locOf (ObjCStrong loc)         = locOf loc
     locOf (ObjCWeak loc)           = locOf loc
     locOf (ObjCUnsafeRetained loc) = locOf loc
+    locOf (AntiAttr _ loc) = locOf loc
+    locOf (AntiAttrs _ loc) = locOf loc
 
 instance Located ObjCMethodReq where
     locOf (ObjCRequired loc) = locOf loc
@@ -626,9 +645,12 @@ instance Located ObjCMethodReq where
 
 instance Located ObjCParm where
     locOf (ObjCParm _ _ _ _ loc) = locOf loc
+    locOf (AntiObjCParm _ loc) = locOf loc
+    locOf (AntiObjCParms _ loc) = locOf loc
 
 instance Located ObjCMethodProto where
     locOf (ObjCMethodProto _ _ _ _ _ _ loc) = locOf loc
+    locOf (AntiObjCMethodProto _ loc)= locOf loc
 
 instance Located Stm where
     locOf (Label _ _ loc)             = locOf loc
@@ -738,6 +760,10 @@ instance Located ObjCRecv where
 
 instance Located ObjCArg where
     locOf (ObjCArg _ _ loc) = locOf loc
+
+instance Located ObjcDictElem where
+    locOf (ObjcDictElem _ loc) = locOf loc
+    locOf (AntiDictElems _ loc) = locOf loc
 
 ctypedef :: Id -> Decl -> [Attr] -> Typedef
 ctypedef ident decl attrs =
