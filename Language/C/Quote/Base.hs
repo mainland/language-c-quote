@@ -41,6 +41,7 @@ import Language.Haskell.TH.Syntax
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
 
+-- | An instance of 'ToIndent' can be converted to a 'C.Id'.
 class ToIdent a where
     toIdent :: a -> SrcLoc -> C.Id
 
@@ -53,6 +54,7 @@ instance ToIdent (SrcLoc -> C.Id) where
 instance ToIdent String where
     toIdent s loc = C.Id s loc
 
+-- | An instance of 'ToExp' can be converted to a 'C.Exp'.
 class ToExp a where
     toExp :: a -> SrcLoc -> C.Exp
 
