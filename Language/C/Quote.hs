@@ -73,7 +73,7 @@
 --
 -- Valid antiquote specifiers are:
 --
--- [@id@] A C identifier. The argument must have type @'String'@.
+-- [@id@] A C identifier. The argument must be an instance of @'ToIdent'@.
 --
 -- [@int@] An @integer@ constant. The argument must be an instance of
 -- @'Integral'@.
