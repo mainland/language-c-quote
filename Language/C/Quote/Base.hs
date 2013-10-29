@@ -15,6 +15,7 @@
 {-# OPTIONS_GHC -w #-}
 
 module Language.C.Quote.Base (
+    ToIdent(..),
     ToExp(..),
     quasiquote
   ) where
