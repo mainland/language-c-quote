@@ -273,7 +273,7 @@ instance Show Token where
     show (Tanti_items s)                = "$items:" ++ s
     show (Tanti_stm s)                  = "$stm:" ++ s
     show (Tanti_stms s)                 = "$stms:" ++ s
-    show (Tanti_type s)                 = "$type:" ++ s
+    show (Tanti_type s)                 = "$ty:" ++ s
     show (Tanti_spec s)                 = "$spec:" ++ s
     show (Tanti_param s)                = "$param:" ++ s
     show (Tanti_params s)               = "$params:" ++ s
