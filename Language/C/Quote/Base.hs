@@ -16,6 +16,7 @@
 
 module Language.C.Quote.Base (
     ToIdent(..),
+    ToConst(..),
     ToExp(..),
     quasiquote
   ) where
@@ -53,6 +54,34 @@ instance ToIdent (SrcLoc -> C.Id) where
 
 instance ToIdent String where
     toIdent s loc = C.Id s loc
+
+-- | An instance of 'ToConst' can be converted to a 'C.Const'.
+class ToConst a where
+    toConst :: a -> SrcLoc -> C.Const
+
+instance ToConst C.Const where
+    toConst k _ = k
+
+instance ToConst Int where
+    toConst n loc = C.IntConst (show n) C.Signed (fromIntegral n) loc
+
+instance ToConst Integer where
+    toConst n loc = C.IntConst (show n) C.Signed n loc
+
+instance ToConst Rational where
+    toConst n loc = C.DoubleConst (show n) n loc
+
+instance ToConst Float where
+    toConst n loc = C.DoubleConst (show n) (toRational n) loc
+
+instance ToConst Double where
+    toConst n loc = C.DoubleConst (show n) (toRational n) loc
+
+instance ToConst Char where
+    toConst c loc = C.CharConst (show c) c loc
+
+instance ToConst String where
+    toConst s loc = C.StringConst [show s] s loc
 
 -- | An instance of 'ToExp' can be converted to a 'C.Exp'.
 class ToExp a where
@@ -191,6 +220,9 @@ qqDefinitionListE (def : defs) =
 qqConstE :: C.Const -> Maybe (Q Exp)
 qqConstE = go
   where
+    go (C.AntiConst v loc) =
+        Just [|toConst $(antiVarE v) $(qqLocE loc) :: C.Const|]
+
     go (C.AntiInt v loc) =
         Just [|C.IntConst  $(intConst (antiVarE v)) C.Signed
                            (fromIntegral $(antiVarE v))

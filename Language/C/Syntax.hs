@@ -314,6 +314,7 @@ data Const = IntConst String Signed Integer !SrcLoc
            | LongDoubleConst String Rational !SrcLoc
            | CharConst String Char !SrcLoc
            | StringConst [String] String !SrcLoc
+           | AntiConst String !SrcLoc
            | AntiInt String !SrcLoc
            | AntiUInt String !SrcLoc
            | AntiLInt String !SrcLoc
@@ -673,6 +674,7 @@ instance Located Const where
     locOf (LongDoubleConst _ _ loc)     = locOf loc
     locOf (CharConst _ _ loc)           = locOf loc
     locOf (StringConst _ _ loc)         = locOf loc
+    locOf (AntiConst _ loc)             = locOf loc
     locOf (AntiInt _ loc)               = locOf loc
     locOf (AntiUInt _ loc)              = locOf loc
     locOf (AntiLInt _ loc)              = locOf loc

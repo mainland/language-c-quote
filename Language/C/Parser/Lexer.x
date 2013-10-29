@@ -78,6 +78,7 @@ c :-
  "typename"  / { allowAnti } { token Ttypename }
 
  "$id:"      / { allowAnti } { lexAnti Tanti_id }
+ "$const:"   / { allowAnti } { lexAnti Tanti_const }
  "$int:"     / { allowAnti } { lexAnti Tanti_int }
  "$uint:"    / { allowAnti } { lexAnti Tanti_uint }
  "$lint:"    / { allowAnti } { lexAnti Tanti_lint }

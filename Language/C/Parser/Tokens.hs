@@ -191,6 +191,7 @@ data Token = Teof
            | Ttypename
 
            | Tanti_id String
+           | Tanti_const String
            | Tanti_int String
            | Tanti_uint String
            | Tanti_lint String
@@ -246,6 +247,7 @@ instance Show Token where
     show (TObjCnamed s)                 = s
 
     show (Tanti_id s)                   = "$id:" ++ s
+    show (Tanti_const s)                = "$const:" ++ s
     show (Tanti_int s)                  = "$int:" ++ s
     show (Tanti_uint s)                 = "$uint:" ++ s
     show (Tanti_lint s)                 = "$lint:" ++ s

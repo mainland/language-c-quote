@@ -202,6 +202,7 @@ import qualified Language.C.Syntax as C
  'typename'       { L _ T.Ttypename }
 
  ANTI_ID          { L _ (T.Tanti_id _) }
+ ANTI_CONST       { L _ (T.Tanti_const _) }
  ANTI_INT         { L _ (T.Tanti_int _) }
  ANTI_UINT        { L _ (T.Tanti_uint _) }
  ANTI_LINT        { L _ (T.Tanti_lint _) }
@@ -346,6 +347,7 @@ constant :
                         in
                           CharConst s c (srclocOf $1)
                       }
+  | ANTI_CONST        { AntiConst (getANTI_CONST $1) (srclocOf $1) }
   | ANTI_INT          { AntiInt (getANTI_INT $1) (srclocOf $1) }
   | ANTI_UINT         { AntiUInt (getANTI_UINT $1) (srclocOf $1) }
   | ANTI_LINT         { AntiLInt (getANTI_LINT $1) (srclocOf $1) }
@@ -2587,6 +2589,7 @@ getOBJCNAMED   (L _ (T.TObjCnamed ident))    = ident
 getPRAGMA      (L _ (T.Tpragma pragma))      = pragma
 
 getANTI_ID          (L _ (T.Tanti_id v))          = v
+getANTI_CONST       (L _ (T.Tanti_const v))       = v
 getANTI_INT         (L _ (T.Tanti_int v))         = v
 getANTI_UINT        (L _ (T.Tanti_uint v))        = v
 getANTI_LINT        (L _ (T.Tanti_lint v))        = v

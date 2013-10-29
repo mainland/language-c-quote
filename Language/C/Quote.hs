@@ -75,6 +75,8 @@
 --
 -- [@id@] A C identifier. The argument must be an instance of @'ToIdent'@.
 --
+-- [@const@] A constant. The argument must be an instance of @'ToConst'@.
+--
 -- [@int@] An @integer@ constant. The argument must be an instance of
 -- @'Integral'@.
 --

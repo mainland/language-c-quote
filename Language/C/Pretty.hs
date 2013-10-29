@@ -727,6 +727,7 @@ instance Pretty Const where
     ppr (CharConst s _ _)           = text s
     ppr (StringConst ss _ _)        = sep (map string ss)
 
+    ppr (AntiConst v _)       = pprAnti "const"  v
     ppr (AntiString v _)      = pprAnti "string"  v
     ppr (AntiChar v _)        = pprAnti "char"    v
     ppr (AntiLongDouble v _)  = pprAnti "ldouble" v

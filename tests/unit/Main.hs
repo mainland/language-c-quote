@@ -10,6 +10,7 @@ import Test.HUnit ((@=?))
 import Data.Loc (SrcLoc, noLoc)
 import Language.C.Quote.C
 import qualified Language.C.Syntax as C
+import Numeric (showHex)
 import System.Exit (exitFailure, exitSuccess)
 
 #if !MIN_VERSION_template_haskell(2,7,0)
@@ -26,6 +27,7 @@ tests = [exp_id,
          exp_int,
          exp_octint,
          exp_hexint, exp_hexint_u, exp_hexint_ul, exp_hexint_ull,
+         exp_hexconst, exp_hexconst_u,
          exp_float, exp_char, exp_string,
          exp_exp, exp_func, exp_args, exp_decl, exp_sdecl,
          exp_enum, exp_edecl, exp_stm, exp_param, exp_ty,
@@ -71,6 +73,26 @@ exp_hexint_ul = testCase "exp hexint_ul" $
 exp_hexint_ull :: Test
 exp_hexint_ull = testCase "exp hexint_ull" $
     (C.Const (C.LongLongIntConst "0x10ULL" C.Unsigned 16 noLoc) noLoc) @=? [cexp|0x10ULL|]
+
+exp_hexconst :: Test
+exp_hexconst = testCase "exp hexconst" $
+    (C.Const (C.IntConst "0xa" C.Signed 10 noLoc) noLoc) @=? [cexp|$const:(hexconst 10)|]
+  where
+    hexconst :: Integral a => a -> C.Const
+    hexconst i = C.IntConst ("0x" ++ showHex x "") C.Signed x noLoc
+      where
+        x :: Integer
+        x = fromIntegral i
+
+exp_hexconst_u :: Test
+exp_hexconst_u = testCase "exp hexconst_u" $
+    (C.Const (C.IntConst "0xa" C.Unsigned 10 noLoc) noLoc) @=? [cexp|$const:(hexconst_u 10)|]
+  where
+    hexconst_u :: Integral a => a -> C.Const
+    hexconst_u i = C.IntConst ("0x" ++ showHex x "") C.Unsigned x noLoc
+      where
+        x :: Integer
+        x = fromIntegral i
 
 exp_float :: Test
 exp_float = testCase "exp float" $
