@@ -29,7 +29,8 @@ tests = [exp_id, exp_int, exp_float, exp_char, exp_string,
          exp_init, exp_inits, exp_item]
 
 exp_id :: Test
-exp_id = testCase "exp id" $ [cexp|$id:f($id:x, $id:y)|] @=? [cexp|f(x, y)|]
+exp_id = testCase "exp id" $
+    [cexp|$id:f($id:x, $id:y)|] @=? [cexp|f(x, y)|]
   where
     f :: String
     f = "f"
@@ -55,19 +56,20 @@ exp_float = testCase "exp float" $
     one = 1
 
 exp_char :: Test
-exp_char = testCase "exp char" $ [cexp|$char:a|] @=?  [cexp|'a'|]
-    where
-      a = 'a'
+exp_char = testCase "exp char" $
+    [cexp|$char:a|] @=?  [cexp|'a'|]
+  where
+    a = 'a'
 
 exp_string :: Test
-exp_string =
-    testCase "exp string" $ [cexp|$string:hello|] @=?  [cexp|"Hello, world\n"|]
+exp_string = testCase "exp string" $
+    [cexp|$string:hello|] @=?  [cexp|"Hello, world\n"|]
   where
     hello = "Hello, world\n"
 
 exp_exp :: Test
-exp_exp =
-    testCase "exp expression" $ [cexp|$exp:e1 + $exp:e2|] @=?  [cexp|1 + 2|]
+exp_exp = testCase "exp expression" $
+    [cexp|$exp:e1 + $exp:e2|] @=?  [cexp|1 + 2|]
   where
     e1 = [cexp|1|]
     e2 = [cexp|2|]
@@ -169,16 +171,16 @@ exp_ty = testCase "exp ty" $
     ty2 = [cty|float|]
 
 pat_args :: Test
-pat_args =
-    testCase"pat args" $ stms @=?  [[cexp|2|], [cexp|3|]]
+pat_args = testCase "pat args" $
+    stms @=?  [[cexp|2|], [cexp|3|]]
   where
     stms = case [cstm|f(1, 2, 3);|] of
              [cstm|f(1, $args:es);|] -> es
              _ -> []
 
 exp_hexp :: Test
-exp_hexp =
-    testCase "exp hexp" $ [cexp|$ulint:(13 - 2*5)|] @=? [cexp|3UL|]
+exp_hexp = testCase "exp hexp" $
+    [cexp|$ulint:(13 - 2*5)|] @=? [cexp|3UL|]
 
 exp_init :: Test
 exp_init = testCase "initializer" $

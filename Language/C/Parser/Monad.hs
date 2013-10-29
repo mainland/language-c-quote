@@ -329,7 +329,7 @@ expected alts after = do
     pprGot :: L Token -> Doc
     pprGot (L _ Teof)  = text "but reached end of file"
     pprGot (L _ t)     = text "but got" <+> quoteTok (ppr t)
-    
+
     pprAfter :: Maybe String -> Doc
     pprAfter Nothing     = empty
     pprAfter (Just what) = text " after" <+> text what

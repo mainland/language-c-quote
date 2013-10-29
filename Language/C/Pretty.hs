@@ -429,7 +429,7 @@ instance Pretty Definition where
         <> case attrs of
              [] -> empty
              _  ->  ppr attrs <> softline
-        <> text "@interface" <+> ppr cident <+> maybe empty (\ident -> char ':' <+> ppr ident) sident 
+        <> text "@interface" <+> ppr cident <+> maybe empty (\ident -> char ':' <+> ppr ident) sident
         <+> pprIfaceBody refs ivars decls
     ppr (ObjCCatIface cident catident refs ivars decls loc)
       = srcloc loc
@@ -479,7 +479,7 @@ pprIfaceBody refs ivars decls
       _  -> angleList (map ppr refs)
     </>  stack (map ppr ivars)
     <//> stack (map ppr decls)
-    </>  text "@end" 
+    </>  text "@end"
 
 instance Pretty ObjCIvarDecl where
     ppr (ObjCIvarVisi visi  loc) = pprLoc loc $ ppr visi
@@ -492,20 +492,20 @@ instance Pretty ObjCVisibilitySpec where
     ppr (ObjCPackage _loc)   = text "@package"
 
 instance Pretty ObjCIfaceDecl where
-    ppr (ObjCIfaceProp attrs field loc) 
-      = pprLoc loc $ 
+    ppr (ObjCIfaceProp attrs field loc)
+      = pprLoc loc $
         text "@property"
         <+> case attrs of
               [] -> empty
               _  -> parensList (map ppr attrs) <> space
         <> ppr field
         <> semi
-    ppr (ObjCIfaceReq req loc)          
+    ppr (ObjCIfaceReq req loc)
       = pprLoc loc $ ppr req
-    ppr (ObjCIfaceMeth proto _loc) 
+    ppr (ObjCIfaceMeth proto _loc)
       = ppr proto
         <> semi
-    ppr (ObjCIfaceDecl decl loc)        
+    ppr (ObjCIfaceDecl decl loc)
       = pprLoc loc $ ppr decl
 
 instance Pretty ObjCPropAttr where
@@ -532,18 +532,18 @@ instance Pretty ObjCParm where
         case (sel, arg) of
          (Nothing , Nothing) -> error $ "pretty printing 'ObjCParm': empty " ++ show loc
          (Just sid, Nothing) -> ppr sid
-         (_       , Just pid) 
+         (_       , Just pid)
            -> maybe empty ppr sel <> colon <> maybe empty (parens . ppr) ty <> ppr attrs <> ppr pid
 
 instance Pretty ObjCMethodProto where
-    ppr (ObjCMethodProto isClassMeth resTy attrs1 parms vargs attrs2 loc) 
+    ppr (ObjCMethodProto isClassMeth resTy attrs1 parms vargs attrs2 loc)
       = pprLoc loc $
         (if isClassMeth then char '+' else char '-')
         <+> maybe empty (parens . ppr) resTy
         <> case attrs1 of
              [] -> empty
              _  -> space <> ppr attrs1 <> space
-        <> spread (map ppr parms) 
+        <> spread (map ppr parms)
         <> if vargs then text ", ..." else empty
         <> ppr attrs2
 
@@ -655,7 +655,7 @@ instance Pretty Stm where
 
     ppr (ObjCTry try catchs finally sloc) =
         srcloc sloc
-        <>  text "@try" 
+        <>  text "@try"
         </> ppr try
         </> stack (map ppr catchs)
         </> case finally of
@@ -663,9 +663,9 @@ instance Pretty Stm where
               Just block -> text "@finally" </> ppr block
 
     ppr (ObjCThrow e sloc) =
-        srcloc sloc 
-        <> text "@throw" 
-        <> case e of 
+        srcloc sloc
+        <> text "@throw"
+        <> case e of
              Nothing -> semi
              Just e' -> space <> ppr e' <> semi
 
@@ -685,11 +685,11 @@ instance Pretty Stm where
 
 instance Pretty ObjCCatch where
     ppr (ObjCCatch Nothing     block loc) = srcloc loc <> text "@catch (...)" <+> ppr block
-    ppr (ObjCCatch (Just parm) block loc) = srcloc loc 
+    ppr (ObjCCatch (Just parm) block loc) = srcloc loc
                                             <> text "@catch" <+> parens (ppr parm) <+> ppr block
-    
+
     pprList = stack . map ppr
-  
+
 instance Pretty BlockItem where
     ppr (BlockDecl decl) = ppr decl <> semi
     ppr (BlockStm stm)   = ppr stm
@@ -873,10 +873,10 @@ instance Pretty Exp where
         pprMsgArgs ([ObjCArg (Just sel) Nothing loc]) = pprLoc loc $ ppr sel
         pprMsgArgs _                                  = sep (map pprMsgArg args) <>
                                                         cat (map pprVarArg varArgs)
-        
+
         pprMsgArg (ObjCArg (Just sel) (Just e) loc) = pprLoc loc $ ppr sel <> colon <+> ppr e
         pprMsgArg (ObjCArg Nothing    (Just e) loc) = pprLoc loc $ colon <+> ppr e
-        pprMsgArg (ObjCArg _          Nothing  loc) 
+        pprMsgArg (ObjCArg _          Nothing  loc)
           = error $ "pretty printing 'ObjCArg': missing expression at " ++ show loc
 
         pprVarArg e = comma <+> ppr e
@@ -903,7 +903,7 @@ instance Pretty Exp where
         srcloc loc <>
         char '@' <> brackets
           (commasep (map ppr es))
-        
+
     pprPrec _ (ObjCLitDict as loc) =
         srcloc loc <>
         char '@' <> braces
@@ -912,15 +912,15 @@ instance Pretty Exp where
     pprPrec _ (ObjCLitBoxed e loc) =
         srcloc loc <>
         char '@' <> parens (ppr e)
-        
+
     pprPrec _ (ObjCEncode t loc) =
         srcloc loc <>
         text "@encode" <> parens (ppr t)
-        
+
     pprPrec _ (ObjCProtocol ident loc) =
         srcloc loc <>
         text "@protocol" <> parens (ppr ident)
-        
+
     pprPrec _ (ObjCSelector sel loc) =
         srcloc loc <>
         text "@selector" <> parens (text sel)

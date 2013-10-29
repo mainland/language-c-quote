@@ -439,8 +439,8 @@ block_literal :
 -- Objective-C extension: message expression
 --
 -- objc-message-expr ->
---   '[' objc-receiver 
---         ( objc-selector 
+--   '[' objc-receiver
+--         ( objc-selector
 --         | ([objc-selector] ':' assignment-expression)+  (',' assignment-expression)*
 --         )
 --   ']'
@@ -459,7 +459,7 @@ objc_message_expr :
     '[' objc_receiver objc_message_args ']'
       {% do { assertObjCEnabled ($1 <--> $4) "To use a message expression, enable Objective-C support"
             ; let (args, vargs) = $3
-            ; return $ ObjCMsg $2 args vargs ($1 `srcspan` $4) 
+            ; return $ ObjCMsg $2 args vargs ($1 `srcspan` $4)
             }
       }
 
@@ -470,7 +470,7 @@ objc_receiver :
   | OBJCNAMED
       { ObjCRecvClassName (Id (getOBJCNAMED $1) (srclocOf $1)) (srclocOf $1) }
   | expression
-      { case $1 of 
+      { case $1 of
           Var (Id "super" _) loc -> ObjCRecvSuper loc
           _                      -> ObjCRecvExp $1 (srclocOf $1) }
 
@@ -1669,19 +1669,19 @@ typedef_name :
       { TSnamed (Id (getNAMED $1) (srclocOf $1)) [] (srclocOf $1) }
   | NAMED '<' identifier_list '>'
       {% do { assertObjCEnabled ($1 <--> $4) "To use protocol qualifiers, enable support for Objective-C"
-            ; return $ TSnamed (Id (getNAMED $1) (srclocOf $1)) (rev $3) ($1 `srcspan` $4) 
+            ; return $ TSnamed (Id (getNAMED $1) (srclocOf $1)) (rev $3) ($1 `srcspan` $4)
             } }
   | OBJCNAMED
       { TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) [] (srclocOf $1) }
   | OBJCNAMED '<' identifier_list '>'
       {% do { assertObjCEnabled ($1 <--> $4) "To use protocol qualifiers, enable support for Objective-C"
-            ; return $ TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) (rev $3) ($1 `srcspan` $4) 
+            ; return $ TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) (rev $3) ($1 `srcspan` $4)
             } }
   | 'typename' identifier
       { TSnamed $2 [] (srclocOf $1) }
   | 'typename' identifier '<' identifier_list '>'
       {% do { assertObjCEnabled ($1 <--> $5) "To use protocol qualifiers, enable support for Objective-C"
-            ; return $ TSnamed $2 (rev $4) ($1 `srcspan` $5) 
+            ; return $ TSnamed $2 (rev $4) ($1 `srcspan` $5)
             } }
   | 'typename' error
       {% expected ["identifier"] (Just "'typename'")}
@@ -1827,7 +1827,7 @@ selection_statement :
       { If $3 $5 Nothing ($1 `srcspan` $5) }
   | 'if' '(' expression ')' statement 'else' statement
       { If $3 $5 (Just $7) ($1 `srcspan` $7) }
-  | 'if' error 
+  | 'if' error
       {% expected ["("] (Just "`if'") }
   | 'if' '(' expression error
       {% unclosed ($2 <--> $3) "(" }
@@ -1886,7 +1886,7 @@ jump_statement :
 --
 -- objc-catch-statement ->
 --   '@' 'catch' '(' (parameter-declaration | '...') ')' compound-statement
--- 
+--
 -- NB: If a try-catch statement without a finally clause is followed by another '@' statement,
 --     we require a ';' after the try-catch statement. To avoid that, we would need a lookahead
 --     of 2 (to see what special keyword comes after the '@'). In LALR(1), we get a shift-reduce
@@ -1905,9 +1905,9 @@ objc_at_statement :
                   ; catchStmts       = rev $4
                   }
             ; when (null catchStmts) $
-                throw $ ParserException ($1 <--> $3) $ 
+                throw $ ParserException ($1 <--> $3) $
                   text "@try statement without @finally needs at least one @catch statement"
-            ; return $ ObjCTry tryItems catchStmts Nothing ($1 `srcspan` catchStmts) 
+            ; return $ ObjCTry tryItems catchStmts Nothing ($1 `srcspan` catchStmts)
             } }
   | '@' 'try' compound_statement objc_catch_statement_list '@' error
       {% parserError ($1 <--> $5)
@@ -2035,16 +2035,16 @@ function_definition :
 
 -- Objective-C extension: class declaration
 --
--- objc-class-declaration -> 
+-- objc-class-declaration ->
 --   '@' 'class' identifier+ ';'
 --
 objc_class_declaration :: { Definition }
-objc_class_declaration : 
+objc_class_declaration :
     '@' 'class' identifier_list ';'
       {% do { let idents = rev $3
             ; mapM addClassdefId idents
             ; return $ ObjCClassDec idents ($1 `srcspan` $4)
-            } 
+            }
       }
 
 -- Objective-C extension: class or category interface
@@ -2052,14 +2052,14 @@ objc_class_declaration :
 -- objc-interface ->
 --   [attributes] objc-class-interface | objc-category-interface
 --
--- objc-class-interface -> 
+-- objc-class-interface ->
 --   '@' 'interface' identifier [':' identifier]
 --     [objc-protocol-refs]
 --     [objc-class-instance-variables]
 --     objc-interface-decl*
 --   '@' 'end'
 --
--- objc-category-interface -> 
+-- objc-category-interface ->
 --   '@' 'interface' identifier '(' [identifier] ')'
 --     [objc-protocol-refs]
 --     [objc-class-instance-variables]
@@ -2120,17 +2120,17 @@ objc_interface :
                '@' 'interface' identifier objc_interface_body
       {% do { let (prot, vars, decls, loc) = $4
             ; addClassdefId $3
-            ; return $ ObjCClassIface $3 Nothing prot vars decls [] ($1 `srcspan` loc) 
+            ; return $ ObjCClassIface $3 Nothing prot vars decls [] ($1 `srcspan` loc)
             } }
   | attributes '@' 'interface' identifier objc_interface_body
       {% do { let (prot, vars, decls, loc) = $5
             ; addClassdefId $4
-            ; return $ ObjCClassIface $4 Nothing prot vars decls $1 ($2 `srcspan` loc) 
+            ; return $ ObjCClassIface $4 Nothing prot vars decls $1 ($2 `srcspan` loc)
             } }
   |            '@' 'interface' identifier ':' identifier_or_typedef objc_interface_body
       {% do { let (prot, vars, decls, loc) = $6
             ; addClassdefId $3
-            ; return $ ObjCClassIface $3 (Just $5) prot vars decls [] ($1 `srcspan` loc) 
+            ; return $ ObjCClassIface $3 (Just $5) prot vars decls [] ($1 `srcspan` loc)
             } }
   | attributes '@' 'interface' identifier ':' identifier_or_typedef objc_interface_body
       {% do { let (prot, vars, decls, loc) = $7
@@ -2139,11 +2139,11 @@ objc_interface :
             } }
   | '@' 'interface' identifier_or_typedef '(' ')' objc_interface_body
       { let (prot, vars, decls, loc) = $6
-        in 
+        in
         ObjCCatIface $3 Nothing prot vars decls ($1 `srcspan` loc) }
   | '@' 'interface' identifier_or_typedef '(' identifier ')' objc_interface_body
       { let (prot, vars, decls, loc) = $7
-        in 
+        in
         ObjCCatIface $3 (Just $5) prot vars decls ($1 `srcspan` loc) }
 
 objc_interface_body :: { ([Id], [ObjCIvarDecl], [ObjCIfaceDecl], Loc) }
@@ -2203,7 +2203,7 @@ objc_interface_decl_list :
       { rcons $2 $1 }
   | objc_interface_decl_list objc_method_requirement
       { rcons (ObjCIfaceReq $2 (srclocOf $2)) $1 }
-  | objc_interface_decl_list objc_method_proto ';' 
+  | objc_interface_decl_list objc_method_proto ';'
       { rcons (ObjCIfaceMeth $2 (srclocOf $2)) $1 }
   | objc_interface_decl_list declaration
       { rcons (ObjCIfaceDecl $2 (srclocOf $2)) $1 }
@@ -2224,26 +2224,26 @@ objc_property_attr_list :
 
 objc_property_attr :: { ObjCPropAttr }
 objc_property_attr :
-    identifier '=' objc_selector 
-      {% case $1 of 
+    identifier '=' objc_selector
+      {% case $1 of
            Id "getter" _ -> return $ ObjCGetter $3 ($1 `srcspan` $3)
            _             -> expectedObjCPropertyAttr (locOf $1) }
   | identifier '=' objc_selector ':'
-      {% case $1 of 
+      {% case $1 of
            Id "setter" _ -> return $ ObjCSetter $3 ($1 `srcspan` $4)
            _             -> expectedObjCPropertyAttr (locOf $1) }
   | identifier
-      {% case $1 of 
-           Id "readonly" _        -> return $ ObjCReadonly (srclocOf $1) 
-           Id "readwrite" _       -> return $ ObjCReadwrite (srclocOf $1) 
-           Id "assign" _          -> return $ ObjCAssign (srclocOf $1) 
-           Id "retain" _          -> return $ ObjCRetain (srclocOf $1) 
-           Id "copy" _            -> return $ ObjCCopy (srclocOf $1) 
-           Id "nonatomic" _       -> return $ ObjCNonatomic (srclocOf $1) 
-           Id "atomic" _          -> return $ ObjCAtomic (srclocOf $1) 
-           Id "strong" _          -> return $ ObjCStrong (srclocOf $1) 
-           Id "weak" _            -> return $ ObjCWeak (srclocOf $1) 
-           Id "unsafe_retained" _ -> return $ ObjCUnsafeRetained (srclocOf $1) 
+      {% case $1 of
+           Id "readonly" _        -> return $ ObjCReadonly (srclocOf $1)
+           Id "readwrite" _       -> return $ ObjCReadwrite (srclocOf $1)
+           Id "assign" _          -> return $ ObjCAssign (srclocOf $1)
+           Id "retain" _          -> return $ ObjCRetain (srclocOf $1)
+           Id "copy" _            -> return $ ObjCCopy (srclocOf $1)
+           Id "nonatomic" _       -> return $ ObjCNonatomic (srclocOf $1)
+           Id "atomic" _          -> return $ ObjCAtomic (srclocOf $1)
+           Id "strong" _          -> return $ ObjCStrong (srclocOf $1)
+           Id "weak" _            -> return $ ObjCWeak (srclocOf $1)
+           Id "unsafe_retained" _ -> return $ ObjCUnsafeRetained (srclocOf $1)
            _                      -> expectedObjCPropertyAttr (locOf $1) }
 
 objc_method_requirement :: { ObjCMethodReq }
@@ -2307,7 +2307,7 @@ objc_method_arg :
 --
 -- objc-protocol-definition ->
 --   '@' 'protocol' identifier
---     [objc-protocol-refs] 
+--     [objc-protocol-refs]
 --     objc-interface-decl*
 --   '@' 'end'
 --
@@ -2333,7 +2333,7 @@ objc_protocol_declaration :
 objc_protocol_prefix :: { (Id, Loc) }
 objc_protocol_prefix :
   '@' 'protocol' identifier
-    { ($3, locOf $1) }  
+    { ($3, locOf $1) }
 
 -- Objective-C extension: class or category implementation
 --
@@ -2455,7 +2455,7 @@ objc_compatibility_alias :
   '@' 'compatibility_alias' identifier OBJCNAMED ';'
       {% do { addClassdefId $3
             ; return $ ObjCCompAlias $3 (Id (getOBJCNAMED $1) (srclocOf $1)) ($1 `srcspan` $5)
-            } 
+            }
       }
 
 attributes_opt :: { [Attr] }
@@ -3134,7 +3134,7 @@ expectedObjCPropertyAttr :: Loc -> P a
 expectedObjCPropertyAttr loc
   = throw $ ParserException loc $
       text "Expected an Objective-C property attribute; allowed are the following:" </>
-      nest 2 
+      nest 2
         (text "'getter = <sel>', 'setter = <sel>:', 'readonly', 'readwrite', 'assign'," <+>
          text "'retain', 'copy', 'nonatomic', 'atomic', 'strong', 'weak', and 'unsafe_retained'")
 
@@ -3142,8 +3142,8 @@ assertObjCEnabled :: Loc -> String -> P ()
 assertObjCEnabled loc errMsg
   = do
     { objc_enabled <- useObjCExts
-    ; unless objc_enabled $ 
-        throw $ ParserException loc $ 
+    ; unless objc_enabled $
+        throw $ ParserException loc $
           text errMsg
     }
 

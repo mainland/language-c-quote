@@ -151,10 +151,10 @@ data Token = Teof
            | TCLreadonly
            | TCLwriteonly
            | TCLkernel
-           
+
            -- Clang (currently active is Objective-C is active)
            | T__block
-           
+
            -- Objective-C
            | TObjCnamed String
            | TObjCat
@@ -524,7 +524,7 @@ keywords = [("auto",       Tauto,      Nothing),
             ("__write_only", TCLwriteonly, Just [OpenCL]),
             ("kernel",       TCLkernel,    Just [OpenCL]),
             ("__kernel",     TCLkernel,    Just [OpenCL]),
-            
+
             ("__block",             T__block,                 Just [ObjC]),
 
             ("autoreleasepool",     TObjCautoreleasepool,     Just [ObjC]),
