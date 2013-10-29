@@ -375,22 +375,22 @@ lexCharEscape = do
       c -> return c
 
 lexInteger :: Int -> Radix -> Action
-lexInteger ndrop radix beg end =
+lexInteger ndrop radix@(_, isRadixDigit, _) beg end =
     case i of
       [n] -> return $ locateTok beg end (toToken n)
       _   -> fail "bad parse for integer"
   where
     num :: String
-    num = (takeWhile isDigit . drop ndrop)  s
+    num = (takeWhile isRadixDigit . drop ndrop)  s
 
     suffix :: String
-    suffix = (map toLower . takeWhile (not . isDigit) . reverse) s
+    suffix = (map toLower . takeWhile (not . isRadixDigit) . reverse) s
 
     s :: String
     s = inputString beg end
 
     i :: [Integer]
-    i = do  (n, _) <- readInteger radix s
+    i = do  (n, _) <- readInteger radix num
             return n
 
     toToken :: Integer -> Token
