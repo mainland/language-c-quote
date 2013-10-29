@@ -3,7 +3,7 @@
 -- Copyright   :  (c) Harvard University 2006-2011
 --                (c) Geoffrey Mainland 2011-2013
 -- License     :  BSD-style
--- Maintainer  :  mainland@eecs.harvard.edu
+-- Maintainer  :  mainland@cs.drexel.edu
 
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleInstances #-}

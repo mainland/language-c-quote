@@ -2,8 +2,9 @@
 -- Module      :  Language.C.Quote
 -- Copyright   :  (c) Harvard University 2010-2011
 --                (c) Geoffrey Mainland 2011-2013
+--             :  (c) Drexel University 2013
 -- License     :  BSD-style
--- Maintainer  :  mainland@eecs.harvard.edu
+-- Maintainer  :  mainland@cs.drexel.edu
 --
 -- There are five modules that provide quasiquoters, each for a different C
 -- variant. 'Language.C.Quote.C' parses C99, 'Language.C.Quote.GCC' parses C99

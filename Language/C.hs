@@ -2,7 +2,7 @@
 -- Module      :  Language.C
 -- Copyright   :  (c) Harvard University 2009
 -- License     :  BSD-style
--- Maintainer  :  mainland@eecs.harvard.edu
+-- Maintainer  :  mainland@cs.drexel.edu
 
 module Language.C (
     module Language.C.Parser,

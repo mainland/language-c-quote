@@ -2,7 +2,7 @@
 -- Module      :  Language.C.Parser
 -- Copyright   :  (c) Harvard University 2006-2010
 -- License     :  BSD-style
--- Maintainer  :  mainland@eecs.harvard.edu
+-- Maintainer  :  mainland@cs.drexel.edu
 
 module Language.C.Parser (
     module Language.C.Parser.Lexer,

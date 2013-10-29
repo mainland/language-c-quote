@@ -3,8 +3,9 @@
 -- Copyright   :  (c) Harvard University 2006-2011
 --                (c) Geoffrey Mainland 2011-2013
 --                (c) Manuel M T Chakravarty 2013
+--             :  (c) Drexel University 2013
 -- License     :  BSD-style
--- Maintainer  :  mainland@eecs.harvard.edu
+-- Maintainer  :  mainland@cs.drexel.edu
 
 module Language.C.Quote.ObjC (
     ToExp(..),

@@ -2,7 +2,7 @@
 -- Module      :  Language.C.Properties
 -- Copyright   :  (c) Harvard University 2006-2008
 -- License     :  BSD-style
--- Maintainer  :  mainland@eecs.harvard.edu
+-- Maintainer  :  mainland@cs.drexel.edu
 
 module Language.C.Properties where
 
