@@ -235,6 +235,9 @@ data Token = Teof
            | Tanti_objc_method_proto String
            | Tanti_objc_method_defn String
            | Tanti_objc_method_defns String
+           | Tanti_objc_recv String
+           | Tanti_objc_kwarg String
+           | Tanti_objc_kwargs String
     deriving (Ord, Eq)
 
 instance Pretty Token where

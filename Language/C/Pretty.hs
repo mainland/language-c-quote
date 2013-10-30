@@ -525,7 +525,6 @@ instance Pretty ObjCPropAttr where
     ppr (ObjCStrong loc)         = pprLoc loc $ text "strong"
     ppr (ObjCWeak loc)           = pprLoc loc $ text "weak"
     ppr (ObjCUnsafeRetained loc) = pprLoc loc $ text "unsafe_retained"
-    ppr (ObjCUnsafeRetained loc) = pprLoc loc $ text "unsafe_retained"
     ppr (AntiAttr v _) = pprAnti "propattr" v
     ppr (AntiAttrs v _) = pprAnti "propattrs" v
 
@@ -886,6 +885,8 @@ instance Pretty Exp where
         
         pprMsgArg (ObjCArg (Just sel) (Just e) loc) = pprLoc loc $ ppr sel <> colon <+> ppr e
         pprMsgArg (ObjCArg Nothing    (Just e) loc) = pprLoc loc $ colon <+> ppr e
+        pprMsgArg (AntiObjCArg v _) = pprAnti "ObjCArg" v
+        pprMsgArg (AntiObjCArgs v _) = pprAnti "ObjCArgs" v
         pprMsgArg (ObjCArg _          Nothing  loc) 
           = error $ "pretty printing 'ObjCArg': missing expression at " ++ show loc
 
@@ -994,3 +995,4 @@ instance Pretty ObjCRecv where
     ppr (ObjCRecvExp e loc)               = pprLoc loc $ ppr e
     ppr (ObjCRecvClassName className loc) = pprLoc loc $ ppr className
     ppr (ObjCRecvTypeName typeName loc)   = pprLoc loc $ ppr typeName
+    ppr (AntiObjCRecv v _)   = pprAnti "ObjCRecv" v

@@ -440,9 +440,12 @@ data ObjCRecv = ObjCRecvSuper !SrcLoc
               | ObjCRecvExp Exp !SrcLoc
               | ObjCRecvClassName Id !SrcLoc
               | ObjCRecvTypeName Id !SrcLoc
+              | AntiObjCRecv String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data ObjCArg = ObjCArg (Maybe Id) (Maybe Exp) !SrcLoc
+             | AntiObjCArg String !SrcLoc
+             | AntiObjCArgs String !SrcLoc
     -- -=chak FIXME: provide an ANTI form (singular and plural)
     deriving (Eq, Ord, Show, Data, Typeable)
 
@@ -757,9 +760,12 @@ instance Located ObjCRecv where
     locOf (ObjCRecvExp _ loc)       = locOf loc
     locOf (ObjCRecvClassName _ loc) = locOf loc
     locOf (ObjCRecvTypeName _ loc)  = locOf loc
+    locOf (AntiObjCRecv _ loc)  = locOf loc
 
 instance Located ObjCArg where
     locOf (ObjCArg _ _ loc) = locOf loc
+    locOf (AntiObjCArg _ loc) = locOf loc
+    locOf (AntiObjCArgs _ loc) = locOf loc
 
 instance Located ObjcDictElem where
     locOf (ObjcDictElem _ loc) = locOf loc

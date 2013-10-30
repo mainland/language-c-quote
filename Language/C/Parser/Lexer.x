@@ -123,6 +123,9 @@ c :-
  "$methodproto:"     / { allowAnti } { lexAnti Tanti_objc_method_proto }
  "$methoddef:"     / { allowAnti } { lexAnti Tanti_objc_method_defn }
  "$methoddefs:"     / { allowAnti } { lexAnti Tanti_objc_method_defns }
+ "$recv:"     / { allowAnti } { lexAnti Tanti_objc_recv }
+ "$kwarg:"     / { allowAnti } { lexAnti Tanti_objc_kwarg }
+ "$kwargs:"     / { allowAnti } { lexAnti Tanti_objc_kwargs }
 }
 
 <0> {

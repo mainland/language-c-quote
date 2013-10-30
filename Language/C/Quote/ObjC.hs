@@ -6,8 +6,11 @@
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 
+{-# LANGUAGE FlexibleInstances #-}
+
 module Language.C.Quote.ObjC (
     ToExp(..),
+    toObjCLit,
     cexp,
     cedecl,
     cdecl,
@@ -25,7 +28,9 @@ module Language.C.Quote.ObjC (
     ocpropattr,
     ocmethodparam,
     ocmethodproto,
-    ocmethoddef
+    ocmethoddef,
+    ocmethodrecv,
+    ocarg
   ) where
 
 import qualified Language.C.Parser as P
@@ -39,9 +44,24 @@ exts = [C.ObjC]
 typenames :: [String]
 typenames = ["id"]
 
+newtype ObjCLit a = ObjCLit a
+    deriving (Show, Read, Eq, Ord)
+
+instance ToExp (ObjCLit String) where
+    toExp (ObjCLit s) loc = C.ObjCLitString [C.StringConst [show s] s loc] loc
+
+instance ToExp (ObjCLit Bool) where
+    toExp (ObjCLit b) loc = C.ObjCLitBool b loc
+
+instance ToExp (ObjCLit Char) where
+    toExp (ObjCLit c) loc = C.ObjCLitConst Nothing (C.CharConst (show c) c loc) loc
+
+toObjCLit :: a -> ObjCLit a
+toObjCLit = ObjCLit
+
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, csdecl, cstm :: QuasiQuoter
 citem, cty, cunit, propdecl, ocdictelem, ocpropattr, ocmethodparam, ocmethodproto :: QuasiQuoter
-ocmethoddef :: QuasiQuoter
+ocmethoddef, ocmethodrecv, ocarg :: QuasiQuoter
 cdecl  = quasiquote exts typenames P.parseDecl
 cedecl = quasiquote exts typenames P.parseEdecl
 cenum  = quasiquote exts typenames P.parseEnum
@@ -60,3 +80,5 @@ ocpropattr = quasiquote exts typenames P.parsePropAttr
 ocmethodparam = quasiquote exts typenames P.parseObjcMethodArg
 ocmethodproto = quasiquote exts typenames P.parseObjcMethodProto
 ocmethoddef = quasiquote exts typenames P.parseObjcMethodDefn
+ocmethodrecv = quasiquote exts typenames P.parseObjcMethodRecv
+ocarg = quasiquote exts typenames P.parseObjcKeywordArg

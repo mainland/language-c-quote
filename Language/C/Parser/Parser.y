@@ -246,6 +246,9 @@ import qualified Language.C.Syntax as C
  ANTI_OBJC_METHOD_PROTO        { L _ (T.Tanti_objc_method_proto _) }
  ANTI_OBJC_METHOD_DEFN        { L _ (T.Tanti_objc_method_defn _) }
  ANTI_OBJC_METHOD_DEFNS        { L _ (T.Tanti_objc_method_defns _) }
+ ANTI_OBJC_RECV        { L _ (T.Tanti_objc_recv _) }
+ ANTI_OBJC_ARG        { L _ (T.Tanti_objc_kwarg _) }
+ ANTI_OBJC_ARGS        { L _ (T.Tanti_objc_kwargs _) }
 
 -- Three shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
@@ -281,6 +284,9 @@ import qualified Language.C.Syntax as C
 %name parseObjcMethodArg objc_method_arg
 %name parseObjcMethodProto objc_method_proto
 %name parseObjcMethodDefn objc_method_definition
+%name parseObjcMethodRecv objc_receiver
+%name parseObjcKeywordArg objc_keywordarg
+
 
 %right NAMED OBJCNAMED
 %%
@@ -490,6 +496,7 @@ objc_receiver :
       { case $1 of 
           Var (Id "super" _) loc -> ObjCRecvSuper loc
           _                      -> ObjCRecvExp $1 (srclocOf $1) }
+  | ANTI_OBJC_RECV { AntiObjCRecv (getANTI_OBJC_RECV $1) (srclocOf $1) }
 
 objc_message_args :: { ([ObjCArg], [Exp]) }
 objc_message_args :
@@ -504,6 +511,8 @@ objc_keywordarg_list :
       { rsingleton $1 }
   | objc_keywordarg_list objc_keywordarg
       { $2 `rcons` $1 }
+  | ANTI_OBJC_ARGS
+      { rsingleton (AntiObjCArgs (getANTI_OBJC_ARGS $1) (srclocOf $1)) }
 
 objc_keywordarg :: { ObjCArg }
 objc_keywordarg :
@@ -511,6 +520,9 @@ objc_keywordarg :
       { ObjCArg Nothing (Just $2) ($1 `srcspan` $2) }
   | objc_selector ':' assignment_expression
       { ObjCArg (Just $1) (Just $3) ($1 `srcspan` $3) }
+  | ANTI_OBJC_ARG 
+      { AntiObjCArg (getANTI_OBJC_ARG $1) (srclocOf $1) }
+
 
 objc_selector :: { Id }
 objc_selector :
@@ -572,6 +584,7 @@ objc_vararg_list :
       { rnil }
   |  objc_vararg_list ',' assignment_expression
       { $3 `rcons` $1 }
+  |  ANTI_ARGS { rsingleton (AntiArgs (getANTI_ARGS $1) (srclocOf $1)) }
 
 -- Objective-C extension: at expression
 --
@@ -2677,6 +2690,9 @@ getANTI_OBJC_PARAMS        (L _ (T.Tanti_objc_params v))        = v
 getANTI_OBJC_METHOD_PROTO        (L _ (T.Tanti_objc_method_proto v))        = v
 getANTI_OBJC_METHOD_DEFN        (L _ (T.Tanti_objc_method_defn v))         = v
 getANTI_OBJC_METHOD_DEFNS        (L _ (T.Tanti_objc_method_defns v))         = v
+getANTI_OBJC_RECV        (L _ (T.Tanti_objc_recv v))         = v
+getANTI_OBJC_ARG        (L _ (T.Tanti_objc_kwarg v))         = v
+getANTI_OBJC_ARGS        (L _ (T.Tanti_objc_kwargs v))         = v
 
 lexer :: (L T.Token -> P a) -> P a
 lexer cont = do

@@ -327,20 +327,22 @@ qqObjCMethodProtoE :: C.ObjCMethodProto -> Maybe (Q Exp)
 qqObjCMethodProtoE (C.AntiObjCMethodProto p _) = Just $ antiVarE p
 qqObjCMethodProtoE _                  = Nothing
 
-{-
-qqObjCMethodDefnE :: C.Definition -> Maybe (Q Exp)
-qqObjCMethodDefnE (C.AntiObjCMeth m _) = Just $ antiVarE m
-qqObjCMethodDefnE _                  = Nothing
+qqObjCRecvE :: C.ObjCRecv -> Maybe (Q Exp)
+qqObjCRecvE (C.AntiObjCRecv p _) = Just $ antiVarE p
+qqObjCRecvE _                  = Nothing
 
-qqObjCMethodDefnsE :: [C.Definition] -> Maybe (Q Exp)
-qqObjCMethodDefnsE [] = Just [|[]|]
-qqObjCMethodDefnsE (C.AntiObjCMeths m _: defs) = Just $ [|$(antiVarE m) ++ $(dataToExpQ qqExp defs)|]
-qqObjCMethodDefnsE _                 = Nothing
--}
+qqObjCArgE :: C.ObjCArg -> Maybe (Q Exp)
+qqObjCArgE (C.AntiObjCArg p _) = Just $ antiVarE p
+qqObjCArgE _                  = Nothing
+
+qqObjCArgsE :: [C.ObjCArg] -> Maybe (Q Exp)
+qqObjCArgsE [] = Just [|[]|]
+qqObjCArgsE (C.AntiObjCArgs a _: args) = Just $ [|$(antiVarE a) ++ $(dataToExpQ qqExp args)|]
+qqObjCArgsE _                 = Nothing
+
 qqExp :: Typeable a => a -> Maybe (Q Exp)
 qqExp = const Nothing  `extQ` qqStringE
                        `extQ` qqIdE
-                       --`extQ` qqObjCMethodDefnE
                        `extQ` qqDeclSpecE
                        `extQ` qqDeclE
                        `extQ` qqTypeE
@@ -371,7 +373,9 @@ qqExp = const Nothing  `extQ` qqStringE
                        `extQ` qqObjCParamE
                        `extQ` qqObjCParamsE
                        `extQ` qqObjCMethodProtoE
-                       --`extQ` qqObjCMethodDefnsE
+                       `extQ` qqObjCRecvE
+                       `extQ` qqObjCArgE
+                       `extQ` qqObjCArgsE
 
 antiVarP :: String -> PatQ
 antiVarP = either fail return . parsePat
