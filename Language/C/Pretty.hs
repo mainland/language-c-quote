@@ -940,8 +940,8 @@ instance Pretty Exp where
 
     pprPrec _ (AntiExp v _)   = pprAnti "var"  v 
 
-instance Pretty ObjcDictElem where
-    pprPrec _ (ObjcDictElem (l,r) _) = ppr l <+> colon <+> ppr r     
+instance Pretty ObjCDictElem where
+    pprPrec _ (ObjCDictElem (l,r) _) = ppr l <+> colon <+> ppr r     
     pprPrec _ (AntiDictElems v _) = pprAnti "dictelems" v    
 
 instance Pretty BinOp where

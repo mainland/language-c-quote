@@ -301,7 +301,7 @@ qqPropAttrListE :: [C.ObjCPropAttr] -> Maybe (Q Exp)
 qqPropAttrListE (C.AntiAttrs pa _:attrelems) = Just $ [|$(antiVarE pa) ++ $(dataToExpQ qqExp attrelems)|]
 qqPropAttrListE _                  = Nothing
 
-qqDictsE :: [C.ObjcDictElem] -> Maybe (Q Exp)
+qqDictsE :: [C.ObjCDictElem] -> Maybe (Q Exp)
 qqDictsE (C.AntiDictElems e _:elems) = Just $ [|$(antiVarE e) ++ $(dataToExpQ qqExp elems)|]
 qqDictsE _                  = Nothing
 

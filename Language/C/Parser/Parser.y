@@ -654,19 +654,19 @@ assignment_expression_list :
   | assignment_expression_list ',' assignment_expression
       { rcons $3 $1 }
 
-objc_key_value_list :: { RevList ObjcDictElem }
+objc_key_value_list :: { RevList ObjCDictElem }
 objc_key_value_list :
     assignment_expression ':' assignment_expression
-      { rsingleton $ ObjcDictElem ($1, $3) ($1 `srcspan` $3) }
+      { rsingleton $ ObjCDictElem ($1, $3) ($1 `srcspan` $3) }
   | ANTI_DICTS 
       { rsingleton (AntiDictElems (getANTI_DICTS $1) (srclocOf $1)) }
   | objc_key_value_list ',' assignment_expression ':' assignment_expression
-      { rcons (ObjcDictElem ($3, $5) ($3 `srcspan` $5)) $1 }
+      { rcons (ObjCDictElem ($3, $5) ($3 `srcspan` $5)) $1 }
 
-objc_key_value :: { ObjcDictElem }
+objc_key_value :: { ObjCDictElem }
 objc_key_value :
     assignment_expression ':' assignment_expression
-      { ObjcDictElem ($1, $3) ($1 `srcspan` $3) }
+      { ObjCDictElem ($1, $3) ($1 `srcspan` $3) }
 
 objc_string_literal_list :: { RevList Const }
 objc_string_literal_list :

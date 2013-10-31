@@ -23,7 +23,7 @@ module Language.C.Quote.ObjC (
     citem,
     cunit,
     cfun,
-    propdecl,
+    ocprop,
     ocdictelem,
     ocpropattr,
     ocmethodparam,
@@ -60,7 +60,7 @@ toObjCLit :: a -> ObjCLit a
 toObjCLit = ObjCLit
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, csdecl, cstm :: QuasiQuoter
-citem, cty, cunit, propdecl, ocdictelem, ocpropattr, ocmethodparam, ocmethodproto :: QuasiQuoter
+citem, cty, cunit, ocprop, ocdictelem, ocpropattr, ocmethodparam, ocmethodproto :: QuasiQuoter
 ocmethoddef, ocmethodrecv, ocarg :: QuasiQuoter
 cdecl  = quasiquote exts typenames P.parseDecl
 cedecl = quasiquote exts typenames P.parseEdecl
@@ -74,7 +74,7 @@ cstm   = quasiquote exts typenames P.parseStm
 citem  = quasiquote exts typenames P.parseBlockItem
 cty    = quasiquote exts typenames P.parseType
 cunit  = quasiquote exts typenames P.parseUnit
-propdecl = quasiquote exts typenames P.parsePropDecl
+ocprop = quasiquote exts typenames P.parsePropDecl
 ocdictelem = quasiquote exts typenames P.parseDictElem
 ocpropattr = quasiquote exts typenames P.parsePropAttr
 ocmethodparam = quasiquote exts typenames P.parseObjcMethodArg

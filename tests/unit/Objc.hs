@@ -35,8 +35,8 @@ objcProp = testCase "objc property" $
              @end
              |]
   where
-    propdec n typ = [propdecl|@property ($propattrs:r) $ty:typ $id:n;|]
-    propdec' n typ = [propdecl|@property ($propattr:p) $ty:typ $id:n;|]
+    propdec n typ = [ocprop|@property ($propattrs:r) $ty:typ $id:n;|]
+    propdec' n typ = [ocprop|@property ($propattr:p) $ty:typ $id:n;|]
     p = [ocpropattr|nonatomic|]
     q = [ocpropattr|retain|]
     r = [p,q]

@@ -286,7 +286,7 @@ data BlockItem = BlockDecl InitGroup
 data ObjCCatch = ObjCCatch (Maybe Param) [BlockItem] !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
-data ObjcDictElem = ObjcDictElem (Exp, Exp) !SrcLoc
+data ObjCDictElem = ObjCDictElem (Exp, Exp) !SrcLoc
                   | AntiDictElems String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
@@ -379,7 +379,7 @@ data Exp = Var Id !SrcLoc
          | ObjCLitString [Const] !SrcLoc              -- they are all 'StringConst'
          | ObjCLitBool Bool !SrcLoc
          | ObjCLitArray [Exp] !SrcLoc
-         | ObjCLitDict [ObjcDictElem] !SrcLoc
+         | ObjCLitDict [ObjCDictElem] !SrcLoc
          | ObjCLitBoxed Exp !SrcLoc
          | ObjCEncode Type !SrcLoc
          | ObjCProtocol Id !SrcLoc
@@ -767,8 +767,8 @@ instance Located ObjCArg where
     locOf (AntiObjCArg _ loc) = locOf loc
     locOf (AntiObjCArgs _ loc) = locOf loc
 
-instance Located ObjcDictElem where
-    locOf (ObjcDictElem _ loc) = locOf loc
+instance Located ObjCDictElem where
+    locOf (ObjCDictElem _ loc) = locOf loc
     locOf (AntiDictElems _ loc) = locOf loc
 
 ctypedef :: Id -> Decl -> [Attr] -> Typedef
