@@ -231,11 +231,11 @@ data ObjCMethodReq = ObjCRequired !SrcLoc
                    | ObjCOptional !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
-data ObjCParm = ObjCParm (Maybe Id) (Maybe Type) [Attr] (Maybe Id) !SrcLoc
+data ObjCParam = ObjCParam (Maybe Id) (Maybe Type) [Attr] (Maybe Id) !SrcLoc
     -- -=chak FIXME: provide an ANTI form (singular and plural)
     deriving (Eq, Ord, Show, Data, Typeable)
 
-data ObjCMethodProto = ObjCMethodProto Bool (Maybe Type) [Attr] [ObjCParm] Bool [Attr] !SrcLoc
+data ObjCMethodProto = ObjCMethodProto Bool (Maybe Type) [Attr] [ObjCParam] Bool [Attr] !SrcLoc
                        -- ^Invariant: First parameter must at least either have a selector or
                        --  an identifier; all other parameters must have an identifier.
     deriving (Eq, Ord, Show, Data, Typeable)
@@ -626,8 +626,8 @@ instance Located ObjCMethodReq where
     locOf (ObjCRequired loc) = locOf loc
     locOf (ObjCOptional loc) = locOf loc
 
-instance Located ObjCParm where
-    locOf (ObjCParm _ _ _ _ loc) = locOf loc
+instance Located ObjCParam where
+    locOf (ObjCParam _ _ _ _ loc) = locOf loc
 
 instance Located ObjCMethodProto where
     locOf (ObjCMethodProto _ _ _ _ _ _ loc) = locOf loc

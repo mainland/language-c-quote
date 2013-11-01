@@ -1304,7 +1304,7 @@ type_qualifier :
 -- In the grammar in the C99 standard, a parameter declaration can result from
 -- either a declarator or an abstract declarator. This produces an ambiguity
 -- when a typedef name appears after '(' because we can't tell whether or not it
--- is an item in a parmeter list for a function that is part of an abstract
+-- is an item in a parameter list for a function that is part of an abstract
 -- declarator, or if is just a parenthesized (standard) declarator. This
 -- ambiguity exists in the definition of f in the above program.
 --
@@ -2259,15 +2259,15 @@ objc_method_requirement :
 objc_method_proto :: { ObjCMethodProto }
 objc_method_proto :
     '-' objc_method_decl attributes_opt
-      { let (res, attrs, parms, hasVargs) = $2
+      { let (res, attrs, params, hasVargs) = $2
         in
-        ObjCMethodProto False res attrs parms hasVargs $3 ($1 `srcspan` $3) }
+        ObjCMethodProto False res attrs params hasVargs $3 ($1 `srcspan` $3) }
   | '+' objc_method_decl attributes_opt
-      { let (res, attrs, parms, hasVargs) = $2
+      { let (res, attrs, params, hasVargs) = $2
         in
-        ObjCMethodProto True res attrs parms hasVargs $3 ($1 `srcspan` $3) }
+        ObjCMethodProto True res attrs params hasVargs $3 ($1 `srcspan` $3) }
 
-objc_method_decl :: { (Maybe Type, [Attr], [ObjCParm], Bool) }
+objc_method_decl :: { (Maybe Type, [Attr], [ObjCParam], Bool) }
 objc_method_decl :
                  attributes_opt objc_method_args
       { (Nothing, $1, $2, False) }
@@ -2278,30 +2278,30 @@ objc_method_decl :
   | '(' type_name ')' attributes_opt objc_method_args ',' '...'
       { (Just $2, $4, $5, True) }
 
-objc_method_args :: { [ObjCParm] }
+objc_method_args :: { [ObjCParam] }
 objc_method_args :
     objc_selector
-      { [ObjCParm (Just $1) Nothing [] Nothing (srclocOf $1)] }
+      { [ObjCParam (Just $1) Nothing [] Nothing (srclocOf $1)] }
   | objc_method_arg_list
       { rev $1 }
 
-objc_method_arg_list :: { RevList ObjCParm }
+objc_method_arg_list :: { RevList ObjCParam }
 objc_method_arg_list :
     objc_method_arg
       { rsingleton $1 }
   | objc_method_arg_list objc_method_arg
       { rcons $2 $1 }
 
-objc_method_arg :: { ObjCParm }
+objc_method_arg :: { ObjCParam }
 objc_method_arg :
     objc_selector ':' '(' type_name ')' attributes_opt identifier
-      { ObjCParm (Just $1) (Just $4) $6 (Just $7) ($1 `srcspan` $7) }
+      { ObjCParam (Just $1) (Just $4) $6 (Just $7) ($1 `srcspan` $7) }
   |               ':' '(' type_name ')' attributes_opt identifier
-      { ObjCParm Nothing   (Just $3) $5 (Just $6) ($1 `srcspan` $6) }
+      { ObjCParam Nothing   (Just $3) $5 (Just $6) ($1 `srcspan` $6) }
   | objc_selector ':'               attributes_opt identifier
-      { ObjCParm (Just $1) Nothing   $3 (Just $4) ($1 `srcspan` $4) }
+      { ObjCParam (Just $1) Nothing   $3 (Just $4) ($1 `srcspan` $4) }
   |               ':'               attributes_opt identifier
-      { ObjCParm Nothing   Nothing   $2 (Just $3) ($1 `srcspan` $3) }
+      { ObjCParam Nothing   Nothing   $2 (Just $3) ($1 `srcspan` $3) }
 
 -- Objective-C extension: protocol declaration
 --

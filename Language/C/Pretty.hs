@@ -526,24 +526,24 @@ instance Pretty ObjCMethodReq where
     ppr (ObjCRequired _loc) = text "@required"
     ppr (ObjCOptional _loc) = text "@optional"
 
-instance Pretty ObjCParm where
-    ppr (ObjCParm sel ty attrs arg loc)
+instance Pretty ObjCParam where
+    ppr (ObjCParam sel ty attrs arg loc)
       = pprLoc loc $
         case (sel, arg) of
-         (Nothing , Nothing) -> error $ "pretty printing 'ObjCParm': empty " ++ show loc
+         (Nothing , Nothing) -> error $ "pretty printing 'ObjCParam': empty " ++ show loc
          (Just sid, Nothing) -> ppr sid
          (_       , Just pid)
            -> maybe empty ppr sel <> colon <> maybe empty (parens . ppr) ty <> ppr attrs <> ppr pid
 
 instance Pretty ObjCMethodProto where
-    ppr (ObjCMethodProto isClassMeth resTy attrs1 parms vargs attrs2 loc)
+    ppr (ObjCMethodProto isClassMeth resTy attrs1 params vargs attrs2 loc)
       = pprLoc loc $
         (if isClassMeth then char '+' else char '-')
         <+> maybe empty (parens . ppr) resTy
         <> case attrs1 of
              [] -> empty
              _  -> space <> ppr attrs1 <> space
-        <> spread (map ppr parms)
+        <> spread (map ppr params)
         <> if vargs then text ", ..." else empty
         <> ppr attrs2
 
@@ -685,8 +685,8 @@ instance Pretty Stm where
 
 instance Pretty ObjCCatch where
     ppr (ObjCCatch Nothing     block loc) = srcloc loc <> text "@catch (...)" <+> ppr block
-    ppr (ObjCCatch (Just parm) block loc) = srcloc loc
-                                            <> text "@catch" <+> parens (ppr parm) <+> ppr block
+    ppr (ObjCCatch (Just param) block loc) = srcloc loc
+                                            <> text "@catch" <+> parens (ppr param) <+> ppr block
 
     pprList = stack . map ppr
 
