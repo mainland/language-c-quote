@@ -10,6 +10,7 @@ import Data.Loc (SrcLoc, noLoc)
 import Language.C.Quote.C
 import qualified Language.C.Syntax as C
 import Numeric (showHex)
+import Objc (objcTests)
 import System.Exit (exitFailure, exitSuccess)
 
 main :: IO ()
@@ -21,6 +22,7 @@ tests = [ constantTests
         , cQuotationTests
         , cPatternAntiquotationTests
         , statementCommentTests
+        , objcTests
         ]
 
 constantTests :: Test

@@ -7,10 +7,13 @@
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
 
+{-# LANGUAGE FlexibleInstances #-}
+
 module Language.C.Quote.ObjC (
     ToIdent(..),
     ToConst(..),
     ToExp(..),
+    objcLit,
     cexp,
     cedecl,
     cdecl,
@@ -25,9 +28,16 @@ module Language.C.Quote.ObjC (
     citem,
     cunit,
     cfun,
-    objcprop, 
-    objcifdecls, 
-    objcimdecls
+    objcprop,
+    objcifdecls,
+    objcimdecls,
+    objcdictelem,
+    objcpropattr,
+    objcmethparam,
+    objcmethproto,
+    objcmethdef,
+    objcmethrecv,
+    objcarg
   ) where
 
 import qualified Language.C.Parser as P
@@ -40,6 +50,24 @@ exts = [C.ObjC]
 
 typenames :: [String]
 typenames = ["id", "instancetype"]
+
+-- | A wrapper for a value indicating that it should be treated as an
+-- Objective-C literal.
+newtype ObjCLit a = ObjCLit a
+    deriving (Show, Read, Eq, Ord)
+
+instance ToExp (ObjCLit String) where
+    toExp (ObjCLit s) loc = C.ObjCLitString [C.StringConst [show s] s loc] loc
+
+instance ToExp (ObjCLit Bool) where
+    toExp (ObjCLit b) loc = C.ObjCLitBool b loc
+
+instance ToExp (ObjCLit Char) where
+    toExp (ObjCLit c) loc = C.ObjCLitConst Nothing (C.CharConst (show c) c loc) loc
+
+-- | Indicates that a value should be treated as an Objective-C literal.
+objcLit :: a -> ObjCLit a
+objcLit = ObjCLit
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, cparams, csdecl, cstm, cstms :: QuasiQuoter
 citem, cty, cunit :: QuasiQuoter
@@ -58,7 +86,15 @@ citem   = quasiquote exts typenames P.parseBlockItem
 cty     = quasiquote exts typenames P.parseType
 cunit   = quasiquote exts typenames P.parseUnit
 
-objcprop, objcifdecls, objcimdecls :: QuasiQuoter
-objcprop    = quasiquote exts typenames P.parseObjCProp
-objcifdecls = quasiquote exts typenames P.parseObjCIfaceDecls
-objcimdecls = quasiquote exts typenames P.parseObjCImplDecls
+objcprop, objcpropattr, objcifdecls, objcimdecls, objcdictelem, objcmethparam, objcmethproto :: QuasiQuoter
+objcmethdef, objcmethrecv, objcarg :: QuasiQuoter
+objcprop      = quasiquote exts typenames P.parseObjCProp
+objcifdecls   = quasiquote exts typenames P.parseObjCIfaceDecls
+objcimdecls   = quasiquote exts typenames P.parseObjCImplDecls
+objcpropattr  = quasiquote exts typenames P.parseObjCPropAttr
+objcdictelem  = quasiquote exts typenames P.parseObjCDictElem
+objcmethparam = quasiquote exts typenames P.parseObjCMethodParam
+objcmethproto = quasiquote exts typenames P.parseObjCMethodProto
+objcmethdef   = quasiquote exts typenames P.parseObjCMethodDef
+objcmethrecv  = quasiquote exts typenames P.parseObjCMethodRecv
+objcarg       = quasiquote exts typenames P.parseObjCKeywordArg

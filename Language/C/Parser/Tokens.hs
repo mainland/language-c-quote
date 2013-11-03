@@ -233,6 +233,19 @@ data Token = Teof
 
            | Tanti_objc_ifdecl String
            | Tanti_objc_ifdecls String
+           | Tanti_objc_prop String
+           | Tanti_objc_props String
+           | Tanti_objc_prop_attr String
+           | Tanti_objc_prop_attrs String
+           | Tanti_objc_dicts String
+           | Tanti_objc_param String
+           | Tanti_objc_params String
+           | Tanti_objc_method_proto String
+           | Tanti_objc_method_def String
+           | Tanti_objc_method_defs String
+           | Tanti_objc_recv String
+           | Tanti_objc_arg String
+           | Tanti_objc_args String
     deriving (Ord, Eq)
 
 instance Pretty Token where
@@ -291,10 +304,26 @@ instance Show Token where
     show (Tanti_init s)                 = "$init:" ++ s
     show (Tanti_inits s)                = "$inits:" ++ s
 
-    show (TObjCnamed s)                 = s
+    --
+    -- Objective C
+    --
+    show (TObjCnamed s)              = s
 
-    show (Tanti_objc_ifdecl s)          = "$ifdecl:" ++ s
-    show (Tanti_objc_ifdecls s)         = "$ifdecls:" ++ s
+    show (Tanti_objc_ifdecl s)       = "$ifdecl:" ++ s
+    show (Tanti_objc_ifdecls s)      = "$ifdecls:" ++ s
+    show (Tanti_objc_prop s)         = "$prop:" ++ s
+    show (Tanti_objc_props s)        = "$props:" ++ s
+    show (Tanti_objc_prop_attr s)    = "$propattr:" ++ s
+    show (Tanti_objc_prop_attrs s)   = "$propattrs:" ++ s
+    show (Tanti_objc_dicts s)        = "$dictelems:" ++ s
+    show (Tanti_objc_param s)        = "$methparam:" ++ s
+    show (Tanti_objc_params s)       = "$methparams:" ++ s
+    show (Tanti_objc_method_proto s) = "$methproto:" ++ s
+    show (Tanti_objc_method_def s)   = "$methdef:" ++ s
+    show (Tanti_objc_method_defs s)  = "$methdefs:" ++ s
+    show (Tanti_objc_recv s)         = "$recv:" ++ s
+    show (Tanti_objc_arg s)          = "$kwarg:" ++ s
+    show (Tanti_objc_args s)         = "$kwargs:" ++ s
 
     show t = fromMaybe (error "language-c-quote: internal error: unknown token")
                        (lookup t tokenStrings)

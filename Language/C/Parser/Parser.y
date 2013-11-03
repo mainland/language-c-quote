@@ -232,8 +232,21 @@ import qualified Language.C.Syntax as C
  '__strong'            { L _ T.TObjC__strong }
  '__unsafe_unretained' { L _ T.TObjC__unsafe_unretained }
 
- ANTI_OBJC_IFDECL  { L _ (T.Tanti_objc_ifdecl _) }
- ANTI_OBJC_IFDECLS { L _ (T.Tanti_objc_ifdecls _) }
+ ANTI_OBJC_IFDECL       { L _ (T.Tanti_objc_ifdecl _) }
+ ANTI_OBJC_IFDECLS      { L _ (T.Tanti_objc_ifdecls _) }
+ ANTI_OBJC_PROP         { L _ (T.Tanti_objc_prop _) }
+ ANTI_OBJC_PROPS        { L _ (T.Tanti_objc_props _) }
+ ANTI_OBJC_PROP_ATTR    { L _ (T.Tanti_objc_prop_attr _) }
+ ANTI_OBJC_PROP_ATTRS   { L _ (T.Tanti_objc_prop_attrs _) }
+ ANTI_OBJC_DICTS        { L _ (T.Tanti_objc_dicts _) }
+ ANTI_OBJC_PARAM        { L _ (T.Tanti_objc_param _) }
+ ANTI_OBJC_PARAMS       { L _ (T.Tanti_objc_params _) }
+ ANTI_OBJC_METHOD_PROTO { L _ (T.Tanti_objc_method_proto _) }
+ ANTI_OBJC_METHOD_DEF   { L _ (T.Tanti_objc_method_def _) }
+ ANTI_OBJC_METHOD_DEFS  { L _ (T.Tanti_objc_method_defs _) }
+ ANTI_OBJC_RECV         { L _ (T.Tanti_objc_recv _) }
+ ANTI_OBJC_ARG          { L _ (T.Tanti_objc_arg _) }
+ ANTI_OBJC_ARGS         { L _ (T.Tanti_objc_args _) }
 
  --
  -- CUDA
@@ -299,9 +312,16 @@ import qualified Language.C.Syntax as C
 --
 -- Objective-C
 --
-%name parseObjCProp       objc_property_decl
-%name parseObjCIfaceDecls objc_interface_decl_list
-%name parseObjCImplDecls  objc_implementation_decl_list
+%name parseObjCProp        objc_property_decl
+%name parseObjCIfaceDecls  objc_interface_decl_list
+%name parseObjCImplDecls   objc_implementation_decl_list
+%name parseObjCDictElem    objc_key_value
+%name parseObjCPropAttr    objc_property_attr
+%name parseObjCMethodParam objc_method_param
+%name parseObjCMethodProto objc_method_proto
+%name parseObjCMethodDef   objc_method_definition
+%name parseObjCMethodRecv  objc_receiver
+%name parseObjCKeywordArg  objc_keywordarg
 
 %right NAMED OBJCNAMED
 
@@ -2129,12 +2149,19 @@ block_literal :
  -
  ------------------------------------------------------------------------------}
 
-objc_key_value_rlist :: { RevList (Exp, Exp) }
-objc_key_value_rlist :
+objc_key_value :: { ObjCDictElem }
+objc_key_value :
     assignment_expression ':' assignment_expression
-      { rsingleton ($1, $3) }
-  | objc_key_value_rlist ',' assignment_expression ':' assignment_expression
-      { rcons ($3, $5) $1 }
+      { ObjCDictElem $1 $3 ($1 `srcspan` $3) }
+
+objc_key_value_rlist :: { RevList ObjCDictElem }
+objc_key_value_rlist :
+    objc_key_value
+      { rsingleton $1 }
+  | ANTI_OBJC_DICTS
+      { rsingleton (AntiObjCDictElems (getANTI_OBJC_DICTS $1) (srclocOf $1)) }
+  | objc_key_value_rlist ',' objc_key_value
+      { rcons $3 $1 }
 
 objc_string_literal_rlist :: { RevList Const }
 objc_string_literal_rlist :
@@ -2264,6 +2291,8 @@ objc_receiver :
           Var (Id "super" _) loc -> ObjCRecvSuper loc
           _                      -> ObjCRecvExp $1 (srclocOf $1)
       }
+  | ANTI_OBJC_RECV
+      { AntiObjCRecv (getANTI_OBJC_RECV $1) (srclocOf $1) }
 
 objc_message_args :: { ([ObjCArg], [Exp]) }
 objc_message_args :
@@ -2332,6 +2361,8 @@ objc_keywordarg_rlist :
       { rsingleton $1 }
   | objc_keywordarg_rlist objc_keywordarg
       { $2 `rcons` $1 }
+  | ANTI_OBJC_ARGS
+      { rsingleton (AntiObjCArgs (getANTI_OBJC_ARGS $1) (srclocOf $1)) }
 
 objc_keywordarg :: { ObjCArg }
 objc_keywordarg :
@@ -2339,6 +2370,8 @@ objc_keywordarg :
       { ObjCArg Nothing (Just $2) ($1 `srcspan` $2) }
   | objc_selector ':' assignment_expression
       { ObjCArg (Just $1) (Just $3) ($1 `srcspan` $3) }
+  | ANTI_OBJC_ARG
+      { AntiObjCArg (getANTI_OBJC_ARG $1) (srclocOf $1) }
 
 objc_vararg_rlist :: { RevList Exp }   -- might be empty
 objc_vararg_rlist :
@@ -2346,6 +2379,8 @@ objc_vararg_rlist :
       { rnil }
   | objc_vararg_rlist ',' assignment_expression
       { $3 `rcons` $1 }
+  | ANTI_ARGS
+      { rsingleton (AntiArgs (getANTI_ARGS $1) (srclocOf $1)) }
 
 -- Objective-C extension: at expression
 --
@@ -2597,6 +2632,8 @@ objc_interface_decl_rlist :
       { rcons $2 $1 }
   | objc_interface_decl_rlist ANTI_OBJC_IFDECLS
       { rcons (AntiObjCIfaceDecls (getANTI_OBJC_IFDECLS $2) (srclocOf $2)) $1 }
+  | objc_interface_decl_rlist ANTI_OBJC_PROPS
+      { rcons (AntiObjCProps (getANTI_OBJC_PROPS $2) (srclocOf $2)) $1 }
 
 objc_interface_decl :: { ObjCIfaceDecl }
 objc_interface_decl :
@@ -2617,6 +2654,8 @@ objc_property_decl :
       { ObjCIfaceProp [] $3 ($1 `srcspan` $3) }
   | '@' 'property' '(' objc_property_attr_rlist ')' struct_declaration
       { ObjCIfaceProp (rev $4) $6 ($1 `srcspan` $6) }
+  | ANTI_OBJC_PROP
+      { AntiObjCProp (getANTI_OBJC_PROP $1) (srclocOf $1) }
 
 objc_property_attr_rlist :: { RevList ObjCPropAttr }
 objc_property_attr_rlist :
@@ -2624,6 +2663,8 @@ objc_property_attr_rlist :
       { rsingleton $1 }
   | objc_property_attr_rlist ',' objc_property_attr
       { rcons $3 $1 }
+  | ANTI_OBJC_PROP_ATTRS
+      { rsingleton (AntiObjCAttrs (getANTI_OBJC_PROP_ATTRS $1) (srclocOf $1)) }
 
 objc_property_attr :: { ObjCPropAttr }
 objc_property_attr :
@@ -2654,6 +2695,8 @@ objc_property_attr :
            ; _                        -> expectedObjCPropertyAttr (locOf $1)
            }
       }
+  | ANTI_OBJC_PROP_ATTR
+     { AntiObjCAttr (getANTI_OBJC_PROP_ATTR $1) (srclocOf $1) }
 
 objc_method_requirement :: { ObjCMethodReq }
 objc_method_requirement :
@@ -2674,34 +2717,38 @@ objc_method_proto :
         in
           ObjCMethodProto True res attrs params hasVargs $3 ($1 `srcspan` $3)
       }
+  | ANTI_OBJC_METHOD_PROTO
+      { AntiObjCMethodProto (getANTI_OBJC_METHOD_PROTO $1) (srclocOf $1) }
 
 objc_method_decl :: { (Maybe Type, [Attr], [ObjCParam], Bool) }
 objc_method_decl :
-    attribute_specifiers_opt objc_method_args
+    attribute_specifiers_opt objc_method_params
       { (Nothing, $1, $2, False) }
-  | '(' type_name ')' attribute_specifiers_opt objc_method_args
+  | '(' type_name ')' attribute_specifiers_opt objc_method_params
       { (Just $2, $4, $5, False) }
-  | attribute_specifiers_opt objc_method_args ',' '...'
+  | attribute_specifiers_opt objc_method_params ',' '...'
       { (Nothing, $1, $2, True) }
-  | '(' type_name ')' attribute_specifiers_opt objc_method_args ',' '...'
+  | '(' type_name ')' attribute_specifiers_opt objc_method_params ',' '...'
       { (Just $2, $4, $5, True) }
 
-objc_method_args :: { [ObjCParam] }
-objc_method_args :
+objc_method_params :: { [ObjCParam] }
+objc_method_params :
     objc_selector
       { [ObjCParam (Just $1) Nothing [] Nothing (srclocOf $1)] }
-  | objc_method_arg_rlist
+  | objc_method_param_rlist
       { rev $1 }
 
-objc_method_arg_rlist :: { RevList ObjCParam }
-objc_method_arg_rlist :
-    objc_method_arg
+objc_method_param_rlist :: { RevList ObjCParam }
+objc_method_param_rlist :
+    objc_method_param
       { rsingleton $1 }
-  | objc_method_arg_rlist objc_method_arg
+  | objc_method_param_rlist objc_method_param
       { rcons $2 $1 }
+  | ANTI_OBJC_PARAMS
+      { rsingleton (AntiObjCParams (getANTI_OBJC_PARAMS $1) (srclocOf $1)) }
 
-objc_method_arg :: { ObjCParam }
-objc_method_arg :
+objc_method_param :: { ObjCParam }
+objc_method_param :
     objc_selector ':' '(' type_name ')' attribute_specifiers_opt identifier
       { ObjCParam (Just $1) (Just $4) $6 (Just $7) ($1 `srcspan` $7) }
   |               ':' '(' type_name ')' attribute_specifiers_opt identifier
@@ -2710,6 +2757,8 @@ objc_method_arg :
       { ObjCParam (Just $1) Nothing   $3 (Just $4) ($1 `srcspan` $4) }
   |               ':'                   attribute_specifiers_opt identifier
       { ObjCParam Nothing   Nothing   $2 (Just $3) ($1 `srcspan` $3) }
+  |   ANTI_OBJC_PARAM
+      { AntiObjCParam (getANTI_OBJC_PARAM $1) (srclocOf $1) }
 
 -- Objective-C extension: protocol declaration
 --
@@ -2864,6 +2913,10 @@ objc_method_definition :
         in
           ObjCMethDef $1 stmts ($1 `srcspan` loc)
       }
+  | ANTI_OBJC_METHOD_DEF
+      { AntiObjCMeth (getANTI_OBJC_METHOD_DEF $1) (srclocOf $1) }
+  | ANTI_OBJC_METHOD_DEFS
+      { AntiObjCMeths (getANTI_OBJC_METHOD_DEFS $1) (srclocOf $1) }
 
 -- Objective-C extension: compatibility alias
 --
@@ -2972,8 +3025,21 @@ getANTI_INITS       (L _ (T.Tanti_inits v))       = v
 --
 -- Objective-C
 --
-getANTI_OBJC_IFDECL  (L _ (T.Tanti_objc_ifdecl v))  = v
-getANTI_OBJC_IFDECLS (L _ (T.Tanti_objc_ifdecls v)) = v
+getANTI_OBJC_IFDECL       (L _ (T.Tanti_objc_ifdecl v))       = v
+getANTI_OBJC_IFDECLS      (L _ (T.Tanti_objc_ifdecls v))      = v
+getANTI_OBJC_PROP         (L _ (T.Tanti_objc_prop v))         = v
+getANTI_OBJC_PROPS        (L _ (T.Tanti_objc_props v))        = v
+getANTI_OBJC_PROP_ATTR    (L _ (T.Tanti_objc_prop_attr v))    = v
+getANTI_OBJC_PROP_ATTRS   (L _ (T.Tanti_objc_prop_attrs v))   = v
+getANTI_OBJC_DICTS        (L _ (T.Tanti_objc_dicts v))        = v
+getANTI_OBJC_PARAM        (L _ (T.Tanti_objc_param v))        = v
+getANTI_OBJC_PARAMS       (L _ (T.Tanti_objc_params v))       = v
+getANTI_OBJC_METHOD_PROTO (L _ (T.Tanti_objc_method_proto v)) = v
+getANTI_OBJC_METHOD_DEF   (L _ (T.Tanti_objc_method_def v))   = v
+getANTI_OBJC_METHOD_DEFS  (L _ (T.Tanti_objc_method_defs v))  = v
+getANTI_OBJC_RECV         (L _ (T.Tanti_objc_recv v))         = v
+getANTI_OBJC_ARG          (L _ (T.Tanti_objc_arg v))          = v
+getANTI_OBJC_ARGS         (L _ (T.Tanti_objc_args v))         = v
 
 lexer :: (L T.Token -> P a) -> P a
 lexer cont = do

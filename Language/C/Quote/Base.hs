@@ -205,12 +205,16 @@ qqDefinitionE (C.AntiEsc v loc) =
     Just [|C.EscDef $(antiVarE v) $(qqLocE loc)|]
 qqDefinitionE (C.AntiEdecl v _) =
     Just $ antiVarE v
+qqDefinitionE (C.AntiObjCMeth m _) =
+    Just $ antiVarE m
 qqDefinitionE _ = Nothing
 
 qqDefinitionListE :: [C.Definition] -> Maybe (Q Exp)
 qqDefinitionListE [] = Just [|[]|]
 qqDefinitionListE (C.AntiEdecls v _ : defs) =
     Just [|$(antiVarE v) ++ $(dataToExpQ qqExp defs)|]
+qqDefinitionListE (C.AntiObjCMeths m _ : meths) =
+    Just [|$(antiVarE m) ++ $(dataToExpQ qqExp meths)|]
 qqDefinitionListE (def : defs) =
     Just [|$(dataToExpQ qqExp def) : $(dataToExpQ qqExp defs)|]
 
@@ -330,6 +334,63 @@ qqObjcIfaceDeclE (C.AntiObjCIfaceDecl v _  : decls) =
 qqObjcIfaceDeclE (decl : decls) =
   Just [|$(dataToExpQ qqExp decl) : $(dataToExpQ qqExp decls)|]
 
+qqObjCPropE :: C.ObjCIfaceDecl -> Maybe (Q Exp)
+qqObjCPropE (C.AntiObjCProp p _) = Just $ antiVarE p
+qqObjCPropE _                    = Nothing
+
+qqObjCPropListE :: [C.ObjCIfaceDecl] -> Maybe (Q Exp)
+qqObjCPropListE [] = Just [|[]|]
+qqObjCPropListE (C.AntiObjCProps p _: props) = Just $ [|$(antiVarE p) ++ $(dataToExpQ qqExp props)|]
+qqObjCPropListE _                            = Nothing
+
+qqObjCPropAttrE :: C.ObjCPropAttr -> Maybe (Q Exp)
+qqObjCPropAttrE (C.AntiObjCAttr pa _) = Just $ antiVarE pa
+qqObjCPropAttrE _                     = Nothing
+
+qqObjCPropAttrListE :: [C.ObjCPropAttr] -> Maybe (Q Exp)
+qqObjCPropAttrListE [] = Just [|[]|]
+qqObjCPropAttrListE (C.AntiObjCAttrs pa _:attrelems) =
+    Just $ [|$(antiVarE pa) ++ $(dataToExpQ qqExp attrelems)|]
+qqObjCPropAttrListE (pattr : pattrs) =
+    Just [|$(dataToExpQ qqExp pattr) : $(dataToExpQ qqExp pattrs)|]
+
+qqObjCDictsE :: [C.ObjCDictElem] -> Maybe (Q Exp)
+qqObjCDictsE [] = Just [|[]|]
+qqObjCDictsE (C.AntiObjCDictElems e _:elems) =
+    Just $ [|$(antiVarE e) ++ $(dataToExpQ qqExp elems)|]
+qqObjCDictsE (elem : elems) =
+    Just [|$(dataToExpQ qqExp elem) : $(dataToExpQ qqExp elems)|]
+
+qqObjCParamE :: C.ObjCParam -> Maybe (Q Exp)
+qqObjCParamE (C.AntiObjCParam p _) = Just $ antiVarE p
+qqObjCParamE _                     = Nothing
+
+qqObjCParamsE :: [C.ObjCParam] -> Maybe (Q Exp)
+qqObjCParamsE [] = Just [|[]|]
+qqObjCParamsE (C.AntiObjCParams p _: props) =
+    Just $ [|$(antiVarE p) ++ $(dataToExpQ qqExp props)|]
+qqObjCParamsE (param : params) =
+    Just [|$(dataToExpQ qqExp param) : $(dataToExpQ qqExp params)|]
+
+qqObjCMethodProtoE :: C.ObjCMethodProto -> Maybe (Q Exp)
+qqObjCMethodProtoE (C.AntiObjCMethodProto p _) = Just $ antiVarE p
+qqObjCMethodProtoE _                           = Nothing
+
+qqObjCRecvE :: C.ObjCRecv -> Maybe (Q Exp)
+qqObjCRecvE (C.AntiObjCRecv p _) = Just $ antiVarE p
+qqObjCRecvE _                  = Nothing
+
+qqObjCArgE :: C.ObjCArg -> Maybe (Q Exp)
+qqObjCArgE (C.AntiObjCArg p _) = Just $ antiVarE p
+qqObjCArgE _                  = Nothing
+
+qqObjCArgsE :: [C.ObjCArg] -> Maybe (Q Exp)
+qqObjCArgsE [] = Just [|[]|]
+qqObjCArgsE (C.AntiObjCArgs a _: args) =
+    Just $ [|$(antiVarE a) ++ $(dataToExpQ qqExp args)|]
+qqObjCArgsE (arg : args) =
+    Just [|$(dataToExpQ qqExp arg) : $(dataToExpQ qqExp args)|]
+
 qqExp :: Typeable a => a -> Maybe (Q Exp)
 qqExp = const Nothing  `extQ` qqStringE
                        `extQ` qqIdE
@@ -356,6 +417,17 @@ qqExp = const Nothing  `extQ` qqStringE
                        `extQ` qqBlockItemE
                        `extQ` qqBlockItemListE
                        `extQ` qqObjcIfaceDeclE
+                       `extQ` qqObjCPropE
+                       `extQ` qqObjCPropListE
+                       `extQ` qqObjCPropAttrE
+                       `extQ` qqObjCPropAttrListE
+                       `extQ` qqObjCDictsE
+                       `extQ` qqObjCParamE
+                       `extQ` qqObjCParamsE
+                       `extQ` qqObjCMethodProtoE
+                       `extQ` qqObjCRecvE
+                       `extQ` qqObjCArgE
+                       `extQ` qqObjCArgsE
 
 antiVarP :: String -> PatQ
 antiVarP = either fail return . parsePat

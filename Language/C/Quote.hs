@@ -50,7 +50,7 @@
 --
 -- [@cparam@] Declaration of a function parameter, of type @'Param'@.
 --
--- [@cparams@] Declaration of function parameters, of type @'[Param]'@.
+-- [@cparams@] Declaration of function parameters, of type @['Param']@.
 --
 -- [@csdecl@] Declaration of a struct member, of type @'FieldGroup'@.
 --
@@ -62,9 +62,24 @@
 --
 -- [@objcprop@] Property declaration of type @'ObjCIfaceDecl'@.
 --
--- [@objcifdecls@] Interface declarations of type @'[ObjCIfaceDecl]'@
+-- [@objcifdecls@] Interface declarations of type @['ObjCIfaceDecl']@
 --
--- [@objcimdecls@] Class implementation declarations of type @'[Definition]'@
+-- [@objcimdecls@] Class implementation declarations of type @['Definition']@
+--
+-- [@objcdictelem@] Dictionary element, of type @'ObjCDictElem'@
+--
+-- [@objcpropattr@] Property attribute element, of type @'ObjCPropAttr'@
+--
+-- [@objcmethparam@] Method parameter, of type @'ObjCParam'@
+--
+-- [@objcmethproto@] Method prototype, of type @'ObjCMethodProto'@
+--
+-- [@objcmethdef@] Method definition, of type @'Definition'@
+--
+-- [@objcrecv@] Receiver, of type @'ObjCRecv'@
+--
+-- [@objcarg@] Keyword argument, of type @'ObjCArg'@
+--
 --
 -- Antiquotations allow splicing in subterms during quotation. These subterms
 -- may bound to a Haskell variable or may be the value of a Haskell
@@ -181,9 +196,49 @@
 --
 -- In addition, Objective-C code can use these antiquote specifiers:
 --
--- [@ifdecl@] A class interface declaration. The argument must have type @'ObjCIfaceDecl'@.
+-- [@ifdecl@] A class interface declaration. The argument must have type
+-- @'ObjCIfaceDecl'@.
 --
--- [@ifdecls@] A list of class interface declaration. The argument must have type @['ObjCIfaceDecl']@.
+-- [@ifdecls@] A list of class interface declaration. The argument must have
+-- type @['ObjCIfaceDecl']@.
+--
+-- [@prop@] A property declaration. The argument must have type
+-- @'ObjCIfaceDecl'@.
+--
+-- [@props@] A list of property declarations. The argument must have type
+-- @['ObjCIfaceDecl']@.
+--
+-- [@propattr@] A property attribute. The argument must have type
+-- @'ObjCPropAttr'@.
+--
+-- [@propattrs@] A list of property attribute. The argument must have type
+-- @['ObjCPropAttr']@.
+--
+-- [@dictelems@] A list dictionary elements. The argument must have type
+-- @['ObjCDictElem']@.
+--
+-- [@methparam@] A method parameter. The argument must have type
+-- @'ObjCParam'@.
+--
+-- [@methparams@] A list of method parameters. The argument must have type
+-- @['ObjCParam']@.
+--
+-- [@methproto@] A method prototype. The argument must have type
+-- @'ObjCMethodProto'@.
+--
+-- [@methdef@] A method definition. The argument must have type
+-- @['Definition']@.
+--
+-- [@methdefs@] A list of method definitions. The argument must have type
+-- @['Definition']@.
+--
+-- [@recv@] A receiver. The argument must have type @'ObjCRecv'@.
+--
+-- [@kwarg@] A keywords argument. The argument must have type
+-- @'ObjCArg'@.
+--
+-- [@kwargs@] A list of keyword arguments. The argument must have type
+-- @['ObjCArg']@.
 --
 --------------------------------------------------------------------------------
 

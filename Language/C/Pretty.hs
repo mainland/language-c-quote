@@ -496,6 +496,9 @@ instance Pretty Definition where
         srcloc loc
         <> text "@compatibility_alias" <+> ppr aident <+> ppr cident
 
+    ppr (AntiObjCMeth v _)  = pprAnti "methdef" v
+    ppr (AntiObjCMeths v _) = pprAnti "methdefs" v
+
     pprList ds = stack (map ppr ds) <> line
 
 pprIfaceBody :: [Id] -> [ObjCIvarDecl] -> [ObjCIfaceDecl] -> Doc
@@ -844,6 +847,8 @@ instance Pretty Exp where
         pprMsgArg (ObjCArg Nothing    (Just e) loc) = pprLoc loc $ colon <+> ppr e
         pprMsgArg (ObjCArg _          Nothing  loc)
           = error $ "pretty printing 'ObjCArg': missing expression at " ++ show loc
+        pprMsgArg (AntiObjCArg v _)  = pprAnti "kwarg" v
+        pprMsgArg (AntiObjCArgs v _) = pprAnti "kwargs" v
 
         pprVarArg e = comma <+> ppr e
 
@@ -873,7 +878,7 @@ instance Pretty Exp where
     pprPrec _ (ObjCLitDict as loc) =
         srcloc loc <>
         char '@' <> braces
-          (commasep (map (\(l, r) -> ppr l <+> colon <+> ppr r) as))
+          (commasep (map ppr as))
 
     pprPrec _ (ObjCLitBoxed e loc) =
         srcloc loc <>
@@ -894,6 +899,10 @@ instance Pretty Exp where
     pprPrec _ (AntiArgs v _)  = pprAnti "args"  v
 
     pprPrec _ (AntiExp v _)   = pprAnti "var"  v
+
+instance Pretty ObjCDictElem where
+    pprPrec _ (ObjCDictElem l r _)    = ppr l <+> colon <+> ppr r
+    pprPrec _ (AntiObjCDictElems v _) = pprAnti "dictelems" v
 
 instance Pretty BinOp where
     ppr Add  = text "+"
@@ -992,6 +1001,9 @@ instance Pretty ObjCIfaceDecl where
     ppr (AntiObjCIfaceDecls v _loc) =
         pprAnti "ifdecls" v
 
+    ppr (AntiObjCProp v _)  = pprAnti "prop" v
+    ppr (AntiObjCProps v _) = pprAnti "props" v
+
 instance Pretty ObjCPropAttr where
     ppr (ObjCGetter ident loc)     = pprLoc loc $ text "getter=" <> ppr ident
     ppr (ObjCSetter ident loc)     = pprLoc loc $ text "setter=" <> ppr ident <> colon
@@ -1005,6 +1017,8 @@ instance Pretty ObjCPropAttr where
     ppr (ObjCStrong loc)           = pprLoc loc $ text "strong"
     ppr (ObjCWeak loc)             = pprLoc loc $ text "weak"
     ppr (ObjCUnsafeUnretained loc) = pprLoc loc $ text "unsafe_unretained"
+    ppr (AntiObjCAttr v _)         = pprAnti "propattr" v
+    ppr (AntiObjCAttrs v _)        = pprAnti "propattrs" v
 
 instance Pretty ObjCMethodReq where
     ppr (ObjCRequired _loc) = text "@required"
@@ -1018,6 +1032,8 @@ instance Pretty ObjCParam where
          (Just sid, Nothing) -> ppr sid
          (_       , Just pid)
            -> maybe empty ppr sel <> colon <> maybe empty (parens . ppr) ty <> ppr attrs <> ppr pid
+    ppr (AntiObjCParam p _)  = pprAnti "methparam" p
+    ppr (AntiObjCParams v _) = pprAnti "methparams" v
 
 instance Pretty ObjCMethodProto where
     ppr (ObjCMethodProto isClassMeth resTy attrs1 params vargs attrs2 loc) =
@@ -1030,6 +1046,7 @@ instance Pretty ObjCMethodProto where
         <> spread (map ppr params)
         <> if vargs then text ", ..." else empty
         <> ppr attrs2
+    ppr (AntiObjCMethodProto p _) = pprAnti "methproto" p
 
 instance Pretty ObjCCatch where
     ppr (ObjCCatch Nothing     block loc)  = srcloc loc <> text "@catch (...)" <+> ppr block
@@ -1043,3 +1060,4 @@ instance Pretty ObjCRecv where
     ppr (ObjCRecvExp e loc)               = pprLoc loc $ ppr e
     ppr (ObjCRecvClassName className loc) = pprLoc loc $ ppr className
     ppr (ObjCRecvTypeName typeName loc)   = pprLoc loc $ ppr typeName
+    ppr (AntiObjCRecv v _)                = pprAnti "recv" v
