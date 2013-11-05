@@ -175,7 +175,7 @@ getInput  :: P AlexInput
 getInput = gets input
 
 setInput  :: AlexInput -> P ()
-setInput inp= modify $ \s ->
+setInput inp = modify $ \s ->
     s { input = inp }
 
 pushLexState :: Int -> P ()
