@@ -62,6 +62,7 @@ module Language.C.Parser.Monad (
     parserError,
     unclosed,
     expected,
+    expectedAt,
 
     AlexInput(..),
     alexGetChar,
@@ -333,7 +334,11 @@ unclosed loc x =
 
 expected :: [String] -> Maybe String -> P b
 expected alts after = do
-    tok@(L loc _) <- getCurToken
+    tok <- getCurToken
+    expectedAt tok alts after
+
+expectedAt :: L Token -> [String] -> Maybe String -> P b
+expectedAt tok@(L loc _) alts after = do
     parserError (locStart loc) (text "expected" <+> pprAlts alts <+> pprGot tok <> pprAfter after)
   where
     pprAlts :: [String] -> Doc
