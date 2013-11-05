@@ -34,6 +34,8 @@ module Language.C.Parser.Monad (
     pushScope,
     popScope,
 
+    c99Exts,
+    c11Exts,
     gccExts,
     cudaExts,
     openCLExts,
@@ -41,6 +43,8 @@ module Language.C.Parser.Monad (
 
     useExts,
     antiquotationExts,
+    useC99Exts,
+    useC11Exts,
     useGccExts,
     useCUDAExts,
     useOpenCLExts,
@@ -234,6 +238,12 @@ popScope = modify  $ \s ->
 antiquotationExts :: ExtensionsInt
 antiquotationExts = (bit . fromEnum) Antiquotation
 
+c99Exts :: ExtensionsInt
+c99Exts = (bit . fromEnum) C99
+
+c11Exts :: ExtensionsInt
+c11Exts = (bit . fromEnum) C11
+
 gccExts :: ExtensionsInt
 gccExts = (bit . fromEnum) Gcc
 
@@ -249,6 +259,12 @@ objcExts = (bit . fromEnum) ObjC
 useExts :: ExtensionsInt -> P Bool
 useExts ext = gets $ \s ->
     extensions s .&. ext /= 0
+
+useC99Exts :: P Bool
+useC99Exts = useExts c99Exts
+
+useC11Exts :: P Bool
+useC11Exts = useExts c11Exts
 
 useGccExts :: P Bool
 useGccExts = useExts gccExts

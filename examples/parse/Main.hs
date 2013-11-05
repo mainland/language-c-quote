@@ -19,7 +19,9 @@ main :: IO ()
 main = do
     args <- getArgs
     (flags, files) <- compilerOpts args
-    let exts = (if Gcc `elem` flags then [C.Gcc] else []) ++
+    let exts = (if C99 `elem` flags then [C.C99] else []) ++
+               (if C11 `elem` flags then [C.C11] else []) ++
+               (if Gcc `elem` flags then [C.Gcc] else []) ++
                (if CUDA `elem` flags then [C.CUDA] else [])
     let doPrint = Print `elem` flags
     let doTokens = Tokens `elem` flags

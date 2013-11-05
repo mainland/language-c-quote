@@ -3,7 +3,9 @@ module Opts where
 import System.Console.GetOpt
 import Data.Maybe (fromMaybe)
 
-data Flag = Gcc
+data Flag = C99
+          | C11
+          | Gcc
           | CUDA
           | Tokens
           | Print
@@ -13,7 +15,9 @@ data Flag = Gcc
 
 options :: [OptDescr Flag]
 options =
-    [ Option []    ["gcc"]    (NoArg Gcc)          "allow GCC extensions"
+    [ Option []    ["c99"]    (NoArg C99)          "support C99"
+    , Option []    ["c11"]    (NoArg C11)          "support C11"
+    , Option []    ["gcc"]    (NoArg Gcc)          "allow GCC extensions"
     , Option []    ["cuda"]   (NoArg CUDA)         "allow CUDA extensions"
     , Option []    ["tokens"] (NoArg Tokens)       "show tokens"
     , Option ['p'] ["print"]  (NoArg Print)        "pretty-print file"

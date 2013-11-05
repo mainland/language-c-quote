@@ -18,6 +18,8 @@ import Data.Loc
 import Data.Typeable (Typeable(..))
 
 data Extensions = Antiquotation
+                | C99
+                | C11
                 | Gcc
                 | CUDA
                 | OpenCL
