@@ -1158,6 +1158,16 @@ struct_declaration :
         in
           FieldGroup dspec (rev $2) ($1 `srcspan` $3)
       }
+  | specifier_qualifier_list ';'
+      {%  do{ dspec <- mkDeclSpec $1
+            ; gcc <- useGccExts
+            ; c11 <- useC11Exts
+            ; when (not gcc && not c11) $
+                  expectedAt $2 ["declarator"] Nothing
+            ; checkAnonymousStructOrUnion $2 dspec
+            ; return $ FieldGroup dspec [] ($1 `srcspan` $2)
+            }
+      }
   | specifier_qualifier_list struct_declarator_list ';'
       {%  do{ dspec <- mkDeclSpec $1
             ; return $ FieldGroup dspec (rev $2) ($1 `srcspan` $3)
@@ -3126,6 +3136,12 @@ checkInitGroup dspec decl attrs inits =
 
     loc :: Loc
     loc = dspec <--> attrs <--> inits
+
+checkAnonymousStructOrUnion :: L T.Token -> DeclSpec -> P ()
+checkAnonymousStructOrUnion _   (DeclSpec _ _ (Tstruct {}) _) = return ()
+checkAnonymousStructOrUnion _   (DeclSpec _ _ (Tunion {}) _)  = return ()
+checkAnonymousStructOrUnion tok (DeclSpec _ _ (Tunion {}) _)  =
+    expectedAt tok ["anonymous struct or union"] Nothing
 
 declRoot :: Located a => a -> Decl
 declRoot x = DeclRoot (srclocOf x)
