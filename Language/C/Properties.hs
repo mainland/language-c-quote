@@ -1,6 +1,7 @@
 -- |
 -- Module      :  Language.C.Properties
 -- Copyright   :  (c) Harvard University 2006-2008
+--             :  (c) Drexel University 2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
 
@@ -14,8 +15,8 @@ import Text.PrettyPrint.Mainland
 import Language.C.Syntax as C
 import qualified Language.C.Parser as P
 
-prop_ParsePrintUnitId :: B.ByteString -> Bool
-prop_ParsePrintUnitId s =
+prop_ParsePrintUnitId :: [C.Extensions] -> B.ByteString -> Bool
+prop_ParsePrintUnitId exts s =
     case comp s of
       Left _ ->  False
       Right x -> x
@@ -28,7 +29,7 @@ prop_ParsePrintUnitId s =
 
     parse :: B.ByteString -> Either String [C.Definition]
     parse s =
-        case P.parse [Gcc] [] P.parseUnit s pos of
+        case P.parse exts [] P.parseUnit s pos of
           Left err   -> fail $ show err
           Right defs -> return defs
       where

@@ -56,7 +56,7 @@ parseFile doPrint exts filename = do
       Right defs -> if doPrint
                     then putStr $ prettyPragma 80 (ppr defs)
                     else return ()
-    when (not (prop_ParsePrintUnitId s)) $
+    when (not (prop_ParsePrintUnitId exts s)) $
         putStrLn $ "Bad pretty-printing: " ++ filename
   where
     start :: Pos
