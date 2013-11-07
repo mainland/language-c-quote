@@ -1181,6 +1181,14 @@ struct_declaration :
             ; return $ FieldGroup dspec [field] ($1 `srcspan` $3)
             }
       }
+  | ANTI_TYPE identifier_or_typedef ':' constant_expression ';'
+      {%  do{ let v     = getANTI_TYPE $1
+            ; let dspec = AntiTypeDeclSpec [] [] v (srclocOf $1)
+            ; let decl  = AntiTypeDecl v (srclocOf $1)
+            ; let field = Field (Just $2) (Just decl) (Just $4) ($1 `srcspan` $4)
+            ; return $ FieldGroup dspec [field] ($1 `srcspan` $5)
+            }
+      }
   | ANTI_SDECL
       { AntiSdecl (getANTI_SDECL $1) (srclocOf $1) }
 
