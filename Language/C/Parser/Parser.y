@@ -21,7 +21,7 @@ import Control.Monad (forM_,
 import Control.Monad.Exception
 import Data.List (intersperse)
 import Data.Loc
-import Data.Maybe (catMaybes)
+import Data.Maybe (fromMaybe, catMaybes)
 import Text.PrettyPrint.Mainland
 
 import Language.C.Parser.Lexer
@@ -1156,7 +1156,7 @@ struct_declaration :
     ANTI_SPEC struct_declarator_list ';'
       { let dspec = AntiDeclSpec (getANTI_SPEC $1) (srclocOf $1)
         in
-          FieldGroup dspec (rev $2) ($1 `srcspan` $3)
+          FieldGroup dspec (map ($ Nothing) (rev $2)) ($1 `srcspan` $3)
       }
   | specifier_qualifier_list ';'
       {%  do{ dspec <- mkDeclSpec $1
@@ -1170,23 +1170,14 @@ struct_declaration :
       }
   | specifier_qualifier_list struct_declarator_list ';'
       {%  do{ dspec <- mkDeclSpec $1
-            ; return $ FieldGroup dspec (rev $2) ($1 `srcspan` $3)
+            ; return $ FieldGroup dspec (map ($ Nothing) (rev $2)) ($1 `srcspan` $3)
             }
       }
-  | ANTI_TYPE identifier_or_typedef ';'
+  | ANTI_TYPE struct_declarator_list ';'
       {%  do{ let v     = getANTI_TYPE $1
             ; let dspec = AntiTypeDeclSpec [] [] v (srclocOf $1)
             ; let decl  = AntiTypeDecl v (srclocOf $1)
-            ; let field = Field (Just $2) (Just decl) Nothing ($1 `srcspan` $2)
-            ; return $ FieldGroup dspec [field] ($1 `srcspan` $3)
-            }
-      }
-  | ANTI_TYPE identifier_or_typedef ':' constant_expression ';'
-      {%  do{ let v     = getANTI_TYPE $1
-            ; let dspec = AntiTypeDeclSpec [] [] v (srclocOf $1)
-            ; let decl  = AntiTypeDecl v (srclocOf $1)
-            ; let field = Field (Just $2) (Just decl) (Just $4) ($1 `srcspan` $4)
-            ; return $ FieldGroup dspec [field] ($1 `srcspan` $5)
+            ; return $ FieldGroup dspec (map ($ Just decl) (rev $2)) ($1 `srcspan` $3)
             }
       }
   | ANTI_SDECL
@@ -1215,35 +1206,38 @@ specifier_qualifier_list_ :
   | type_qualifier %prec NAMED               { [$1] }
   | type_qualifier specifier_qualifier_list  { $1 : $2 }
 
-struct_declarator_list :: { RevList Field }
+struct_declarator_list :: { RevList (Maybe Decl -> Field) }
 struct_declarator_list :
     struct_declarator                            { rsingleton $1 }
   | struct_declarator_list ',' struct_declarator { rcons $3 $1 }
 
-struct_declarator :: { Field }
+struct_declarator :: { Maybe Decl -> Field }
 struct_declarator :
     declarator
-        { let { (ident, declToDecl) = $1
-              ; decl                = declToDecl (declRoot ident)
-              }
-          in
-            Field (Just ident) (Just decl) Nothing (srclocOf decl)
+        { \maybe_decl ->
+              let { (ident, declToDecl) = $1
+                  ; decl                = declToDecl (fromMaybe (declRoot ident) maybe_decl)
+                  }
+              in
+                Field (Just ident) (Just decl) Nothing (srclocOf decl)
         }
   | declarator attributes
-        { let { (ident, declToDecl) = $1
-              ; decl                = declToDecl (declRoot ident)
-              }
-          in
-            Field (Just ident) (Just decl) Nothing (srclocOf decl)
+        { \maybe_decl ->
+              let { (ident, declToDecl) = $1
+                  ; decl                = declToDecl (fromMaybe (declRoot ident) maybe_decl)
+                  }
+              in
+                Field (Just ident) (Just decl) Nothing (srclocOf decl)
         }
   | ':' constant_expression
-        { Field Nothing Nothing (Just $2) ($1 `srcspan` $2) }
+        { \maybe_decl -> Field Nothing maybe_decl (Just $2) ($1 `srcspan` $2) }
   | declarator ':' constant_expression
-        { let { (ident, declToDecl) = $1
-              ; decl                = declToDecl (declRoot ident)
-              }
-          in
-            Field (Just ident) (Just decl) (Just $3) (srclocOf decl)
+        { \maybe_decl ->
+              let { (ident, declToDecl) = $1
+                  ; decl                = declToDecl (fromMaybe (declRoot ident) maybe_decl)
+                  }
+              in
+                Field (Just ident) (Just decl) (Just $3) (srclocOf decl)
         }
 
 enum_specifier :: { TySpec }
