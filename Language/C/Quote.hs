@@ -39,6 +39,8 @@
 --
 -- [@cstm@] Statement, of type @'Stm'@.
 --
+-- [@cstms@] A list of statements, of type @['Stm']@.
+--
 -- [@citem@] Block item, of type @'BlockItem'@. A block item is either a
 -- declaration or a statement.
 --

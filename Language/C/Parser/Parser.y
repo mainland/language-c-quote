@@ -262,6 +262,7 @@ import qualified Language.C.Syntax as C
 %name parseInit       initializer
 
 %name parseStm        statement
+%name parseStms       statement_list
 %name parseBlockItem  block_item
 
 %name parseUnit       translation_unit
@@ -1778,6 +1779,17 @@ statement :
   | objc_at_statement    { $1 }
   | ANTI_PRAGMA          { AntiPragma (getANTI_PRAGMA $1) (srclocOf $1) }
   | ANTI_STM             { AntiStm (getANTI_STM $1) (srclocOf $1) }
+
+statement_list :: { [Stm] }
+statement_list :
+    statement_list_ { rev $1 }
+
+statement_list_ :: { RevList Stm }
+statement_list_ :
+     statement                 { rsingleton $1 }
+  |  ANTI_STMS                 { rsingleton (AntiStms (getANTI_STMS $1) (srclocOf $1)) }
+  |  statement_list_ statement { rcons $2 $1 }
+  |  statement_list_ ANTI_STMS { rcons (AntiStms (getANTI_STMS $2) (srclocOf $2)) $1 }
 
 labeled_statement :: { Stm }
 labeled_statement :

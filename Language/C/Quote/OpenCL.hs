@@ -18,6 +18,7 @@ module Language.C.Quote.OpenCL (
     cparam,
     cinit,
     cstm,
+    cstms,
     citem,
     cunit,
     cfun
@@ -47,7 +48,7 @@ typenames =
 typeN :: String -> [String]
 typeN typename = [typename ++ show n | n <- [2, 3, 4, 8, 16 :: Integer]]
 
-cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, csdecl, cstm :: QuasiQuoter
+cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, csdecl, cstm, cstms :: QuasiQuoter
 citem, cty, cunit :: QuasiQuoter
 cdecl  = quasiquote exts typenames P.parseDecl
 cedecl = quasiquote exts typenames P.parseEdecl
@@ -58,6 +59,7 @@ cinit  = quasiquote exts typenames P.parseInit
 cparam = quasiquote exts typenames P.parseParam
 csdecl = quasiquote exts typenames P.parseStructDecl
 cstm   = quasiquote exts typenames P.parseStm
+cstms  = quasiquote exts typenames P.parseStms
 citem  = quasiquote exts typenames P.parseBlockItem
 cty    = quasiquote exts typenames P.parseType
 cunit  = quasiquote exts typenames P.parseUnit
