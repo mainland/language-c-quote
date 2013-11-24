@@ -6,6 +6,8 @@
 -- Maintainer  :  mainland@cs.drexel.edu
 
 module Language.C.Quote.OpenCL (
+    ToIdent(..),
+    ToConst(..),
     ToExp(..),
     cexp,
     cedecl,
@@ -23,7 +25,7 @@ module Language.C.Quote.OpenCL (
 
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
-import Language.C.Quote.Base (ToExp(..), quasiquote)
+import Language.C.Quote.Base (ToIdent(..), ToConst(..), ToExp(..), quasiquote)
 import Language.Haskell.TH.Quote (QuasiQuoter)
 
 exts :: [C.Extensions]
