@@ -259,6 +259,7 @@ import qualified Language.C.Syntax as C
 
 %name parseType       type_declaration
 %name parseParam      parameter_declaration
+%name parseParams     parameter_list
 %name parseInit       initializer
 
 %name parseStm        statement
@@ -423,7 +424,7 @@ block_literal :
             ; return $ BlockLit (BlockVoid (srclocOf $1)) $2 items ($1 `srcspan` $3)
             }
       }
-  | '^' '(' parameter_list ')'                       attributes_opt compound_statement
+  | '^' '(' parameter_list_ ')'                       attributes_opt compound_statement
       {% do { assertObjCEnabled ($1 <--> $6) "To use blocks, enable Objective-C support"
             ; let Block items _ = $6
             ; return $ BlockLit (BlockParam (rev $3) ($2 `srcspan` $4)) $5 items ($1 `srcspan` $6)
@@ -1537,26 +1538,30 @@ type_qualifier_list :
 
 parameter_type_list :: { Params }
 parameter_type_list :
-    parameter_list
+    parameter_list_
       { let params = rev $1
         in
           Params params False (srclocOf params)
       }
-  | parameter_list ',' '...'
+  | parameter_list_ ',' '...'
       { let params = rev $1
         in
           Params params True (params `srcspan` $3)
       }
 
-parameter_list :: { RevList Param }
-parameter_list:
+parameter_list :: { [Param] }
+parameter_list :
+    parameter_list_ { rev $1 }
+
+parameter_list_ :: { RevList Param }
+parameter_list_ :
     parameter_declaration
       { rsingleton $1 }
   | ANTI_PARAMS
       { rsingleton (AntiParams (getANTI_PARAMS $1) (srclocOf $1)) }
-  | parameter_list ',' parameter_declaration
+  | parameter_list_ ',' parameter_declaration
       { rcons $3 $1 }
-  | parameter_list ',' ANTI_PARAMS
+  | parameter_list_ ',' ANTI_PARAMS
       { rcons (AntiParams (getANTI_PARAMS $3) (srclocOf $3))  $1 }
 
 parameter_declaration :: { Param }

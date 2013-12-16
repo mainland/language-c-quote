@@ -50,6 +50,8 @@
 --
 -- [@cparam@] Declaration of a function parameter, of type @'Param'@.
 --
+-- [@cparams@] Declaration of function parameters, of type @'[Param]'@.
+--
 -- [@csdecl@] Declaration of a struct member, of type @'FieldGroup'@.
 --
 -- [@cty@] A C type, of type @'Type'@.
