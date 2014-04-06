@@ -683,6 +683,10 @@ instance Pretty Stm where
     ppr (AntiStm v _)    = pprAnti "stm" v
     ppr (AntiStms v _)   = pprAnti "stms" v
 
+    ppr (Comment c sloc) =
+        srcloc sloc
+        <> text "/*" <+> text c <+> text "*/"
+
 instance Pretty ObjCCatch where
     ppr (ObjCCatch Nothing     block loc) = srcloc loc <> text "@catch (...)" <+> ppr block
     ppr (ObjCCatch (Just param) block loc) = srcloc loc

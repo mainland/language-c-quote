@@ -269,6 +269,7 @@ data Stm  = Label Id Stm !SrcLoc
           | AntiPragma String !SrcLoc
           | AntiStm String !SrcLoc
           | AntiStms String !SrcLoc
+          | Comment String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data BlockItem = BlockDecl InitGroup
@@ -658,6 +659,7 @@ instance Located Stm where
     locOf (AntiPragma _ loc)          = locOf loc
     locOf (AntiStm _ loc)             = locOf loc
     locOf (AntiStms _ loc)            = locOf loc
+    locOf (Comment _ loc)             = locOf loc
 
 instance Located BlockItem where
     locOf (BlockDecl decl)       = locOf decl
