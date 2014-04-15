@@ -36,7 +36,7 @@ exts :: [C.Extensions]
 exts = [C.ObjC]
 
 typenames :: [String]
-typenames = ["id"]
+typenames = ["id", "instancetype"]
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, cparams, csdecl, cstm, cstms :: QuasiQuoter
 citem, cty, cunit :: QuasiQuoter
