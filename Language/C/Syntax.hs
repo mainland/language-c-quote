@@ -39,7 +39,7 @@ data Storage = Tauto !SrcLoc
              | T__block !SrcLoc                 -- Extension: clang blocks extension
              | TObjC__weak !SrcLoc              -- Extension: Objective-C
              | TObjC__strong !SrcLoc            -- Extension: Objective-C
-             | TObjC__unsafe_retained !SrcLoc   -- Extension: Objective-C
+             | TObjC__unsafe_unretained !SrcLoc -- Extension: Objective-C
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data TypeQual = Tconst !SrcLoc
@@ -225,7 +225,7 @@ data ObjCPropAttr = ObjCGetter Id !SrcLoc
                   | ObjCAtomic !SrcLoc
                   | ObjCStrong !SrcLoc
                   | ObjCWeak !SrcLoc
-                  | ObjCUnsafeRetained !SrcLoc
+                  | ObjCUnsafeUnretained !SrcLoc
                   -- -=chak FIXME: needs ANTI forms
     deriving (Eq, Ord, Show, Data, Typeable)
 
@@ -442,16 +442,16 @@ instance Located Id where
     locOf (AntiId _ loc)  = locOf loc
 
 instance Located Storage where
-    locOf (Tauto loc)                  = locOf loc
-    locOf (Tregister loc)              = locOf loc
-    locOf (Tstatic loc)                = locOf loc
-    locOf (Textern loc)                = locOf loc
-    locOf (TexternL _ loc)             = locOf loc
-    locOf (Ttypedef loc)               = locOf loc
-    locOf (T__block loc)               = locOf loc
-    locOf (TObjC__weak loc)            = locOf loc
-    locOf (TObjC__strong loc)          = locOf loc
-    locOf (TObjC__unsafe_retained loc) = locOf loc
+    locOf (Tauto loc)                    = locOf loc
+    locOf (Tregister loc)                = locOf loc
+    locOf (Tstatic loc)                  = locOf loc
+    locOf (Textern loc)                  = locOf loc
+    locOf (TexternL _ loc)               = locOf loc
+    locOf (Ttypedef loc)                 = locOf loc
+    locOf (T__block loc)                 = locOf loc
+    locOf (TObjC__weak loc)              = locOf loc
+    locOf (TObjC__strong loc)            = locOf loc
+    locOf (TObjC__unsafe_unretained loc) = locOf loc
 
 instance Located TypeQual where
     locOf (Tconst loc)     = locOf loc
@@ -611,18 +611,18 @@ instance Located ObjCIfaceDecl where
     locOf (ObjCIfaceDecl _ loc)   = locOf loc
 
 instance Located ObjCPropAttr where
-    locOf (ObjCGetter _ loc)       = locOf loc
-    locOf (ObjCSetter _ loc)       = locOf loc
-    locOf (ObjCReadonly loc)       = locOf loc
-    locOf (ObjCReadwrite loc)      = locOf loc
-    locOf (ObjCAssign loc)         = locOf loc
-    locOf (ObjCRetain loc)         = locOf loc
-    locOf (ObjCCopy loc)           = locOf loc
-    locOf (ObjCNonatomic loc)      = locOf loc
-    locOf (ObjCAtomic loc)         = locOf loc
-    locOf (ObjCStrong loc)         = locOf loc
-    locOf (ObjCWeak loc)           = locOf loc
-    locOf (ObjCUnsafeRetained loc) = locOf loc
+    locOf (ObjCGetter _ loc)         = locOf loc
+    locOf (ObjCSetter _ loc)         = locOf loc
+    locOf (ObjCReadonly loc)         = locOf loc
+    locOf (ObjCReadwrite loc)        = locOf loc
+    locOf (ObjCAssign loc)           = locOf loc
+    locOf (ObjCRetain loc)           = locOf loc
+    locOf (ObjCCopy loc)             = locOf loc
+    locOf (ObjCNonatomic loc)        = locOf loc
+    locOf (ObjCAtomic loc)           = locOf loc
+    locOf (ObjCStrong loc)           = locOf loc
+    locOf (ObjCWeak loc)             = locOf loc
+    locOf (ObjCUnsafeUnretained loc) = locOf loc
 
 instance Located ObjCMethodReq where
     locOf (ObjCRequired loc) = locOf loc
