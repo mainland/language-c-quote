@@ -7,7 +7,7 @@
 -- Module      :  Language.C.Parser.Parser
 -- Copyright   :  (c) Harvard University 2006-2011
 --                (c) Geoffrey Mainland 2011-2012
---                (c) Manuel M T Chakravarty 2013
+--                (c) Manuel M T Chakravarty 2013-2014
 --                (c) Drexel University 2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
@@ -268,6 +268,13 @@ import qualified Language.C.Syntax as C
 
 %name parseUnit       translation_unit
 %name parseFunc       function_definition
+
+-- extension specific parsing functions
+
+%name parseObjCProp       objc_property_decl
+%name parseObjCIfaceDecls objc_interface_decl_list_ext
+%name parseObjCImplDecls  objc_implementation_decl_list_ext
+
 
 %right NAMED OBJCNAMED
 %%
@@ -2225,6 +2232,11 @@ objc_visibility_spec :
   | '@' 'package'
       { ObjCPackage ($1 `srcspan` $2) }
 
+objc_interface_decl_list_ext :: { [ObjCIfaceDecl] }
+objc_interface_decl_list_ext :
+    objc_interface_decl_list
+      { rev $1 }
+
 objc_interface_decl_list :: { RevList ObjCIfaceDecl }
 objc_interface_decl_list :
     {- empty -}
@@ -2420,6 +2432,11 @@ objc_implementation_body :: { ([Definition], Loc) }
 objc_implementation_body :
   objc_implementation_decl_list '@' 'end'
     { (rev $1, locOf $3) }
+
+objc_implementation_decl_list_ext :: { [Definition] }
+objc_implementation_decl_list_ext :
+    objc_implementation_decl_list
+      { rev $1 }
 
 objc_implementation_decl_list :: { RevList Definition }
 objc_implementation_decl_list :
