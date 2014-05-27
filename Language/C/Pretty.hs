@@ -508,9 +508,9 @@ instance Pretty ObjCIfaceDecl where
     ppr (ObjCIfaceDecl decl loc)
       = pprLoc loc $ ppr decl
     ppr (AntiObjCIfaceDecl v _loc)
-      = pprAnti "ifacedecl" v
+      = pprAnti "ifdecl" v
     ppr (AntiObjCIfaceDecls v _loc)
-      = pprAnti "ifacedecls" v
+      = pprAnti "ifdecls" v
 
 instance Pretty ObjCPropAttr where
     ppr (ObjCGetter ident loc)     = pprLoc loc $ text "getter=" <> ppr ident
