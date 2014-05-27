@@ -324,6 +324,15 @@ qqBlockItemListE (C.AntiBlockItems v _ : items) =
 qqBlockItemListE (stm : stms) =
     Just [|$(dataToExpQ qqExp stm) : $(dataToExpQ qqExp stms)|]
 
+qqObjcIfaceDeclE :: [C.ObjCIfaceDecl] -> Maybe (Q Exp)
+qqObjcIfaceDeclE [] = Just [|[]|]
+qqObjcIfaceDeclE (C.AntiObjCIfaceDecls v _ : decls) =
+    Just [|$(antiVarE v) ++ $(dataToExpQ qqExp decls)|]
+qqObjcIfaceDeclE (C.AntiObjCIfaceDecl v _  : decls) =
+    Just [|$(antiVarE v) : $(dataToExpQ qqExp decls)|]
+qqObjcIfaceDeclE (decl : decls) =
+  Just [|$(dataToExpQ qqExp decl) : $(dataToExpQ qqExp decls)|]
+
 qqExp :: Typeable a => a -> Maybe (Q Exp)
 qqExp = const Nothing  `extQ` qqStringE
                        `extQ` qqIdE
@@ -349,6 +358,7 @@ qqExp = const Nothing  `extQ` qqStringE
                        `extQ` qqStmListE
                        `extQ` qqBlockItemE
                        `extQ` qqBlockItemListE
+                       `extQ` qqObjcIfaceDeclE
 
 antiVarP :: String -> PatQ
 antiVarP = either fail return . parsePat

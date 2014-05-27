@@ -115,6 +115,9 @@ c :-
  "$init:"    / { allowAnti } { lexAnti Tanti_init }
  "$inits:"   / { allowAnti } { lexAnti Tanti_inits }
  "$"         / { allowAnti } { lexAnti Tanti_exp }
+ 
+ "$ifacedecl:"  / { allowAnti } { lexAnti Tanti_ifacedecl }
+ "$ifacedecls:" / { allowAnti } { lexAnti Tanti_ifacedecls }
 }
 
 <0> {

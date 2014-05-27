@@ -211,7 +211,8 @@ data ObjCIfaceDecl = ObjCIfaceProp [ObjCPropAttr] FieldGroup !SrcLoc
                    | ObjCIfaceReq ObjCMethodReq !SrcLoc
                    | ObjCIfaceMeth ObjCMethodProto !SrcLoc
                    | ObjCIfaceDecl InitGroup !SrcLoc
-                  -- -=chak FIXME: needs ANTI forms
+                   | AntiObjCIfaceDecl String !SrcLoc
+                   | AntiObjCIfaceDecls String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data ObjCPropAttr = ObjCGetter Id !SrcLoc
@@ -605,10 +606,12 @@ instance Located ObjCVisibilitySpec where
     locOf (ObjCPackage loc)   = locOf loc
 
 instance Located ObjCIfaceDecl where
-    locOf (ObjCIfaceProp _ _ loc) = locOf loc
-    locOf (ObjCIfaceReq _ loc)    = locOf loc
-    locOf (ObjCIfaceMeth _ loc)   = locOf loc
-    locOf (ObjCIfaceDecl _ loc)   = locOf loc
+    locOf (ObjCIfaceProp _ _ loc)    = locOf loc
+    locOf (ObjCIfaceReq _ loc)       = locOf loc
+    locOf (ObjCIfaceMeth _ loc)      = locOf loc
+    locOf (ObjCIfaceDecl _ loc)      = locOf loc
+    locOf (AntiObjCIfaceDecl _ loc)  = locOf loc
+    locOf (AntiObjCIfaceDecls _ loc) = locOf loc
 
 instance Located ObjCPropAttr where
     locOf (ObjCGetter _ loc)         = locOf loc

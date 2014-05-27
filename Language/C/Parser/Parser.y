@@ -238,6 +238,8 @@ import qualified Language.C.Syntax as C
  ANTI_PRAGMA      { L _ (T.Tanti_pragma _) }
  ANTI_INIT        { L _ (T.Tanti_init _) }
  ANTI_INITS       { L _ (T.Tanti_inits _) }
+ ANTI_IFACEDECL   { L _ (T.Tanti_ifacedecl _) }
+ ANTI_IFACEDECLS  { L _ (T.Tanti_ifacedecls _) }
 
 -- Three shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
@@ -2251,6 +2253,10 @@ objc_interface_decl_list :
       { rcons (ObjCIfaceMeth $2 (srclocOf $2)) $1 }
   | objc_interface_decl_list declaration
       { rcons (ObjCIfaceDecl $2 (srclocOf $2)) $1 }
+  | objc_interface_decl_list ANTI_IFACEDECL
+      { rcons (AntiObjCIfaceDecl (getANTI_IFACEDECL $2) (srclocOf $2)) $1 }
+  | objc_interface_decl_list ANTI_IFACEDECLS
+      { rcons (AntiObjCIfaceDecls (getANTI_IFACEDECLS $2) (srclocOf $2)) $1 }
 
 objc_property_decl :: { ObjCIfaceDecl }
 objc_property_decl :
@@ -2670,7 +2676,9 @@ getANTI_PARAM       (L _ (T.Tanti_param v))       = v
 getANTI_PARAMS      (L _ (T.Tanti_params v))      = v
 getANTI_PRAGMA      (L _ (T.Tanti_pragma v))      = v
 getANTI_INIT        (L _ (T.Tanti_init v))        = v
-getANTI_INITS        (L _ (T.Tanti_inits v))      = v
+getANTI_INITS       (L _ (T.Tanti_inits v))       = v
+getANTI_IFACEDECL   (L _ (T.Tanti_ifacedecl v))   = v
+getANTI_IFACEDECLS  (L _ (T.Tanti_ifacedecls v))  = v
 
 lexer :: (L T.Token -> P a) -> P a
 lexer cont = do
