@@ -2462,9 +2462,10 @@ objc_implementation_decl_list :
       { rcons (AntiFunc (getANTI_FUNC $2) (srclocOf $2)) $1 }
   | objc_implementation_decl_list ANTI_ESC
       { rcons (AntiEsc (getANTI_ESC $2) (srclocOf $2)) $1 }
--- FIXME: we need an anti implementation decl like this:
---  | objc_implementation_decl_list ANTI_IDECL
---      { rcons (AntiIdecl (getANTI_IDECL $2) (srclocOf $2)) $1 }
+  | objc_implementation_decl_list ANTI_EDECL
+      { rcons (AntiEdecls (getANTI_EDECL $2) (srclocOf $2)) $1 }
+  | objc_implementation_decl_list ANTI_EDECLS
+      { rcons (AntiEdecls (getANTI_EDECLS $2) (srclocOf $2)) $1 }
 
 property_synthesize :: { Definition }
 property_synthesize :
