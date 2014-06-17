@@ -58,6 +58,14 @@
 --
 -- [@cunit@] A compilation unit, of type @['Definition']@.
 --
+-- In addition, Objective-C support defines the following quasiquoters:
+--
+-- [@objcprop@] Property declaration of type @'ObjCIfaceDecl'@.
+--
+-- [@objcifdecls@] Interface declarations of type @'[ObjCIfaceDecl]'@
+--
+-- [@objcimdecls@] Class implementation declarations of type @'[Definition]'@
+--
 -- Antiquotations allow splicing in subterms during quotation. These subterms
 -- may bound to a Haskell variable or may be the value of a Haskell
 -- expression. Antiquotations appear in a quasiquotation in the form
@@ -167,6 +175,13 @@
 --
 -- [@inits@] A list of initializers. The argument must have type
 -- @['Initializer']@.
+--
+-- In addition, Objective-C code can use these antiquote specifiers:
+--
+-- [@ifdecl@] A class interface declaration. The argument must have type @'ObjCIfaceDecl'@.
+--
+-- [@ifdecls@] A list of class interface declaration. The argument must have type @['ObjCIfaceDecl']@.
+--
 --------------------------------------------------------------------------------
 
 module Language.C.Quote (

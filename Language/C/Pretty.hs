@@ -116,16 +116,16 @@ instance Pretty Id where
     ppr (AntiId v _)  = pprAnti "id" v
 
 instance Pretty Storage where
-    ppr (Tauto _)                  = text "auto"
-    ppr (Tregister _)              = text "register"
-    ppr (Tstatic _)                = text "static"
-    ppr (Textern _)                = text "extern"
-    ppr (TexternL l _)             = text "extern" <+> ppr l
-    ppr (Ttypedef _)               = text "typedef"
-    ppr (T__block _)               = text "__block"
-    ppr (TObjC__weak _)            = text "__weak"
-    ppr (TObjC__strong _)          = text "__strong"
-    ppr (TObjC__unsafe_retained _) = text "__unsafe_retained"
+    ppr (Tauto _)                    = text "auto"
+    ppr (Tregister _)                = text "register"
+    ppr (Tstatic _)                  = text "static"
+    ppr (Textern _)                  = text "extern"
+    ppr (TexternL l _)               = text "extern" <+> ppr l
+    ppr (Ttypedef _)                 = text "typedef"
+    ppr (T__block _)                 = text "__block"
+    ppr (TObjC__weak _)              = text "__weak"
+    ppr (TObjC__strong _)            = text "__strong"
+    ppr (TObjC__unsafe_unretained _) = text "__unsafe_unretained"
 
 instance Pretty TypeQual where
     ppr (Tconst _)        = text "const"
@@ -507,20 +507,24 @@ instance Pretty ObjCIfaceDecl where
         <> semi
     ppr (ObjCIfaceDecl decl loc)
       = pprLoc loc $ ppr decl
+    ppr (AntiObjCIfaceDecl v _loc)
+      = pprAnti "ifdecl" v
+    ppr (AntiObjCIfaceDecls v _loc)
+      = pprAnti "ifdecls" v
 
 instance Pretty ObjCPropAttr where
-    ppr (ObjCGetter ident loc)   = pprLoc loc $ text "getter=" <> ppr ident
-    ppr (ObjCSetter ident loc)   = pprLoc loc $ text "setter=" <> ppr ident <> colon
-    ppr (ObjCReadonly loc)       = pprLoc loc $ text "readonly"
-    ppr (ObjCReadwrite loc)      = pprLoc loc $ text "readwrite"
-    ppr (ObjCAssign loc)         = pprLoc loc $ text "assign"
-    ppr (ObjCRetain loc)         = pprLoc loc $ text "retain"
-    ppr (ObjCCopy loc)           = pprLoc loc $ text "copy"
-    ppr (ObjCNonatomic loc)      = pprLoc loc $ text "nonatomic"
-    ppr (ObjCAtomic loc)         = pprLoc loc $ text "atomic"
-    ppr (ObjCStrong loc)         = pprLoc loc $ text "strong"
-    ppr (ObjCWeak loc)           = pprLoc loc $ text "weak"
-    ppr (ObjCUnsafeRetained loc) = pprLoc loc $ text "unsafe_retained"
+    ppr (ObjCGetter ident loc)     = pprLoc loc $ text "getter=" <> ppr ident
+    ppr (ObjCSetter ident loc)     = pprLoc loc $ text "setter=" <> ppr ident <> colon
+    ppr (ObjCReadonly loc)         = pprLoc loc $ text "readonly"
+    ppr (ObjCReadwrite loc)        = pprLoc loc $ text "readwrite"
+    ppr (ObjCAssign loc)           = pprLoc loc $ text "assign"
+    ppr (ObjCRetain loc)           = pprLoc loc $ text "retain"
+    ppr (ObjCCopy loc)             = pprLoc loc $ text "copy"
+    ppr (ObjCNonatomic loc)        = pprLoc loc $ text "nonatomic"
+    ppr (ObjCAtomic loc)           = pprLoc loc $ text "atomic"
+    ppr (ObjCStrong loc)           = pprLoc loc $ text "strong"
+    ppr (ObjCWeak loc)             = pprLoc loc $ text "weak"
+    ppr (ObjCUnsafeUnretained loc) = pprLoc loc $ text "unsafe_unretained"
 
 instance Pretty ObjCMethodReq where
     ppr (ObjCRequired _loc) = text "@required"

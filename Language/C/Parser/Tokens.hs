@@ -186,7 +186,7 @@ data Token = Teof
            | TObjCYES
            | TObjC__weak
            | TObjC__strong
-           | TObjC__unsafe_retained
+           | TObjC__unsafe_unretained
 
            -- Antiquoting
            | Ttypename
@@ -227,6 +227,10 @@ data Token = Teof
            | Tanti_pragma String
            | Tanti_init String
            | Tanti_inits String
+           
+             -- Objective-C antiquoting
+           | Tanti_ifdecl String
+           | Tanti_ifdecls String
     deriving (Ord, Eq)
 
 instance Pretty Token where
@@ -283,6 +287,10 @@ instance Show Token where
     show (Tanti_pragma s)               = "$pragma:" ++ s
     show (Tanti_init s)                 = "$init:" ++ s
     show (Tanti_inits s)                = "$inits:" ++ s
+
+    show (Tanti_ifdecl s)               = "$ifdecl:" ++ s
+    show (Tanti_ifdecls s)              = "$ifdecls:" ++ s
+
     show t = fromMaybe (error "language-c-quote: internal error: unknown token")
                        (lookup t tokenStrings)
 
@@ -415,35 +423,35 @@ tokenStrings = [(Tlparen,     "("),
                 --
                 -- Objective-C extensions
                 --
-                (TObjCat                 , "@"),
-                (TObjCautoreleasepool    , "autoreleasepool"),
-                (TObjCcatch              , "catch"),
-                (TObjCclass              , "class"),
-                (TObjCcompatibility_alias, "compatibility_alias"),
-                (TObjCdynamic            , "dynamic"),
-                (TObjCencode             , "encode"),
-                (TObjCend                , "end"),
-                (TObjCfinally            , "finally"),
-                (TObjCimplementation     , "implementation"),
-                (TObjCinterface          , "interface"),
-                (TObjCNO                 , "NO"),
-                (TObjCoptional           , "optional"),
-                (TObjCprivate            , "private"),
-                (TObjCpublic             , "public"),
-                (TObjCproperty           , "property"),
-                (TObjCprotected          , "protected"),
-                (TObjCprotocol           , "protocol"),
-                (TObjCpackage            , "package"),
-                (TObjCrequired           , "required"),
-                (TObjCselector           , "selector"),
-                (TObjCsynchronized       , "synchronized"),
-                (TObjCsynthesize         , "synthesize"),
-                (TObjCthrow              , "throw"),
-                (TObjCtry                , "try"),
-                (TObjCYES                , "YES"),
-                (TObjC__weak             , "__weak"),
-                (TObjC__strong           , "__strong"),
-                (TObjC__unsafe_retained  , "__unsafe_retained"),
+                (TObjCat                   , "@"),
+                (TObjCautoreleasepool      , "autoreleasepool"),
+                (TObjCcatch                , "catch"),
+                (TObjCclass                , "class"),
+                (TObjCcompatibility_alias  , "compatibility_alias"),
+                (TObjCdynamic              , "dynamic"),
+                (TObjCencode               , "encode"),
+                (TObjCend                  , "end"),
+                (TObjCfinally              , "finally"),
+                (TObjCimplementation       , "implementation"),
+                (TObjCinterface            , "interface"),
+                (TObjCNO                   , "NO"),
+                (TObjCoptional             , "optional"),
+                (TObjCprivate              , "private"),
+                (TObjCpublic               , "public"),
+                (TObjCproperty             , "property"),
+                (TObjCprotected            , "protected"),
+                (TObjCprotocol             , "protocol"),
+                (TObjCpackage              , "package"),
+                (TObjCrequired             , "required"),
+                (TObjCselector             , "selector"),
+                (TObjCsynchronized         , "synchronized"),
+                (TObjCsynthesize           , "synthesize"),
+                (TObjCthrow                , "throw"),
+                (TObjCtry                  , "try"),
+                (TObjCYES                  , "YES"),
+                (TObjC__weak               , "__weak"),
+                (TObjC__strong             , "__strong"),
+                (TObjC__unsafe_unretained  , "__unsafe_unretained"),
 
                 (Ttypename, "typename")
                 ]
@@ -556,7 +564,7 @@ keywords = [("auto",       Tauto,      Nothing),
             ("YES",                 TObjCYES,                 Just [ObjC]),
             ("__weak",              TObjC__weak,              Just [ObjC]),
             ("__strong",            TObjC__strong,            Just [ObjC]),
-            ("__unsafe_retained",   TObjC__unsafe_retained,   Just [ObjC])
+            ("__unsafe_unretained", TObjC__unsafe_unretained,   Just [ObjC])
            ]
 
 type ExtensionsInt = Word32

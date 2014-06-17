@@ -7,7 +7,7 @@
 -- Module      :  Language.C.Parser.Parser
 -- Copyright   :  (c) Harvard University 2006-2011
 --                (c) Geoffrey Mainland 2011-2012
---                (c) Manuel M T Chakravarty 2013
+--                (c) Manuel M T Chakravarty 2013-2014
 --                (c) Drexel University 2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
@@ -198,7 +198,7 @@ import qualified Language.C.Syntax as C
  'YES'                 { L _ T.TObjCYES }
  '__weak'              { L _ T.TObjC__weak }
  '__strong'            { L _ T.TObjC__strong }
- '__unsafe_retained'   { L _ T.TObjC__unsafe_retained }
+ '__unsafe_unretained' { L _ T.TObjC__unsafe_unretained }
 
  'typename'       { L _ T.Ttypename }
 
@@ -238,6 +238,8 @@ import qualified Language.C.Syntax as C
  ANTI_PRAGMA      { L _ (T.Tanti_pragma _) }
  ANTI_INIT        { L _ (T.Tanti_init _) }
  ANTI_INITS       { L _ (T.Tanti_inits _) }
+ ANTI_IFDECL      { L _ (T.Tanti_ifdecl _) }
+ ANTI_IFDECLS     { L _ (T.Tanti_ifdecls _) }
 
 -- Three shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
@@ -268,6 +270,13 @@ import qualified Language.C.Syntax as C
 
 %name parseUnit       translation_unit
 %name parseFunc       function_definition
+
+-- extension specific parsing functions
+
+%name parseObjCProp       objc_property_decl
+%name parseObjCIfaceDecls objc_interface_decl_list_ext
+%name parseObjCImplDecls  objc_implementation_decl_list_ext
+
 
 %right NAMED OBJCNAMED
 %%
@@ -551,7 +560,7 @@ objc_selector :
     | '__block'             { Id "__block" (srclocOf $1) }
     | '__weak'              { Id "__weak" (srclocOf $1) }
     | '__strong'            { Id "__strong" (srclocOf $1) }
-    | '__unsafe_retained'   { Id "__unsafe_retained" (srclocOf $1) }
+    | '__unsafe_unretained' { Id "__unsafe_unretained" (srclocOf $1) }
 --    | '__alignof'           { Id "__alignof" (srclocOf $1) }
 
 objc_vararg_list :: { RevList Exp }   -- might be empty
@@ -1088,16 +1097,16 @@ init_declarator :
 
 storage_class_specifier :: { TySpec }
 storage_class_specifier :
-    'auto'              { TSauto (srclocOf $1) }
-  | 'register'          { TSregister (srclocOf $1) }
-  | 'static'            { TSstatic (srclocOf $1) }
-  | 'extern'            { TSextern (srclocOf $1) }
-  | 'extern' STRING     { TSexternL ((snd . getSTRING) $2) (srclocOf $1) }
-  | '__block'           { TS__block (srclocOf $1) }
-  | '__weak'            { TSObjC__weak (srclocOf $1) }
-  | '__strong'          { TSObjC__strong (srclocOf $1) }
-  | '__unsafe_retained' { TSObjC__unsafe_retained (srclocOf $1) }
-  | 'typedef'           { TStypedef (srclocOf $1) }
+    'auto'                { TSauto (srclocOf $1) }
+  | 'register'            { TSregister (srclocOf $1) }
+  | 'static'              { TSstatic (srclocOf $1) }
+  | 'extern'              { TSextern (srclocOf $1) }
+  | 'extern' STRING       { TSexternL ((snd . getSTRING) $2) (srclocOf $1) }
+  | '__block'             { TS__block (srclocOf $1) }
+  | '__weak'              { TSObjC__weak (srclocOf $1) }
+  | '__strong'            { TSObjC__strong (srclocOf $1) }
+  | '__unsafe_unretained' { TSObjC__unsafe_unretained (srclocOf $1) }
+  | 'typedef'             { TStypedef (srclocOf $1) }
 
 type_specifier :: { TySpec }
 type_specifier :
@@ -2225,6 +2234,11 @@ objc_visibility_spec :
   | '@' 'package'
       { ObjCPackage ($1 `srcspan` $2) }
 
+objc_interface_decl_list_ext :: { [ObjCIfaceDecl] }
+objc_interface_decl_list_ext :
+    objc_interface_decl_list
+      { rev $1 }
+
 objc_interface_decl_list :: { RevList ObjCIfaceDecl }
 objc_interface_decl_list :
     {- empty -}
@@ -2239,6 +2253,10 @@ objc_interface_decl_list :
       { rcons (ObjCIfaceMeth $2 (srclocOf $2)) $1 }
   | objc_interface_decl_list declaration
       { rcons (ObjCIfaceDecl $2 (srclocOf $2)) $1 }
+  | objc_interface_decl_list ANTI_IFDECL
+      { rcons (AntiObjCIfaceDecl (getANTI_IFDECL $2) (srclocOf $2)) $1 }
+  | objc_interface_decl_list ANTI_IFDECLS
+      { rcons (AntiObjCIfaceDecls (getANTI_IFDECLS $2) (srclocOf $2)) $1 }
 
 objc_property_decl :: { ObjCIfaceDecl }
 objc_property_decl :
@@ -2266,17 +2284,17 @@ objc_property_attr :
            _             -> expectedObjCPropertyAttr (locOf $1) }
   | identifier
       {% case $1 of
-           Id "readonly" _        -> return $ ObjCReadonly (srclocOf $1)
-           Id "readwrite" _       -> return $ ObjCReadwrite (srclocOf $1)
-           Id "assign" _          -> return $ ObjCAssign (srclocOf $1)
-           Id "retain" _          -> return $ ObjCRetain (srclocOf $1)
-           Id "copy" _            -> return $ ObjCCopy (srclocOf $1)
-           Id "nonatomic" _       -> return $ ObjCNonatomic (srclocOf $1)
-           Id "atomic" _          -> return $ ObjCAtomic (srclocOf $1)
-           Id "strong" _          -> return $ ObjCStrong (srclocOf $1)
-           Id "weak" _            -> return $ ObjCWeak (srclocOf $1)
-           Id "unsafe_retained" _ -> return $ ObjCUnsafeRetained (srclocOf $1)
-           _                      -> expectedObjCPropertyAttr (locOf $1) }
+           Id "readonly" _          -> return $ ObjCReadonly (srclocOf $1)
+           Id "readwrite" _         -> return $ ObjCReadwrite (srclocOf $1)
+           Id "assign" _            -> return $ ObjCAssign (srclocOf $1)
+           Id "retain" _            -> return $ ObjCRetain (srclocOf $1)
+           Id "copy" _              -> return $ ObjCCopy (srclocOf $1)
+           Id "nonatomic" _         -> return $ ObjCNonatomic (srclocOf $1)
+           Id "atomic" _            -> return $ ObjCAtomic (srclocOf $1)
+           Id "strong" _            -> return $ ObjCStrong (srclocOf $1)
+           Id "weak" _              -> return $ ObjCWeak (srclocOf $1)
+           Id "unsafe_unretained" _ -> return $ ObjCUnsafeUnretained (srclocOf $1)
+           _                        -> expectedObjCPropertyAttr (locOf $1) }
 
 objc_method_requirement :: { ObjCMethodReq }
 objc_method_requirement :
@@ -2421,6 +2439,11 @@ objc_implementation_body :
   objc_implementation_decl_list '@' 'end'
     { (rev $1, locOf $3) }
 
+objc_implementation_decl_list_ext :: { [Definition] }
+objc_implementation_decl_list_ext :
+    objc_implementation_decl_list
+      { rev $1 }
+
 objc_implementation_decl_list :: { RevList Definition }
 objc_implementation_decl_list :
     {- empty -}
@@ -2439,9 +2462,10 @@ objc_implementation_decl_list :
       { rcons (AntiFunc (getANTI_FUNC $2) (srclocOf $2)) $1 }
   | objc_implementation_decl_list ANTI_ESC
       { rcons (AntiEsc (getANTI_ESC $2) (srclocOf $2)) $1 }
--- FIXME: we need an anti implementation decl like this:
---  | objc_implementation_decl_list ANTI_IDECL
---      { rcons (AntiIdecl (getANTI_IDECL $2) (srclocOf $2)) $1 }
+  | objc_implementation_decl_list ANTI_EDECL
+      { rcons (AntiEdecls (getANTI_EDECL $2) (srclocOf $2)) $1 }
+  | objc_implementation_decl_list ANTI_EDECLS
+      { rcons (AntiEdecls (getANTI_EDECLS $2) (srclocOf $2)) $1 }
 
 property_synthesize :: { Definition }
 property_synthesize :
@@ -2653,7 +2677,9 @@ getANTI_PARAM       (L _ (T.Tanti_param v))       = v
 getANTI_PARAMS      (L _ (T.Tanti_params v))      = v
 getANTI_PRAGMA      (L _ (T.Tanti_pragma v))      = v
 getANTI_INIT        (L _ (T.Tanti_init v))        = v
-getANTI_INITS        (L _ (T.Tanti_inits v))      = v
+getANTI_INITS       (L _ (T.Tanti_inits v))       = v
+getANTI_IFDECL      (L _ (T.Tanti_ifdecl v))      = v
+getANTI_IFDECLS     (L _ (T.Tanti_ifdecls v))     = v
 
 lexer :: (L T.Token -> P a) -> P a
 lexer cont = do
@@ -2676,7 +2702,7 @@ data TySpec = TSauto !SrcLoc
             | TS__block !SrcLoc
             | TSObjC__weak !SrcLoc
             | TSObjC__strong !SrcLoc
-            | TSObjC__unsafe_retained !SrcLoc
+            | TSObjC__unsafe_unretained !SrcLoc
 
             | TSconst !SrcLoc
             | TSvolatile !SrcLoc
@@ -2737,7 +2763,7 @@ instance Located TySpec where
     locOf (TS__block loc)       = locOf loc
     locOf (TSObjC__weak loc)    = locOf loc
     locOf (TSObjC__strong loc)  = locOf loc
-    locOf (TSObjC__unsafe_retained loc)
+    locOf (TSObjC__unsafe_unretained loc)
                                 = locOf loc
 
     locOf (TSconst loc)         = locOf loc
@@ -2783,16 +2809,16 @@ instance Located TySpec where
     locOf (TSCLkernel loc)      = locOf loc
 
 instance Pretty TySpec where
-    ppr (TSauto _)                  = text "auto"
-    ppr (TSregister _)              = text "register"
-    ppr (TSstatic _)                = text "static"
-    ppr (TSextern _)                = text "extern"
-    ppr (TSexternL l _)             = text "extern" <+> ppr l
-    ppr (TStypedef _)               = text "typedef"
-    ppr (TS__block _)               = text "__block"
-    ppr (TSObjC__weak _)            = text "__weak"
-    ppr (TSObjC__strong _)          = text "__strong"
-    ppr (TSObjC__unsafe_retained _) = text "__unsafe_retained"
+    ppr (TSauto _)                    = text "auto"
+    ppr (TSregister _)                = text "register"
+    ppr (TSstatic _)                  = text "static"
+    ppr (TSextern _)                  = text "extern"
+    ppr (TSexternL l _)               = text "extern" <+> ppr l
+    ppr (TStypedef _)                 = text "typedef"
+    ppr (TS__block _)                 = text "__block"
+    ppr (TSObjC__weak _)              = text "__weak"
+    ppr (TSObjC__strong _)            = text "__strong"
+    ppr (TSObjC__unsafe_unretained _) = text "__unsafe_unretained"
 
     ppr (TSconst _)    = text "const"
     ppr (TSinline _)   = text "inline"
@@ -2842,33 +2868,33 @@ instance Pretty TySpec where
     ppr (TSCLkernel _)      = text "__kernel"
 
 isStorage :: TySpec -> Bool
-isStorage (TSauto _)                  = True
-isStorage (TSregister _)              = True
-isStorage (TSstatic _)                = True
-isStorage (TSextern _)                = True
-isStorage (TSexternL _ _)             = True
-isStorage (TStypedef _)               = True
-isStorage (TS__block _)               = True
-isStorage (TSObjC__weak _)            = True
-isStorage (TSObjC__strong _)          = True
-isStorage (TSObjC__unsafe_retained _) = True
-isStorage _                           = False
+isStorage (TSauto _)                    = True
+isStorage (TSregister _)                = True
+isStorage (TSstatic _)                  = True
+isStorage (TSextern _)                  = True
+isStorage (TSexternL _ _)               = True
+isStorage (TStypedef _)                 = True
+isStorage (TS__block _)                 = True
+isStorage (TSObjC__weak _)              = True
+isStorage (TSObjC__strong _)            = True
+isStorage (TSObjC__unsafe_unretained _) = True
+isStorage _                             = False
 
 mkStorage :: [TySpec] -> [Storage]
 mkStorage specs = map mk (filter isStorage specs)
     where
       mk :: TySpec -> Storage
-      mk (TSauto loc)                  = Tauto loc
-      mk (TSregister loc)              = Tregister loc
-      mk (TSstatic loc)                = Tstatic loc
-      mk (TSextern loc)                = Textern loc
-      mk (TSexternL l loc)             = TexternL l loc
-      mk (TStypedef loc)               = Ttypedef loc
-      mk (TS__block loc)               = T__block loc
-      mk (TSObjC__weak loc)            = TObjC__weak loc
-      mk (TSObjC__strong loc)          = TObjC__strong loc
-      mk (TSObjC__unsafe_retained loc) = TObjC__unsafe_retained loc
-      mk _                             = error "internal error in mkStorage"
+      mk (TSauto loc)                    = Tauto loc
+      mk (TSregister loc)                = Tregister loc
+      mk (TSstatic loc)                  = Tstatic loc
+      mk (TSextern loc)                  = Textern loc
+      mk (TSexternL l loc)               = TexternL l loc
+      mk (TStypedef loc)                 = Ttypedef loc
+      mk (TS__block loc)                 = T__block loc
+      mk (TSObjC__weak loc)              = TObjC__weak loc
+      mk (TSObjC__strong loc)            = TObjC__strong loc
+      mk (TSObjC__unsafe_unretained loc) = TObjC__unsafe_unretained loc
+      mk _                               = error "internal error in mkStorage"
 
 isTypeQual :: TySpec -> Bool
 isTypeQual (TSconst _)        = True
@@ -3175,7 +3201,7 @@ expectedObjCPropertyAttr loc
       text "Expected an Objective-C property attribute; allowed are the following:" </>
       nest 2
         (text "'getter = <sel>', 'setter = <sel>:', 'readonly', 'readwrite', 'assign'," <+>
-         text "'retain', 'copy', 'nonatomic', 'atomic', 'strong', 'weak', and 'unsafe_retained'")
+         text "'retain', 'copy', 'nonatomic', 'atomic', 'strong', 'weak', and 'unsafe_unretained'")
 
 assertObjCEnabled :: Loc -> String -> P ()
 assertObjCEnabled loc errMsg

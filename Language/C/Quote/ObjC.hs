@@ -2,7 +2,7 @@
 -- Module      :  Language.C.Quote.ObjC
 -- Copyright   :  (c) Harvard University 2006-2011
 --                (c) Geoffrey Mainland 2011-2013
---                (c) Manuel M T Chakravarty 2013
+--                (c) Manuel M T Chakravarty 2013-2014
 --             :  (c) Drexel University 2013
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
@@ -24,7 +24,10 @@ module Language.C.Quote.ObjC (
     cstms,
     citem,
     cunit,
-    cfun
+    cfun,
+    objcprop, 
+    objcifdecls, 
+    objcimdecls
   ) where
 
 import qualified Language.C.Parser as P
@@ -36,7 +39,7 @@ exts :: [C.Extensions]
 exts = [C.ObjC]
 
 typenames :: [String]
-typenames = ["id"]
+typenames = ["id", "instancetype"]
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, cparams, csdecl, cstm, cstms :: QuasiQuoter
 citem, cty, cunit :: QuasiQuoter
@@ -54,3 +57,8 @@ cstms   = quasiquote exts typenames P.parseStms
 citem   = quasiquote exts typenames P.parseBlockItem
 cty     = quasiquote exts typenames P.parseType
 cunit   = quasiquote exts typenames P.parseUnit
+
+objcprop, objcifdecls, objcimdecls :: QuasiQuoter
+objcprop    = quasiquote exts typenames P.parseObjCProp
+objcifdecls = quasiquote exts typenames P.parseObjCIfaceDecls
+objcimdecls = quasiquote exts typenames P.parseObjCImplDecls
