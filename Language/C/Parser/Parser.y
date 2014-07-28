@@ -43,6 +43,7 @@ import qualified Language.C.Syntax as C
  LONG_DOUBLE { L _ (T.TlongDoubleConst _) }
  ID          { L _ (T.Tidentifier _) }
  NAMED       { L _ (T.Tnamed _) }
+ COMMENT     { L _ (T.Tcomment _) }
 
  '('    { L _ T.Tlparen }
  ')'    { L _ T.Trparen }
@@ -1779,6 +1780,7 @@ statement :
   | iteration_statement  { $1 }
   | jump_statement       { $1 }
   | asm_statement        { $1 }
+  | comment              { $1 }
   | '#pragma'            { Pragma (getPRAGMA $1) (srclocOf $1) }
   {- Extension: ObjC -}
   | objc_at_statement    { $1 }
@@ -1795,6 +1797,11 @@ statement_list_ :
   |  ANTI_STMS                 { rsingleton (AntiStms (getANTI_STMS $1) (srclocOf $1)) }
   |  statement_list_ statement { rcons $2 $1 }
   |  statement_list_ ANTI_STMS { rcons (AntiStms (getANTI_STMS $2) (srclocOf $2)) $1 }
+
+comment :: { Stm }
+comment :
+    COMMENT { let T.Tcomment bytes = unLoc $1
+               in Comment bytes (srclocOf $1) }
 
 labeled_statement :: { Stm }
 labeled_statement :
