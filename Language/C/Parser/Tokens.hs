@@ -50,6 +50,8 @@ data Token = Teof
            | Tarrow
            | Tellipses
 
+           | Tcomment String
+
            | Tplus
            | Tminus
            | Tstar
@@ -250,6 +252,8 @@ instance Show Token where
     show (Tidentifier s)                = s
     show (Tnamed s)                     = s
     show (TObjCnamed s)                 = s
+
+    show (Tcomment s)                   = s
 
     show (Tanti_id s)                   = "$id:" ++ s
     show (Tanti_const s)                = "$const:" ++ s

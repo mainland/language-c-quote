@@ -126,8 +126,8 @@ c :-
 
  ^ $whitechar* "#" $whitechar* "pragma" $whitechar+ { lexPragmaTok }
 
- "//" .* ;
- "/*" ([^\*]|[\r\n]|("*"+([^\*\/]|[\r\n])))* "*"+ "/" ;
+ "//" .*                                              { comment True  }
+ "/*" ([^\*]|[\r\n]|("*"+([^\*\/]|[\r\n])))* "*"+ "/" { comment False }
 
  ^ $whitechar* "#" .* ;
  $whitechar+          ;
@@ -218,6 +218,19 @@ locateTok beg end tok =
 token :: Token -> Action
 token tok beg end =
     return $ locateTok beg end tok
+
+comment :: Bool -> Action
+comment isSingleLine beg end =
+    return $ locateTok beg end
+           $ Tcomment
+           $ B.unpack trimmed
+  where
+    len   = alexOff end - alexOff beg
+    bytes = B.take len (alexInput beg)
+
+    trimmed | isSingleLine = B.drop 2 bytes
+            | otherwise    = B.drop 2 (B.take (len - 2) bytes)
+
 
 setLineFromPragma :: Action
 setLineFromPragma beg end = do
