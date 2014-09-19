@@ -8,6 +8,15 @@ ALEX_ARGS=-gi
 
 APACHE_VERSION=2.2.22
 
+#
+# To support cabal sandbox
+#
+ifneq ($(wildcard ../../.cabal-sandbox/*-packages.conf.d),)
+GHCFLAGS += \
+	-no-user-package-db \
+	-package-db $(wildcard ../../.cabal-sandbox/*-packages.conf.d)
+endif
+
 SOURCE = Main.hs Opts.hs \
 	$(shell find ../../Language -name .svn -prune -o -type f | grep -v .svn) \
 	../../dist/build/Language/C/Parser/Lexer.hs \
@@ -30,7 +39,7 @@ clean :
 
 parse : $(SOURCE)
 	@mkdir -p obj
-	$(GHC) $(GHC_ARGS) --make Main.hs -odir obj -hidir obj \
+	$(GHC) $(GHCFLAGS) --make Main.hs -odir obj -hidir obj \
 		-i../.. -i../../dist/build \
 		-o $@
 
