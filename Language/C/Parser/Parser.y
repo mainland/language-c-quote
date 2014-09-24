@@ -388,7 +388,7 @@ primary_expression :
   | string_literal
       { let str@(StringConst _raw _s l) = mkStringConst $1
         in
-        Const str l
+          Const str l
       }
   | '(' expression ')'
       { $2 }
