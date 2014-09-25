@@ -133,7 +133,7 @@ data Initializer = ExpInitializer Exp !SrcLoc
                  | AntiInits String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
-type AsmLabel = String
+type AsmLabel = StringLit
 
 data Init = Init Id Decl (Maybe AsmLabel) (Maybe Initializer) [Attr] !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)

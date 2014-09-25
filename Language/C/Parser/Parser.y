@@ -1062,8 +1062,12 @@ init_declarator_list :
 
 maybe_asmlabel :: { Maybe AsmLabel }
 maybe_asmlabel :
-     {- empty -}             { Nothing }
-  | '__asm__' '(' STRING ')' { Just ((fst . getSTRING) $3) }
+    {- empty -}
+      { Nothing }
+  | '__asm__' '(' error
+      {% expected ["string literal"] Nothing }
+  | '__asm__' '(' string_literal ')'
+      { Just $3 }
 
 init_declarator :: { Init }
 init_declarator :

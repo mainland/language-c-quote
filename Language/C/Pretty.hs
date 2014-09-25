@@ -326,7 +326,7 @@ instance Pretty Init where
              _ ->  softline <> ppr attrs
         <> case maybe_asmlabel of
              Nothing -> empty
-             Just l ->  space <> text "asm" <+> parens (text l)
+             Just l ->  space <> text "asm" <+> parens (ppr l)
         <> case maybe_e of
              Nothing -> empty
              Just e ->  space <> text "=" <+/> ppr e
