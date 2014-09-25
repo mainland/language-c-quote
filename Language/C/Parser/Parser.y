@@ -420,26 +420,26 @@ string_literal :
 -- Clang extension (currently only enabled with Objective-C): block literal expression
 --
 -- block-literal ->
---   '^' [block-type] attributes_opt compound-statement
+--   '^' [block-type] attribute_specifiers_opt compound-statement
 --
 -- block-type ->
 --   '(' parameter-list ')' | specifier-qualifier-list abstract-declarator
 --
 block_literal :: { Exp }
 block_literal :
-    '^'                                              attributes_opt compound_statement
+    '^'                                              attribute_specifiers_opt compound_statement
       {% do { assertObjCEnabled ($1 <--> $3) "To use blocks, enable Objective-C support"
             ; let Block items _ = $3
             ; return $ BlockLit (BlockVoid (srclocOf $1)) $2 items ($1 `srcspan` $3)
             }
       }
-  | '^' '(' parameter_list_ ')'                       attributes_opt compound_statement
+  | '^' '(' parameter_list_ ')'                       attribute_specifiers_opt compound_statement
       {% do { assertObjCEnabled ($1 <--> $6) "To use blocks, enable Objective-C support"
             ; let Block items _ = $6
             ; return $ BlockLit (BlockParam (rev $3) ($2 `srcspan` $4)) $5 items ($1 `srcspan` $6)
             }
       }
-  | '^' specifier_qualifier_list abstract_declarator attributes_opt compound_statement
+  | '^' specifier_qualifier_list abstract_declarator attribute_specifiers_opt compound_statement
       {% do { assertObjCEnabled ($1 <--> $5) "To use blocks, enable Objective-C support"
             ; let { decl          = $3 (declRoot $2)
                   ; Block items _ = $5
@@ -926,7 +926,7 @@ declaration_ :
            ; checkInitGroup dspec decl [] []
            }
       }
-  | declaration_specifiers attributes
+  | declaration_specifiers attribute_specifiers
       {% do{ let (dspec, decl)  = $1
            ; checkInitGroup dspec decl $2 []
            }
@@ -937,7 +937,7 @@ declaration_ :
            ; checkInitGroup dspec decl [] (rev $2)
            }
       }
-  | declaration_specifiers attributes init_declarator_list
+  | declaration_specifiers attribute_specifiers init_declarator_list
       {% do{ let (dspec, decl) = $1
            ; checkInitGroup dspec decl $2 (rev $3)
            }
@@ -1067,7 +1067,7 @@ init_declarator :
         in
           Init ident decl $2 Nothing [] (ident `srcspan` decl)
       }
-  | declarator attributes maybe_asmlabel
+  | declarator attribute_specifiers maybe_asmlabel
       { let  { (ident, declToDecl) = $1
              ;  decl               = declToDecl (declRoot ident)
              }
@@ -1081,7 +1081,7 @@ init_declarator :
         in
           Init ident decl $2 (Just $4) [] (ident `srcspan` $4)
       }
-  | declarator attributes maybe_asmlabel '=' initializer
+  | declarator attribute_specifiers maybe_asmlabel '=' initializer
       { let  {  (ident, declToDecl) = $1
              ;  decl                = declToDecl (declRoot ident)
              }
@@ -1129,7 +1129,7 @@ struct_or_union_specifier :: { TySpec }
 struct_or_union_specifier :
     struct_or_union identifier_or_typedef
       { (unLoc $1) (Just $2) Nothing [] ($1 `srcspan` $2) }
-  | struct_or_union attributes identifier_or_typedef
+  | struct_or_union attribute_specifiers identifier_or_typedef
       { (unLoc $1) (Just $3) Nothing $2 ($1 `srcspan` $3) }
   | struct_or_union '{' struct_declaration_list '}'
       { (unLoc $1) Nothing (Just (rev $3)) [] ($1 `srcspan` $4) }
@@ -1139,11 +1139,11 @@ struct_or_union_specifier :
       { (unLoc $1) (Just $2) (Just (rev $4)) [] ($1 `srcspan` $5) }
   | struct_or_union identifier_or_typedef '{' struct_declaration_list error
       {% unclosed ($1 <--> rev $4) "{" }
-  | struct_or_union attributes identifier_or_typedef '{' struct_declaration_list '}'
+  | struct_or_union attribute_specifiers identifier_or_typedef '{' struct_declaration_list '}'
       { (unLoc $1) (Just $3) (Just (rev $5)) $2 ($1 `srcspan` $6) }
-  | struct_or_union attributes '{' struct_declaration_list '}'
+  | struct_or_union attribute_specifiers '{' struct_declaration_list '}'
       { (unLoc $1) Nothing (Just (rev $4)) $2 ($1 `srcspan` $5) }
-  | struct_or_union attributes identifier_or_typedef '{' struct_declaration_list error
+  | struct_or_union attribute_specifiers identifier_or_typedef '{' struct_declaration_list error
       {% unclosed ($1 <--> rev $5) "{" }
 
 struct_or_union :: { L (Maybe Id -> Maybe [FieldGroup] -> [Attr] -> SrcLoc -> TySpec) }
@@ -1232,7 +1232,7 @@ struct_declarator :
               in
                 Field (Just ident) (Just decl) Nothing (srclocOf decl)
         }
-  | declarator attributes
+  | declarator attribute_specifiers
         { \maybe_decl ->
               let { (ident, declToDecl) = $1
                   ; decl                = declToDecl (fromMaybe (declRoot ident) maybe_decl)
@@ -1255,7 +1255,7 @@ enum_specifier :: { TySpec }
 enum_specifier :
     'enum' identifier_or_typedef
       { TSenum (Just $2) [] [] ($1 `srcspan` $2) }
-  | 'enum' attributes identifier_or_typedef
+  | 'enum' attribute_specifiers identifier_or_typedef
       { TSenum (Just $3) [] $2 ($1 `srcspan` $3) }
   | 'enum' '{' enumerator_list '}'
       { TSenum Nothing (rev $3) [] ($1 `srcspan` $4) }
@@ -2091,7 +2091,7 @@ objc_class_declaration :
 -- Objective-C extension: class or category interface
 --
 -- objc-interface ->
---   [attributes] objc-class-interface | objc-category-interface
+--   [attribute_specifiers] objc-class-interface | objc-category-interface
 --
 -- objc-class-interface ->
 --   '@' 'interface' identifier [':' identifier]
@@ -2146,12 +2146,12 @@ objc_class_declaration :
 -- objc-method-requirement -> '@' 'required' | '@' 'optional'
 --
 -- objc-method-proto ->
---   ('-' | '+') objc-method-decl [attributes]
+--   ('-' | '+') objc-method-decl [attribute_specifiers]
 --
 -- objc-method-decl ->
---   ['(' type-name ')'] [attributes]
+--   ['(' type-name ')'] [attribute_specifiers]
 --     ( objc-selector
---     | ([objc-selector] ':' ['(' type-name ')'] [attributes] identifier)+
+--     | ([objc-selector] ':' ['(' type-name ')'] [attribute_specifiers] identifier)+
 --     ) [',' '...']
 --
 -- NB: We omit C-style parameters to methods as they don't appear to be current anymore.
@@ -2163,7 +2163,7 @@ objc_interface :
             ; addClassdefId $3
             ; return $ ObjCClassIface $3 Nothing prot vars decls [] ($1 `srcspan` loc)
             } }
-  | attributes '@' 'interface' identifier objc_interface_body
+  | attribute_specifiers '@' 'interface' identifier objc_interface_body
       {% do { let (prot, vars, decls, loc) = $5
             ; addClassdefId $4
             ; return $ ObjCClassIface $4 Nothing prot vars decls $1 ($2 `srcspan` loc)
@@ -2173,7 +2173,7 @@ objc_interface :
             ; addClassdefId $3
             ; return $ ObjCClassIface $3 (Just $5) prot vars decls [] ($1 `srcspan` loc)
             } }
-  | attributes '@' 'interface' identifier ':' identifier_or_typedef objc_interface_body
+  | attribute_specifiers '@' 'interface' identifier ':' identifier_or_typedef objc_interface_body
       {% do { let (prot, vars, decls, loc) = $7
             ; addClassdefId $4
             ; return $ ObjCClassIface $4 (Just $6) prot vars decls $1 ($2 `srcspan` loc)
@@ -2305,24 +2305,24 @@ objc_method_requirement :
 
 objc_method_proto :: { ObjCMethodProto }
 objc_method_proto :
-    '-' objc_method_decl attributes_opt
+    '-' objc_method_decl attribute_specifiers_opt
       { let (res, attrs, params, hasVargs) = $2
         in
         ObjCMethodProto False res attrs params hasVargs $3 ($1 `srcspan` $3) }
-  | '+' objc_method_decl attributes_opt
+  | '+' objc_method_decl attribute_specifiers_opt
       { let (res, attrs, params, hasVargs) = $2
         in
         ObjCMethodProto True res attrs params hasVargs $3 ($1 `srcspan` $3) }
 
 objc_method_decl :: { (Maybe Type, [Attr], [ObjCParam], Bool) }
 objc_method_decl :
-                 attributes_opt objc_method_args
+                 attribute_specifiers_opt objc_method_args
       { (Nothing, $1, $2, False) }
-  | '(' type_name ')' attributes_opt objc_method_args
+  | '(' type_name ')' attribute_specifiers_opt objc_method_args
       { (Just $2, $4, $5, False) }
-  |               attributes_opt objc_method_args ',' '...'
+  |               attribute_specifiers_opt objc_method_args ',' '...'
       { (Nothing, $1, $2, True) }
-  | '(' type_name ')' attributes_opt objc_method_args ',' '...'
+  | '(' type_name ')' attribute_specifiers_opt objc_method_args ',' '...'
       { (Just $2, $4, $5, True) }
 
 objc_method_args :: { [ObjCParam] }
@@ -2341,13 +2341,13 @@ objc_method_arg_list :
 
 objc_method_arg :: { ObjCParam }
 objc_method_arg :
-    objc_selector ':' '(' type_name ')' attributes_opt identifier
+    objc_selector ':' '(' type_name ')' attribute_specifiers_opt identifier
       { ObjCParam (Just $1) (Just $4) $6 (Just $7) ($1 `srcspan` $7) }
-  |               ':' '(' type_name ')' attributes_opt identifier
+  |               ':' '(' type_name ')' attribute_specifiers_opt identifier
       { ObjCParam Nothing   (Just $3) $5 (Just $6) ($1 `srcspan` $6) }
-  | objc_selector ':'               attributes_opt identifier
+  | objc_selector ':'               attribute_specifiers_opt identifier
       { ObjCParam (Just $1) Nothing   $3 (Just $4) ($1 `srcspan` $4) }
-  |               ':'               attributes_opt identifier
+  |               ':'               attribute_specifiers_opt identifier
       { ObjCParam Nothing   Nothing   $2 (Just $3) ($1 `srcspan` $3) }
 
 -- Objective-C extension: protocol declaration
@@ -2514,27 +2514,26 @@ objc_compatibility_alias :
             }
       }
 
-attributes_opt :: { [Attr] }
-attributes_opt :
-    {- empty -}
-      { [] }
-  | attributes
-      { $1 }
-
-
 {------------------------------------------------------------------------------
  -
  - GCC extensions
  -
  ------------------------------------------------------------------------------}
 
-attributes :: { [Attr] }
-attributes :
-    attribute            { $1 }
-  | attributes attribute { $1 ++ $2 }
+attribute_specifiers_opt :: { [Attr] }
+attribute_specifiers_opt :
+    {- empty -}
+      { [] }
+  | attribute_specifiers
+      { $1 }
 
-attribute :: { [Attr] }
-attribute :
+attribute_specifiers :: { [Attr] }
+attribute_specifiers :
+    attribute_specifier                      { $1 }
+  | attribute_specifiers attribute_specifier { $1 ++ $2 }
+
+attribute_specifier :: { [Attr] }
+attribute_specifier :
     '__attribute__' '(' '(' attribute_list ')' ')' { rev $4 }
 
 attribute_list :: { RevList Attr }
