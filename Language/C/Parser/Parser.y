@@ -8,7 +8,7 @@
 -- Copyright   :  (c) Harvard University 2006-2011
 --                (c) Geoffrey Mainland 2011-2012
 --                (c) Manuel M T Chakravarty 2013-2014
---                (c) Drexel University 2013
+--                (c) Drexel University 2013-2014
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
 
