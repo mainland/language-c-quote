@@ -1108,16 +1108,16 @@ init_declarator :
 
 storage_class_specifier :: { TySpec }
 storage_class_specifier :
-    'auto'                { TSauto (srclocOf $1) }
-  | 'register'            { TSregister (srclocOf $1) }
-  | 'static'              { TSstatic (srclocOf $1) }
-  | 'extern'              { TSextern (srclocOf $1) }
-  | 'extern' STRING       { TSexternL ((snd . getSTRING) $2) (srclocOf $1) }
-  | '__block'             { TS__block (srclocOf $1) }
-  | '__weak'              { TSObjC__weak (srclocOf $1) }
-  | '__strong'            { TSObjC__strong (srclocOf $1) }
-  | '__unsafe_unretained' { TSObjC__unsafe_unretained (srclocOf $1) }
-  | 'typedef'             { TStypedef (srclocOf $1) }
+    'auto'                  { TSauto (srclocOf $1) }
+  | 'register'              { TSregister (srclocOf $1) }
+  | 'static'                { TSstatic (srclocOf $1) }
+  | 'extern'                { TSextern Nothing (srclocOf $1) }
+  | 'extern' string_literal { TSextern (Just $2) ($1 `srcspan` $2) }
+  | '__block'               { TS__block (srclocOf $1) }
+  | '__weak'                { TSObjC__weak (srclocOf $1) }
+  | '__strong'              { TSObjC__strong (srclocOf $1) }
+  | '__unsafe_unretained'   { TSObjC__unsafe_unretained (srclocOf $1) }
+  | 'typedef'               { TStypedef (srclocOf $1) }
 
 type_specifier :: { TySpec }
 type_specifier :
@@ -2706,8 +2706,7 @@ data DeclTySpec = DeclTySpec DeclSpec !SrcLoc
 data TySpec = TSauto !SrcLoc
             | TSregister !SrcLoc
             | TSstatic !SrcLoc
-            | TSextern !SrcLoc
-            | TSexternL String !SrcLoc
+            | TSextern (Maybe Linkage) !SrcLoc
             | TStypedef !SrcLoc
             | TS__block !SrcLoc
             | TSObjC__weak !SrcLoc
@@ -2767,8 +2766,7 @@ instance Located TySpec where
     locOf (TSauto loc)          = locOf loc
     locOf (TSregister loc)      = locOf loc
     locOf (TSstatic loc)        = locOf loc
-    locOf (TSextern loc)        = locOf loc
-    locOf (TSexternL _ loc)     = locOf loc
+    locOf (TSextern _ loc)      = locOf loc
     locOf (TStypedef loc)       = locOf loc
     locOf (TS__block loc)       = locOf loc
     locOf (TSObjC__weak loc)    = locOf loc
@@ -2822,8 +2820,8 @@ instance Pretty TySpec where
     ppr (TSauto _)                    = text "auto"
     ppr (TSregister _)                = text "register"
     ppr (TSstatic _)                  = text "static"
-    ppr (TSextern _)                  = text "extern"
-    ppr (TSexternL l _)               = text "extern" <+> ppr l
+    ppr (TSextern Nothing _)          = text "extern"
+    ppr (TSextern (Just l) _)         = text "extern" <+> ppr l
     ppr (TStypedef _)                 = text "typedef"
     ppr (TS__block _)                 = text "__block"
     ppr (TSObjC__weak _)              = text "__weak"
@@ -2881,8 +2879,7 @@ isStorage :: TySpec -> Bool
 isStorage (TSauto _)                    = True
 isStorage (TSregister _)                = True
 isStorage (TSstatic _)                  = True
-isStorage (TSextern _)                  = True
-isStorage (TSexternL _ _)               = True
+isStorage (TSextern _ _)                = True
 isStorage (TStypedef _)                 = True
 isStorage (TS__block _)                 = True
 isStorage (TSObjC__weak _)              = True
@@ -2897,8 +2894,7 @@ mkStorage specs = map mk (filter isStorage specs)
       mk (TSauto loc)                    = Tauto loc
       mk (TSregister loc)                = Tregister loc
       mk (TSstatic loc)                  = Tstatic loc
-      mk (TSextern loc)                  = Textern loc
-      mk (TSexternL l loc)               = TexternL l loc
+      mk (TSextern l loc)                = Textern l loc
       mk (TStypedef loc)                 = Ttypedef loc
       mk (TS__block loc)                 = T__block loc
       mk (TSObjC__weak loc)              = TObjC__weak loc

@@ -119,8 +119,8 @@ instance Pretty Storage where
     ppr (Tauto _)                    = text "auto"
     ppr (Tregister _)                = text "register"
     ppr (Tstatic _)                  = text "static"
-    ppr (Textern _)                  = text "extern"
-    ppr (TexternL l _)               = text "extern" <+> ppr l
+    ppr (Textern Nothing _)          = text "extern"
+    ppr (Textern (Just l) _)         = text "extern" <+> ppr l
     ppr (Ttypedef _)                 = text "typedef"
     ppr (T__block _)                 = text "__block"
     ppr (TObjC__weak _)              = text "__weak"

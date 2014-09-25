@@ -30,11 +30,12 @@ data Id = Id String !SrcLoc
         | AntiId String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
+type Linkage = StringLit
+
 data Storage = Tauto !SrcLoc
              | Tregister !SrcLoc
              | Tstatic !SrcLoc
-             | Textern !SrcLoc
-             | TexternL String !SrcLoc
+             | Textern (Maybe Linkage) !SrcLoc
              | Ttypedef !SrcLoc
              | T__block !SrcLoc                 -- Extension: clang blocks extension
              | TObjC__weak !SrcLoc              -- Extension: Objective-C
@@ -449,8 +450,7 @@ instance Located Storage where
     locOf (Tauto loc)                    = locOf loc
     locOf (Tregister loc)                = locOf loc
     locOf (Tstatic loc)                  = locOf loc
-    locOf (Textern loc)                  = locOf loc
-    locOf (TexternL _ loc)               = locOf loc
+    locOf (Textern _ loc)                = locOf loc
     locOf (Ttypedef loc)                 = locOf loc
     locOf (T__block loc)                 = locOf loc
     locOf (TObjC__weak loc)              = locOf loc
