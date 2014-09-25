@@ -2590,22 +2590,17 @@ maybe_volatile :
 
 asm_statement :: { Stm }
 asm_statement :
-    '__asm__' maybe_volatile '(' asm_template ')' ';'
-      { Asm $2 [] (rev $4) [] [] [] ($1 `srcspan` $5) }
-  | '__asm__' maybe_volatile '(' asm_template ':' asm_inouts ')' ';'
-      { Asm $2 [] (rev $4) $6 [] [] ($1 `srcspan` $7) }
-  | '__asm__' maybe_volatile '(' asm_template ':' asm_inouts
-                                              ':' asm_inouts ')' ';'
-      { Asm $2 [] (rev $4) $6 $8 [] ($1 `srcspan` $9) }
-  | '__asm__' maybe_volatile '(' asm_template ':' asm_inouts
-                                              ':' asm_inouts
-                                              ':' asm_clobbers ')' ';'
-      { Asm $2 [] (rev $4) $6 $8 $10 ($1 `srcspan` $11) }
-
-asm_template :: { RevList String }
-asm_template :
-    STRING               { rsingleton ((fst . getSTRING) $1) }
-  | asm_template STRING  { rcons ((fst . getSTRING) $2) $1 }
+    '__asm__' maybe_volatile '(' string_literal ')' ';'
+      { Asm $2 [] $4 [] [] [] ($1 `srcspan` $5) }
+  | '__asm__' maybe_volatile '(' string_literal ':' asm_inouts ')' ';'
+      { Asm $2 [] $4 $6 [] [] ($1 `srcspan` $7) }
+  | '__asm__' maybe_volatile '(' string_literal ':' asm_inouts
+                                                ':' asm_inouts ')' ';'
+      { Asm $2 [] $4 $6 $8 [] ($1 `srcspan` $9) }
+  | '__asm__' maybe_volatile '(' string_literal ':' asm_inouts
+                                                ':' asm_inouts
+                                                ':' asm_clobbers ')' ';'
+      { Asm $2 [] $4 $6 $8 $10 ($1 `srcspan` $11) }
 
 asm_inouts :: { [(String, Exp)] }
 asm_inouts :

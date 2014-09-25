@@ -637,13 +637,13 @@ instance Pretty Stm where
       where
         pprAsm :: [(String, Exp)] -> [String] -> Doc
         pprAsm [] [] =
-            spread (map text template)
+            ppr template
             <> case outputs of
                  [] -> space <> colon
                  _ ->  colon <+/> commasep (map pprReg outputs)
 
         pprAsm inp clob =
-            spread (map text template)
+            ppr template
             <> case outputs of
                  [] -> space <> colon
                  _ ->  colon <+/> commasep (map pprReg outputs)

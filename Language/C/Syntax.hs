@@ -244,6 +244,8 @@ data ObjCMethodProto = ObjCMethodProto Bool (Maybe Type) [Attr] [ObjCParam] Bool
                        --  an identifier; all other parameters must have an identifier.
     deriving (Eq, Ord, Show, Data, Typeable)
 
+type AsmTemplate = StringLit
+
 data Stm  = Label Id [Attr] Stm !SrcLoc
           | Case Exp Stm !SrcLoc
           | Default Stm !SrcLoc
@@ -260,9 +262,13 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
           | Break !SrcLoc
           | Return (Maybe Exp) !SrcLoc
           | Pragma String !SrcLoc
-          | Asm Bool [Attr] [String]
-                     [(String, Exp)] [(String, Exp)]
-                     [String] !SrcLoc
+          | Asm Bool             -- ^ @True@ if volatile, @False@ otherwise
+                [Attr]           -- ^ Attributes
+                AsmTemplate      -- ^ Assembly template
+                [(String, Exp)]  -- ^ Output operands
+                [(String, Exp)]  -- ^ Input operands
+                [String]         -- ^ Clobbered registers
+                !SrcLoc
           | ObjCTry [BlockItem] [ObjCCatch] (Maybe [BlockItem]) !SrcLoc
             -- ^Invariant: There is either at least one 'ObjCCatch' or the finally block is present.
           | ObjCThrow (Maybe Exp) !SrcLoc
