@@ -413,7 +413,7 @@ primary_expression :
 
 string_literal :: { RevList (L (String, String)) }
 string_literal :
-    STRING                  { rsingleton (L (locOf $1) (getSTRING $1)) }
+    STRING                 { rsingleton (L (locOf $1) (getSTRING $1)) }
     {- Extension: GCC -}
   | string_literal STRING  { rcons (L (locOf $2) (getSTRING $2)) $1 }
 
