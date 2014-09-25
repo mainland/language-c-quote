@@ -721,6 +721,9 @@ instance Pretty BlockItem where
                      nest 4 (line <> stack ds) </>
                      rbrace
 
+instance Pretty StringLit where
+    ppr (StringLit ss _ _) = sep (map string ss)
+
 instance Pretty Const where
     ppr (IntConst s _ _ _)          = text s
     ppr (LongIntConst s _ _ _)      = text s

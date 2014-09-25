@@ -386,10 +386,7 @@ primary_expression :
   | constant
       { Const $1 (srclocOf $1) }
   | string_literal
-      { let str@(StringConst _raw _s l) = mkStringConst $1
-        in
-          Const str l
-      }
+      { Const (mkStringConst $1) (srclocOf $1) }
   | '(' expression ')'
       { $2 }
   | '(' expression error
@@ -411,11 +408,21 @@ primary_expression :
   | ANTI_EXP
       { AntiExp (getANTI_EXP $1) (srclocOf $1) }
 
-string_literal :: { RevList (L (String, String)) }
+string_literal :: { StringLit }
 string_literal :
-    STRING                 { rsingleton (L (locOf $1) (getSTRING $1)) }
-    {- Extension: GCC -}
-  | string_literal STRING  { rcons (L (locOf $2) (getSTRING $2)) $1 }
+    string_literal_
+      { let { slits = rev $1
+            ; raw   = map (fst . unLoc) slits
+            ; s     = (concat . map (snd . unLoc)) slits
+            }
+        in
+         StringLit raw s (srclocOf slits)
+      }
+
+string_literal_ :: { RevList (L (String, String)) }
+string_literal_ :
+    STRING                  { rsingleton (L (locOf $1) (getSTRING $1)) }
+  | string_literal_ STRING  { rcons (L (locOf $2) (getSTRING $2)) $1 }
 
 -- Clang extension (currently only enabled with Objective-C): block literal expression
 --
@@ -2961,13 +2968,8 @@ checkNoSign :: [TySpec] -> String -> P ()
 checkNoSign spec msg  | hasSign spec  = fail msg
                       | otherwise     = return ()
 
-mkStringConst :: RevList (L (String, String)) -> Const
-mkStringConst str_desc
-  = let ss   = rev str_desc
-        l    = srclocOf ss
-        raw  = map (fst . unLoc) ss
-        s    = (concat . intersperse " " . map (snd . unLoc)) ss
-    in
+mkStringConst :: StringLit -> Const
+mkStringConst (StringLit raw s l) =
     StringConst raw s l
 
 composeDecls :: Decl -> Decl -> Decl

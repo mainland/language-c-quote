@@ -310,6 +310,9 @@ data Signed = Signed
             | Unsigned
     deriving (Eq, Ord, Show, Data, Typeable)
 
+data StringLit = StringLit [String] String !SrcLoc
+    deriving (Eq, Ord, Show, Data, Typeable)
+
 data Const = IntConst String Signed Integer !SrcLoc
            | LongIntConst String Signed Integer !SrcLoc
            | LongLongIntConst String Signed Integer !SrcLoc
@@ -670,6 +673,9 @@ instance Located BlockItem where
 
 instance Located ObjCCatch where
     locOf (ObjCCatch _ _ loc) = locOf loc
+
+instance Located StringLit where
+    locOf (StringLit _ _ loc) = locOf loc
 
 instance Located Const where
     locOf (IntConst _ _ _ loc)          = locOf loc
