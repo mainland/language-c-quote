@@ -1819,7 +1819,9 @@ statement_list_ :
 labeled_statement :: { Stm }
 labeled_statement :
     identifier ':' error                      {% expected ["statement"] (Just "label") }
-  | identifier ':' statement                  { Label $1 $3 ($1 `srcspan` $3) }
+    {- GCC Extension -}
+  | identifier ':' attribute_specifiers ';'   { Label $1 $3 (Exp Nothing noLoc) ($1 `srcspan` $4) }
+  | identifier ':' statement                  { Label $1 [] $3 ($1 `srcspan` $3) }
   | 'case' constant_expression error          {% expected ["`:'"] Nothing }
   | 'case' constant_expression ':' error      {% expected ["statement"] Nothing }
   | 'case' constant_expression ':' statement  { Case $2 $4 ($1 `srcspan` $4) }

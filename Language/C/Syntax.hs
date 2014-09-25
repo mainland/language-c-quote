@@ -244,7 +244,7 @@ data ObjCMethodProto = ObjCMethodProto Bool (Maybe Type) [Attr] [ObjCParam] Bool
                        --  an identifier; all other parameters must have an identifier.
     deriving (Eq, Ord, Show, Data, Typeable)
 
-data Stm  = Label Id Stm !SrcLoc
+data Stm  = Label Id [Attr] Stm !SrcLoc
           | Case Exp Stm !SrcLoc
           | Default Stm !SrcLoc
           | Exp (Maybe Exp) !SrcLoc
@@ -641,7 +641,7 @@ instance Located ObjCMethodProto where
     locOf (ObjCMethodProto _ _ _ _ _ _ loc) = locOf loc
 
 instance Located Stm where
-    locOf (Label _ _ loc)             = locOf loc
+    locOf (Label _ _ _ loc)           = locOf loc
     locOf (Case _ _ loc)              = locOf loc
     locOf (Default _ loc)             = locOf loc
     locOf (Exp _ loc)                 = locOf loc

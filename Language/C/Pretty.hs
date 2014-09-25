@@ -552,9 +552,9 @@ instance Pretty ObjCMethodProto where
         <> ppr attrs2
 
 instance Pretty Stm where
-    ppr (Label ident stm sloc) =
+    ppr (Label ident attrs stm sloc) =
         srcloc sloc <>
-        indent (-2) (line <> ppr ident <> colon) </> ppr stm
+        indent (-2) (line <> ppr ident <> colon <+> ppr attrs) </> ppr stm
 
     ppr (Case e stm sloc) =
         srcloc sloc <>
