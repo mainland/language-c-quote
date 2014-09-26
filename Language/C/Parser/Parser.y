@@ -2591,44 +2591,79 @@ maybe_volatile :
 asm_statement :: { Stm }
 asm_statement :
     '__asm__' maybe_volatile '(' string_literal ')' ';'
-      { Asm $2 [] $4 [] [] [] ($1 `srcspan` $5) }
-  | '__asm__' maybe_volatile '(' string_literal ':' asm_inouts ')' ';'
-      { Asm $2 [] $4 $6 [] [] ($1 `srcspan` $7) }
-  | '__asm__' maybe_volatile '(' string_literal ':' asm_inouts
-                                                ':' asm_inouts ')' ';'
-      { Asm $2 [] $4 $6 $8 [] ($1 `srcspan` $9) }
-  | '__asm__' maybe_volatile '(' string_literal ':' asm_inouts
-                                                ':' asm_inouts
+      { Asm $2 [] $4 [] [] [] ($1 `srcspan` $6) }
+  | '__asm__' maybe_volatile '(' string_literal ':' asm_outs ')' ';'
+      { Asm $2 [] $4 $6 [] [] ($1 `srcspan` $8) }
+  | '__asm__' maybe_volatile '(' string_literal ':' asm_outs
+                                                ':' asm_ins ')' ';'
+      { Asm $2 [] $4 $6 $8 [] ($1 `srcspan` $10) }
+  | '__asm__' maybe_volatile '(' string_literal ':' asm_outs
+                                                ':' asm_ins
                                                 ':' asm_clobbers ')' ';'
-      { Asm $2 [] $4 $6 $8 $10 ($1 `srcspan` $11) }
+      { Asm $2 [] $4 $6 $8 $10 ($1 `srcspan` $12) }
+  | '__asm__' maybe_volatile 'goto' '(' string_literal ':'
+                                                       ':' asm_ins
+                                                       ':' asm_clobbers
+                                                       ':' asm_goto_labels ')' ';'
+      { AsmGoto $2 [] $5 $8 $10 $12 ($1 `srcspan` $14) }
 
-asm_inouts :: { [(String, Exp)] }
-asm_inouts :
-    {- empty -}    { [] }
-  | asm_inouts_ne  { rev $1 }
+asm_ins :: { [AsmIn] }
+asm_ins :
+    {- empty -} { [] }
+  | asm_ins_    { rev $1 }
 
-asm_inouts_ne :: { RevList (String, Exp) }
-asm_inouts_ne:
-    asm_inout                    { rsingleton $1 }
-  | asm_inouts_ne ',' asm_inout  { rcons $3 $1 }
+asm_ins_ :: { RevList AsmIn }
+asm_ins_ :
+    asm_in              { rsingleton $1 }
+  | asm_ins_ ',' asm_in { rcons $3 $1 }
 
-asm_inout :: { (String, Exp) }
-asm_inout :
-    STRING '(' expression ')' { ((fst . getSTRING) $1, $3) }
+asm_in :: { AsmIn }
+asm_in :
+    asm_symbolic_name_opt STRING '(' expression ')'
+      { AsmIn $1 ((fst . getSTRING) $2) $4 }
+
+asm_outs :: { [AsmOut] }
+asm_outs :
+    {- empty -} { [] }
+  | asm_outs_ { rev $1 }
+
+asm_outs_ :: { RevList AsmOut }
+asm_outs_ :
+    asm_out               { rsingleton $1 }
+  | asm_outs_ ',' asm_out { rcons $3 $1 }
+
+asm_out :: { AsmOut }
+asm_out :
+    asm_symbolic_name_opt STRING '(' identifier ')'
+      { AsmOut $1 ((fst . getSTRING) $2) $4 }
 
 asm_clobbers :: { [String] }
 asm_clobbers :
-    {- empty -}      { [] }
-  | asm_clobbers_ne  { rev $1 }
+    {- empty -}    { [] }
+  | asm_clobbers_  { rev $1 }
 
-asm_clobbers_ne :: { RevList String }
-asm_clobbers_ne :
-    asm_clobber                      { rsingleton $1 }
-  | asm_clobbers_ne ',' asm_clobber  { rcons $3 $1 }
+asm_clobbers_ :: { RevList String }
+asm_clobbers_ :
+    asm_clobber                   { rsingleton $1 }
+  | asm_clobbers_ ',' asm_clobber { rcons $3 $1 }
 
 asm_clobber :: { String }
 asm_clobber :
     STRING { (fst . getSTRING) $1 }
+
+asm_symbolic_name_opt :: { Maybe Id }
+asm_symbolic_name_opt :
+    {- empty -}        { Nothing }
+  | '[' identifier ']' { Just $2 }
+
+asm_goto_labels :: { [Id] }
+asm_goto_labels :
+    asm_goto_labels_ { rev $1 }
+
+asm_goto_labels_ :: { RevList Id }
+asm_goto_labels_ :
+    identifier                      { rsingleton $1 }
+  | asm_goto_labels_ ',' identifier { rcons $3 $1 }
 
 {
 happyError :: L T.Token -> P a

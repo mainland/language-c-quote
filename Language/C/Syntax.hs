@@ -244,8 +244,6 @@ data ObjCMethodProto = ObjCMethodProto Bool (Maybe Type) [Attr] [ObjCParam] Bool
                        --  an identifier; all other parameters must have an identifier.
     deriving (Eq, Ord, Show, Data, Typeable)
 
-type AsmTemplate = StringLit
-
 data Stm  = Label Id [Attr] Stm !SrcLoc
           | Case Exp Stm !SrcLoc
           | Default Stm !SrcLoc
@@ -262,13 +260,20 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
           | Break !SrcLoc
           | Return (Maybe Exp) !SrcLoc
           | Pragma String !SrcLoc
-          | Asm Bool             -- ^ @True@ if volatile, @False@ otherwise
-                [Attr]           -- ^ Attributes
-                AsmTemplate      -- ^ Assembly template
-                [(String, Exp)]  -- ^ Output operands
-                [(String, Exp)]  -- ^ Input operands
-                [String]         -- ^ Clobbered registers
+          | Asm Bool         -- ^ @True@ if volatile, @False@ otherwise
+                [Attr]       -- ^ Attributes
+                AsmTemplate  -- ^ Assembly template
+                [AsmOut]     -- ^ Output operands
+                [AsmIn]      -- ^ Input operands
+                [AsmClobber] -- ^ Clobbered registers
                 !SrcLoc
+          | AsmGoto Bool         -- ^ @True@ if volatile, @False@ otherwise
+                    [Attr]       -- ^ Attributes
+                    AsmTemplate  -- ^ Assembly template
+                    [AsmIn]      -- ^ Input operands
+                    [AsmClobber] -- ^ Clobbered registers
+                    [Id]         -- ^ Labels
+                    !SrcLoc
           | ObjCTry [BlockItem] [ObjCCatch] (Maybe [BlockItem]) !SrcLoc
             -- ^Invariant: There is either at least one 'ObjCCatch' or the finally block is present.
           | ObjCThrow (Maybe Exp) !SrcLoc
@@ -278,6 +283,16 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
           | AntiStm String !SrcLoc
           | AntiStms String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
+
+type AsmTemplate = StringLit
+
+data AsmOut = AsmOut (Maybe Id) String Id
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data AsmIn = AsmIn (Maybe Id) String Exp
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+type AsmClobber = String
 
 data BlockItem = BlockDecl InitGroup
                | BlockStm Stm
@@ -663,6 +678,7 @@ instance Located Stm where
     locOf (Return _ loc)              = locOf loc
     locOf (Pragma _ loc)              = locOf loc
     locOf (Asm _ _ _ _ _ _ loc)       = locOf loc
+    locOf (AsmGoto _ _ _ _ _ _ loc)   = locOf loc
     locOf (ObjCTry _ _ _ loc)         = locOf loc
     locOf (ObjCThrow _ loc)           = locOf loc
     locOf (ObjCSynchronized _ _ loc)  = locOf loc

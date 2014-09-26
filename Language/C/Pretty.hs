@@ -626,36 +626,44 @@ instance Pretty Stm where
     ppr (Pragma pragma sloc) =
         srcloc sloc <> text "#pragma" <+> text pragma
 
-    ppr (Asm isVolatile _ template outputs inputs clobbered sloc) =
+    ppr (Asm isVolatile _ template outs ins clobbered sloc) =
         srcloc sloc <>
         text "__asm__"
         <> case isVolatile of
              True ->  space <> text "__volatile__"
              False -> empty
-        <> parens (pprAsm inputs clobbered)
+        <> parens (ppr template
+                   <> case outs of
+                        [] -> space <> colon
+                        _ ->  colon <+/> ppr outs
+                   <> case ins of
+                        [] -> space <> colon
+                        _ ->  colon <+/> ppr ins
+                   <> case clobbered of
+                        [] -> space <> colon
+                        _ ->  colon <+/> commasep (map text clobbered)
+                  )
         <> semi
-      where
-        pprAsm :: [(String, Exp)] -> [String] -> Doc
-        pprAsm [] [] =
-            ppr template
-            <> case outputs of
-                 [] -> space <> colon
-                 _ ->  colon <+/> commasep (map pprReg outputs)
 
-        pprAsm inp clob =
-            ppr template
-            <> case outputs of
-                 [] -> space <> colon
-                 _ ->  colon <+/> commasep (map pprReg outputs)
-            <> case inp of
-                 [] -> space <> colon
-                 _ ->  colon <+/> commasep (map pprReg inputs)
-            <> case clob of
-                 [] -> space <> colon
-                 _ ->  colon <+/> commasep (map text clobbered)
-
-        pprReg :: (String, Exp) -> Doc
-        pprReg (reg, e) = text reg <+> parens (ppr e)
+    ppr (AsmGoto isVolatile _ template ins clobbered labels sloc) =
+        srcloc sloc <>
+        text "__asm__"
+        <> case isVolatile of
+             True ->  space <> text "__volatile__"
+             False -> empty
+        <> parens (ppr template
+                   <> colon
+                   <> case ins of
+                        [] -> space <> colon
+                        _ ->  colon <+/> ppr ins
+                   <> case clobbered of
+                        [] -> space <> colon
+                        _ ->  colon <+/> commasep (map text clobbered)
+                   <> case clobbered of
+                        [] -> space <> colon
+                        _ ->  colon <+/> commasep (map ppr labels)
+                  )
+        <> semi
 
     ppr (ObjCTry try catchs finally sloc) =
         srcloc sloc
@@ -686,6 +694,26 @@ instance Pretty Stm where
     ppr (AntiPragma v _) = pprAnti "pragma" v
     ppr (AntiStm v _)    = pprAnti "stm" v
     ppr (AntiStms v _)   = pprAnti "stms" v
+
+instance Pretty AsmOut where
+    ppr (AsmOut Nothing constraint ident) =
+        text constraint <+> parens (ppr ident)
+
+    ppr (AsmOut (Just sym) constraint ident) =
+        brackets (ppr sym) <+> text constraint <+> parens (ppr ident)
+
+    pprList []   = empty
+    pprList outs = commasep (map ppr outs)
+
+instance Pretty AsmIn where
+    ppr (AsmIn Nothing constraint e) =
+        text constraint <+> parens (ppr e)
+
+    ppr (AsmIn (Just sym) constraint e) =
+        brackets (ppr sym) <+> text constraint <+> parens (ppr e)
+
+    pprList []  = empty
+    pprList ins = commasep (map ppr ins)
 
 instance Pretty ObjCCatch where
     ppr (ObjCCatch Nothing     block loc) = srcloc loc <> text "@catch (...)" <+> ppr block
