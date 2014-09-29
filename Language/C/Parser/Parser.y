@@ -22,6 +22,7 @@ import Control.Monad.Exception
 import Data.List (intersperse)
 import Data.Loc
 import Data.Maybe (fromMaybe, catMaybes)
+import Data.Monoid
 import Text.PrettyPrint.Mainland
 
 import Language.C.Parser.Lexer
@@ -3285,4 +3286,8 @@ rev xs = go [] xs
   where
     go  l  RNil          = l
     go  l  (RCons x xs)  = go (x : l) xs
+
+instance Located a => Located (RevList a) where
+    locOf RNil         = mempty
+    locOf (RCons x xs) = locOf x `mappend` locOf xs
 }
