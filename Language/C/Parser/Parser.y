@@ -999,7 +999,7 @@ nontypedef_declaration_specifiers :
            }
       }
   | type_specifier declaration_specifiers_
-      {% do{ dspec <- mkDeclSpec ($1 : $2)
+      {% do{ dspec <- mkDeclSpec ($1 : rev $2)
            ; return (dspec, DeclRoot ($1 `srcspan` $2))
            }
       }
@@ -1009,7 +1009,7 @@ nontypedef_declaration_specifiers :
            }
       }
   | storage_qualifier_specifiers type_specifier declaration_specifiers_
-      {% do{ dspec <- mkDeclSpec ($1 ++ $2 : $3)
+      {% do{ dspec <- mkDeclSpec ($1 ++ $2 : rev $3)
            ; return (dspec, DeclRoot ($1 `srcspan` $3))
            }
       }
@@ -1037,24 +1037,28 @@ typedef_declaration_specifiers :
            }
       }
 
-declaration_specifiers_ :: { [TySpec] }
+declaration_specifiers_ :: { RevList TySpec }
 declaration_specifiers_ :
-    storage_class_specifier %prec NAMED              { [$1] }
-  | storage_class_specifier declaration_specifiers_  { $1 : $2 }
-  | type_specifier %prec NAMED                       { [$1] }
-  | type_specifier declaration_specifiers_           { $1 : $2 }
-  | type_qualifier %prec NAMED                       { [$1] }
-  | type_qualifier declaration_specifiers_           { $1 : $2 }
+    storage_class_specifier                         { rsingleton $1 }
+  | declaration_specifiers_ storage_class_specifier { rcons $2 $1 }
+  | type_specifier                                  { rsingleton $1 }
+  | declaration_specifiers_ type_specifier          { rcons $2 $1 }
+  | type_qualifier                                  { rsingleton $1 }
+  | declaration_specifiers_ type_qualifier          { rcons $2 $1 }
 
 -- | This production allows us to add storage class specifiers and type
 -- qualifiers to an anti-quoted type.
 
-storage_qualifier_specifiers :: { [TySpec] }
+storage_qualifier_specifiers :: { [TySpec]}
 storage_qualifier_specifiers :
-    storage_class_specifier %prec NAMED                   { [$1]}
-  | storage_class_specifier storage_qualifier_specifiers  { $1 : $2 }
-  | type_qualifier %prec NAMED                            { [$1] }
-  | type_qualifier storage_qualifier_specifiers           { $1 : $2 }
+    storage_qualifier_specifiers_ { rev $1 }
+
+storage_qualifier_specifiers_ :: { RevList TySpec }
+storage_qualifier_specifiers_ :
+    storage_class_specifier                               { rsingleton $1 }
+  | storage_qualifier_specifiers_ storage_class_specifier { rcons $2 $1 }
+  | type_qualifier                                        { rsingleton $1 }
+  | storage_qualifier_specifiers_ type_qualifier          { rcons $2 $1 }
 
 init_declarator_list :: { RevList Init }
 init_declarator_list :
@@ -1214,9 +1218,9 @@ struct_declaration :
 specifier_qualifier_list :: { [TySpec] }
 specifier_qualifier_list :
     type_specifier specifier_qualifier_list_
-      { $1 : $2 }
+      { $1 : rev $2 }
   | type_qualifier_list type_specifier specifier_qualifier_list_
-      { rev $1 ++ [$2] ++ $3 }
+      { rev $1 ++ [$2] ++ rev $3 }
   | typedef_name
       { [$1] }
   | typedef_name type_qualifier_list
@@ -1226,13 +1230,11 @@ specifier_qualifier_list :
   | type_qualifier_list typedef_name type_qualifier_list
       { rev $1 ++ [$2] ++ rev $3 }
 
-specifier_qualifier_list_ :: { [TySpec] }
+specifier_qualifier_list_ :: { RevList TySpec }
 specifier_qualifier_list_ :
-    {- empty -} %prec NAMED                  { [] }
-  | type_specifier %prec NAMED               { [$1] }
-  | type_specifier specifier_qualifier_list  { $1 : $2 }
-  | type_qualifier %prec NAMED               { [$1] }
-  | type_qualifier specifier_qualifier_list  { $1 : $2 }
+    {- empty -}                               { rnil }
+  | specifier_qualifier_list_ type_specifier  { rcons $2 $1 }
+  | specifier_qualifier_list_ type_qualifier  { rcons $2 $1 }
 
 struct_declarator_list :: { RevList (Maybe Decl -> Field) }
 struct_declarator_list :
