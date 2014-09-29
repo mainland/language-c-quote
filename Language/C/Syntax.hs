@@ -88,6 +88,9 @@ data TypeSpec = Tvoid !SrcLoc
               | Tnamed Id [Id] !SrcLoc           -- the '[Id]' are Objective-C protocol references
               | TtypeofExp Exp !SrcLoc
               | TtypeofType Type !SrcLoc
+              | T_Bool !SrcLoc
+              | T_Complex !SrcLoc
+              | T_Imaginary !SrcLoc
               | Tva_list !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
@@ -521,6 +524,9 @@ instance Located TypeSpec where
     locOf (Tnamed _ _ loc)     = locOf loc
     locOf (TtypeofExp _ loc)   = locOf loc
     locOf (TtypeofType _ loc)  = locOf loc
+    locOf (T_Bool loc)         = locOf loc
+    locOf (T_Complex loc)      = locOf loc
+    locOf (T_Imaginary loc)    = locOf loc
     locOf (Tva_list loc)       = locOf loc
 
 instance Located DeclSpec where

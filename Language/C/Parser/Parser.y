@@ -1133,6 +1133,11 @@ type_specifier :
   | struct_or_union_specifier { $1 }
   | enum_specifier            { $1 }
 
+  {- Extension: C99 -}
+  | '_Bool'      { TS_Bool (srclocOf $1) }
+  | '_Complex'   { TS_Complex (srclocOf $1) }
+  | '_Imaginary' { TS_Imaginary (srclocOf $1) }
+
   {- Extension: GCC -}
   | '__builtin_va_list' { TSva_list (srclocOf $1) }
 
@@ -2770,6 +2775,9 @@ data TySpec = TSauto !SrcLoc
             | TSva_list !SrcLoc
 
             -- C99
+            | TS_Bool !SrcLoc
+            | TS_Complex !SrcLoc
+            | TS_Imaginary !SrcLoc
             | TSrestrict !SrcLoc
 
             -- CUDA
@@ -2830,6 +2838,9 @@ instance Located TySpec where
     locOf (TStypeofType _ loc)  = locOf loc
     locOf (TSva_list loc)       = locOf loc
 
+    locOf (TS_Bool loc)         = locOf loc
+    locOf (TS_Complex loc)      = locOf loc
+    locOf (TS_Imaginary loc)    = locOf loc
     locOf (TSrestrict loc)      = locOf loc
 
     locOf (TSCUDAdevice loc)    = locOf loc
@@ -3129,6 +3140,18 @@ mkDeclSpec specs =
     go [TStypeofType ty loc] = do
         checkNoSign specs "sign specified for typeof"
         return $ cdeclSpec storage quals (TtypeofType ty loc)
+
+    go [TS_Bool l] = do
+        checkNoSign specs "sign specified for _Bool"
+        return $ cdeclSpec storage quals (T_Bool l)
+
+    go [TS_Complex l] = do
+        checkNoSign specs "sign specified for _Complex"
+        return $ cdeclSpec storage quals (T_Complex l)
+
+    go [TS_Imaginary l] = do
+        checkNoSign specs "sign specified for _Imaginary"
+        return $ cdeclSpec storage quals (T_Imaginary l)
 
     go [TSva_list l] = do
         checkNoSign specs "sign specified for __builtin_va_list"

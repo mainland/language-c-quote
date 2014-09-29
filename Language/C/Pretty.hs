@@ -187,6 +187,15 @@ instance Pretty TypeSpec where
     ppr (TtypeofType tipe _) =
         text "__typeof__" <> parens (ppr tipe)
 
+    ppr (T_Bool _) =
+        text "_Bool"
+
+    ppr (T_Complex _) =
+        text "_Complex"
+
+    ppr (T_Imaginary _) =
+        text "_Imaginary"
+
     ppr (Tva_list _) =
         text "__builtin_va_list"
 
