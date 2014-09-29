@@ -15,7 +15,7 @@ module Language.C.Syntax where
 
 import Data.Data (Data(..))
 import Data.Loc
-import Data.Typeable (Typeable(..))
+import Data.Typeable (Typeable)
 
 data Extensions = Antiquotation
                 | C99
