@@ -13,11 +13,12 @@ import Language.C.Properties
 import Opts
 
 extsMap :: [(Flag, C.Extensions)]
-extsMap = [(C99,  C.C99)
-          ,(C11,  C.C11)
-          ,(Gcc,  C.Gcc)
-          ,(ObjC, C.ObjC)
-          ,(CUDA, C.CUDA)
+extsMap = [(C99,    C.C99)
+          ,(C11,    C.C11)
+          ,(Gcc,    C.Gcc)
+          ,(Blocks, C.Blocks)
+          ,(ObjC,   C.ObjC)
+          ,(CUDA,   C.CUDA)
           ]
 
 main :: IO ()

@@ -6,6 +6,7 @@ import Data.Maybe (fromMaybe)
 data Flag = C99
           | C11
           | Gcc
+          | Blocks
           | ObjC
           | CUDA
           | Tokens
@@ -20,6 +21,7 @@ options =
     [ Option []    ["c99"]    (NoArg C99)          "support C99"
     , Option []    ["c11"]    (NoArg C11)          "support C11"
     , Option []    ["gcc"]    (NoArg Gcc)          "allow GCC extensions"
+    , Option []    ["blocks"] (NoArg Blocks)       "allow the Clang blocks extensions"
     , Option []    ["objc"]   (NoArg ObjC)         "allow Objective-C extensions"
     , Option []    ["cuda"]   (NoArg CUDA)         "allow CUDA extensions"
     , Option []    ["tokens"] (NoArg Tokens)       "show tokens"
