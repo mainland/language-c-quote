@@ -21,6 +21,7 @@ data Extensions = Antiquotation
                 | C99
                 | C11
                 | Gcc
+                | Blocks
                 | ObjC
                 | CUDA
                 | OpenCL

@@ -37,6 +37,7 @@ module Language.C.Parser.Monad (
     c99Exts,
     c11Exts,
     gccExts,
+    blocksExts,
     cudaExts,
     openCLExts,
     objcExts,
@@ -46,6 +47,7 @@ module Language.C.Parser.Monad (
     useC99Exts,
     useC11Exts,
     useGccExts,
+    useBlocksExts,
     useCUDAExts,
     useOpenCLExts,
     useObjCExts,
@@ -248,6 +250,9 @@ c11Exts = (bit . fromEnum) C11
 gccExts :: ExtensionsInt
 gccExts = (bit . fromEnum) Gcc
 
+blocksExts :: ExtensionsInt
+blocksExts = (bit . fromEnum) Blocks
+
 cudaExts :: ExtensionsInt
 cudaExts = (bit . fromEnum) CUDA
 
@@ -255,7 +260,7 @@ openCLExts :: ExtensionsInt
 openCLExts = (bit . fromEnum) OpenCL
 
 objcExts :: ExtensionsInt
-objcExts = (bit . fromEnum) ObjC
+objcExts = (bit . fromEnum) Blocks .|. (bit . fromEnum) ObjC
 
 useExts :: ExtensionsInt -> P Bool
 useExts ext = gets $ \s ->
@@ -269,6 +274,9 @@ useC11Exts = useExts c11Exts
 
 useGccExts :: P Bool
 useGccExts = useExts gccExts
+
+useBlocksExts :: P Bool
+useBlocksExts = useExts blocksExts
 
 useCUDAExts :: P Bool
 useCUDAExts = useExts cudaExts

@@ -229,7 +229,7 @@ data Token = Teof
            | Tanti_pragma String
            | Tanti_init String
            | Tanti_inits String
-           
+
              -- Objective-C antiquoting
            | Tanti_ifdecl String
            | Tanti_ifdecls String
@@ -543,7 +543,7 @@ keywords = [("auto",       Tauto,      Nothing),
             ("kernel",       TCLkernel,    Just [OpenCL]),
             ("__kernel",     TCLkernel,    Just [OpenCL]),
 
-            ("__block",             T__block,                 Just [ObjC]),
+            ("__block",             T__block,                 Just [Blocks, ObjC]),
 
             ("autoreleasepool",     TObjCautoreleasepool,     Just [ObjC]),
             ("catch",               TObjCcatch,               Just [ObjC]),

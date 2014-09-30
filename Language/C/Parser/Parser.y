@@ -1391,9 +1391,6 @@ array_declarator :
 -- Any declarator for a function pointer turns into a block declarator by replacing the '*' by a '^'.
 -- However, block pointers can only point to function types.
 --
--- Currently, we only allow blocks in Objective-C code, but technically, they are a language
--- extension independent of Objective-C.
---
 pointer :: { Decl -> Decl }
 pointer :
     '*'                              { mkPtr [] }
@@ -2041,7 +2038,7 @@ asm_goto_labels_ :
  -
  ------------------------------------------------------------------------------}
 
--- Clang extension (currently only enabled with Objective-C): block literal expression
+-- Clang extension: block literal expression
 --
 -- block-literal ->
 --   '^' [block-type] attribute_specifiers_opt compound-statement
@@ -2052,19 +2049,19 @@ asm_goto_labels_ :
 block_literal :: { Exp }
 block_literal :
     '^'                                              attribute_specifiers_opt compound_statement
-      {% do { assertObjCEnabled ($1 <--> $3) "To use blocks, enable Objective-C support"
+      {% do { assertBlocksEnabled ($1 <--> $3) "To use blocks, enable the blocks language extension"
             ; let Block items _ = $3
             ; return $ BlockLit (BlockVoid (srclocOf $1)) $2 items ($1 `srcspan` $3)
             }
       }
   | '^' '(' parameter_list_ ')'                       attribute_specifiers_opt compound_statement
-      {% do { assertObjCEnabled ($1 <--> $6) "To use blocks, enable Objective-C support"
+      {% do { assertBlocksEnabled ($1 <--> $6) "To use blocks, enable blocks language extension"
             ; let Block items _ = $6
             ; return $ BlockLit (BlockParam (rev $3) ($2 `srcspan` $4)) $5 items ($1 `srcspan` $6)
             }
       }
   | '^' specifier_qualifier_list abstract_declarator attribute_specifiers_opt compound_statement
-      {% do { assertObjCEnabled ($1 <--> $5) "To use blocks, enable Objective-C support"
+      {% do { assertBlocksEnabled ($1 <--> $5) "To use blocks, enable blocks language extension"
             ; let { decl          = $3 (declRoot $2)
                   ; Block items _ = $5
                   }
@@ -3377,11 +3374,9 @@ mkPtr specs decl = C.Ptr quals decl (specs `srcspan` decl)
     quals = mkTypeQuals specs
 
 mkBlockPtr :: Loc -> [TySpec] -> P (Decl -> Decl)
-mkBlockPtr loc specs
-  = do
-    { assertObjCEnabled loc "blocks are currently only allowed as part of the Objective-C extension"
-    ; return $ \decl -> C.BlockPtr quals decl (specs `srcspan` decl)
-    }
+mkBlockPtr loc specs = do
+    assertBlocksEnabled loc "To use blocks, enable the blocks language extension"
+    return $ \decl -> C.BlockPtr quals decl (specs `srcspan` decl)
   where
     quals = mkTypeQuals specs
 
@@ -3457,22 +3452,25 @@ addClassdefId :: Id -> P ()
 addClassdefId (Id str _)  = addClassdef str
 addClassdefId (AntiId {}) = return ()
 
+assertBlocksEnabled :: Loc -> String -> P ()
+assertBlocksEnabled loc errMsg = do
+    blocks_enabled <- useBlocksExts
+    unless blocks_enabled $
+     throw $ ParserException loc $ text errMsg
+
 expectedObjCPropertyAttr :: Loc -> P a
-expectedObjCPropertyAttr loc
-  = throw $ ParserException loc $
+expectedObjCPropertyAttr loc =
+    throw $ ParserException loc $
       text "Expected an Objective-C property attribute; allowed are the following:" </>
       nest 2
         (text "'getter = <sel>', 'setter = <sel>:', 'readonly', 'readwrite', 'assign'," <+>
          text "'retain', 'copy', 'nonatomic', 'atomic', 'strong', 'weak', and 'unsafe_unretained'")
 
 assertObjCEnabled :: Loc -> String -> P ()
-assertObjCEnabled loc errMsg
-  = do
-    { objc_enabled <- useObjCExts
-    ; unless objc_enabled $
-        throw $ ParserException loc $
-          text errMsg
-    }
+assertObjCEnabled loc errMsg = do
+    objc_enabled <- useObjCExts
+    unless objc_enabled $
+     throw $ ParserException loc $ text errMsg
 
 data RevList a  =  RNil
                 |  RCons a (RevList a)
