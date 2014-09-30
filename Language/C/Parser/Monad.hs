@@ -22,6 +22,8 @@ module Language.C.Parser.Monad (
     pushLexState,
     popLexState,
     getLexState,
+    pushbackToken,
+    getPushbackToken,
     getCurToken,
     setCurToken,
 
@@ -99,6 +101,7 @@ import Language.C.Syntax
 
 data PState = PState
     { input      :: !AlexInput
+    , pbToken    :: !(Maybe (L Token))
     , curToken   :: L Token
     , lexState   :: ![Int]
     , extensions :: !ExtensionsInt
@@ -114,6 +117,7 @@ emptyPState :: [Extensions]
             -> PState
 emptyPState exts typnames buf pos = PState
     { input       = inp
+    , pbToken     = Nothing
     , curToken    = error "no token"
     , lexState    = [0]
     , extensions  = foldl' setBit 0 (map fromEnum exts)
@@ -198,6 +202,19 @@ popLexState = do
 
 getLexState :: P Int
 getLexState = gets (head . lexState)
+
+pushbackToken :: L Token -> P ()
+pushbackToken tok = do
+    maybe_tok <- gets pbToken
+    case maybe_tok of
+      Nothing -> modify $ \s -> s { pbToken = Just tok }
+      Just _  -> fail "More than one token pushed back."
+
+getPushbackToken :: P (Maybe (L Token))
+getPushbackToken = do
+    tok <- gets pbToken
+    modify $ \s -> s { pbToken = Nothing }
+    return tok
 
 getCurToken :: P (L Token)
 getCurToken = gets curToken

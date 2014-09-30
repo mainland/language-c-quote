@@ -526,19 +526,26 @@ readNum isDigit base conv =
 
 lexToken :: P (L Token)
 lexToken = do
-    beg  <- getInput
-    sc   <- getLexState
-    st   <- get
-    case alexScanUser st beg sc of
-      AlexEOF ->
-          return $ L (Loc (alexPos beg) (alexPos beg)) Teof
-      AlexError end ->
-          lexerError end (text rest)
-        where
-          rest :: String
-          rest = B.unpack $ B.take 80 (alexInput end)
-      AlexSkip end _ ->
-          setInput end >> lexToken
-      AlexToken end len t ->
-          setInput end >> t beg end
+    maybe_tok <- getPushbackToken
+    case maybe_tok of
+      Nothing  -> nextToken
+      Just tok -> return tok
+  where
+    nextToken :: P (L Token)
+    nextToken = do
+        beg  <- getInput
+        sc   <- getLexState
+        st   <- get
+        case alexScanUser st beg sc of
+          AlexEOF ->
+              return $ L (Loc (alexPos beg) (alexPos beg)) Teof
+          AlexError end ->
+              lexerError end (text rest)
+            where
+              rest :: String
+              rest = B.unpack $ B.take 80 (alexInput end)
+          AlexSkip end _ ->
+              setInput end >> lexToken
+          AlexToken end len t ->
+              setInput end >> t beg end
 }
