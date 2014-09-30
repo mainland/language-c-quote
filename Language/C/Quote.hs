@@ -88,6 +88,9 @@
 --
 -- [@id@] A C identifier. The argument must be an instance of @'ToIdent'@.
 --
+-- [@comment@] A comment to be attached to a statement. The argument must have
+-- type @'String'@, and the antiquote must appear in a statement context.
+--
 -- [@const@] A constant. The argument must be an instance of @'ToConst'@.
 --
 -- [@int@] An @integer@ constant. The argument must be an instance of

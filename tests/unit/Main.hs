@@ -25,7 +25,8 @@ tests = [exp_id,
          exp_exp, exp_func, exp_args, exp_decl, exp_sdecl,
          exp_enum, exp_edecl, exp_stm, exp_param, exp_ty,
          pat_args, exp_hexp,
-         exp_init, exp_inits, exp_item]
+         exp_init, exp_inits, exp_item,
+         lbrace_comment, semi_comment]
 
 exp_id :: Test
 exp_id = testCase "exp id" $
@@ -248,3 +249,13 @@ exp_item = testCase "exp item" $
   where
     item1 = [citem|int y = 2;|]
     item2 = [citem|return x + y;|]
+
+lbrace_comment :: Test
+lbrace_comment = testCase "lbrace comment" $
+    [cstm|{ $comment:("/* Test 1 */") return x + y; }|]
+      @?= [cstm|{/* Test 1 */ return x + y; }|]
+
+semi_comment :: Test
+semi_comment = testCase "semi comment" $
+    [cstms|x = 1; $comment:("/* Test 1 */") return x + y;|]
+      @?= [cstms|x = 1; /* Test 1 */ return x + y;|]

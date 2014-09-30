@@ -170,6 +170,7 @@ import qualified Language.C.Syntax as C
  ANTI_PARAM       { L _ (T.Tanti_param _) }
  ANTI_PARAMS      { L _ (T.Tanti_params _) }
  ANTI_PRAGMA      { L _ (T.Tanti_pragma _) }
+ ANTI_COMMENT     { L _ (T.Tanti_comment _) }
  ANTI_INIT        { L _ (T.Tanti_init _) }
  ANTI_INITS       { L _ (T.Tanti_inits _) }
 
@@ -1661,16 +1662,17 @@ designator :
 
 statement :: { Stm }
 statement :
-    labeled_statement    { $1 }
-  | compound_statement   { $1 }
-  | expression_statement { $1 }
-  | selection_statement  { $1 }
-  | iteration_statement  { $1 }
-  | jump_statement       { $1 }
-  | '#pragma'            { Pragma (getPRAGMA $1) (srclocOf $1) }
-  | '//' statement       { mkCommentStm $1 $2 }
-  | ANTI_PRAGMA          { AntiPragma (getANTI_PRAGMA $1) (srclocOf $1) }
-  | ANTI_STM             { AntiStm (getANTI_STM $1) (srclocOf $1) }
+    labeled_statement      { $1 }
+  | compound_statement     { $1 }
+  | expression_statement   { $1 }
+  | selection_statement    { $1 }
+  | iteration_statement    { $1 }
+  | jump_statement         { $1 }
+  | '#pragma'              { Pragma (getPRAGMA $1) (srclocOf $1) }
+  | '//' statement         { mkCommentStm $1 $2 }
+  | ANTI_COMMENT statement { AntiComment (getANTI_COMMENT $1) $2 ($1 `srcspan` $2) }
+  | ANTI_PRAGMA            { AntiPragma (getANTI_PRAGMA $1) (srclocOf $1) }
+  | ANTI_STM               { AntiStm (getANTI_STM $1) (srclocOf $1) }
 
   -- GCC
   | asm_statement        { $1 }
@@ -1714,7 +1716,15 @@ compound_statement:
   | '{' begin_scope block_item_list end_scope '}'
       { Block (rev $3) ($1 `srcspan` $5) }
   | '{' begin_scope block_item_list '//' end_scope '}'
-      { Block (rev (rcons (BlockStm (mkEmptyCommentStm $4)) $3)) ($1 `srcspan` $6) }
+      { let commentStm = BlockStm (mkEmptyCommentStm $4)
+        in
+         Block (rev (rcons commentStm $3)) ($1 `srcspan` $6)
+      }
+  | '{' begin_scope block_item_list ANTI_COMMENT end_scope '}'
+      { let commentStm = BlockStm (AntiComment (getANTI_COMMENT $4) (mkEmptyCommentStm $4) (srclocOf $4))
+        in
+         Block (rev (rcons commentStm $3)) ($1 `srcspan` $6)
+      }
 
 block_item_list :: { RevList BlockItem }
 block_item_list :
@@ -2906,6 +2916,7 @@ getANTI_SPEC        (L _ (T.Tanti_spec v))        = v
 getANTI_PARAM       (L _ (T.Tanti_param v))       = v
 getANTI_PARAMS      (L _ (T.Tanti_params v))      = v
 getANTI_PRAGMA      (L _ (T.Tanti_pragma v))      = v
+getANTI_COMMENT     (L _ (T.Tanti_comment v))     = v
 getANTI_INIT        (L _ (T.Tanti_init v))        = v
 getANTI_INITS       (L _ (T.Tanti_inits v))       = v
 getANTI_IFDECL      (L _ (T.Tanti_ifdecl v))      = v

@@ -228,6 +228,7 @@ data Token = Teof
            | Tanti_param String
            | Tanti_params String
            | Tanti_pragma String
+           | Tanti_comment String
            | Tanti_init String
            | Tanti_inits String
 
@@ -288,6 +289,7 @@ instance Show Token where
     show (Tanti_param s)                = "$param:" ++ s
     show (Tanti_params s)               = "$params:" ++ s
     show (Tanti_pragma s)               = "$pragma:" ++ s
+    show (Tanti_comment s)              = "$comment:" ++ s
     show (Tanti_init s)                 = "$init:" ++ s
     show (Tanti_inits s)                = "$inits:" ++ s
 

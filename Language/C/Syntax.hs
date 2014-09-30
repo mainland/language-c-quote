@@ -238,6 +238,7 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
           | Pragma String !SrcLoc
           | Comment String Stm !SrcLoc
           | AntiPragma String !SrcLoc
+          | AntiComment String Stm !SrcLoc
           | AntiStm String !SrcLoc
           | AntiStms String !SrcLoc
 
@@ -692,6 +693,7 @@ instance Located Stm where
     locOf (ObjCSynchronized _ _ loc)  = locOf loc
     locOf (ObjCAutoreleasepool _ loc) = locOf loc
     locOf (AntiPragma _ loc)          = locOf loc
+    locOf (AntiComment _ _ loc)       = locOf loc
     locOf (AntiStm _ loc)             = locOf loc
     locOf (AntiStms _ loc)            = locOf loc
 

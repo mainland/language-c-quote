@@ -638,9 +638,10 @@ instance Pretty Stm where
         <>  text "@autoreleasepool"
         </> ppr block
 
-    ppr (AntiPragma v _) = pprAnti "pragma" v
-    ppr (AntiStm v _)    = pprAnti "stm" v
-    ppr (AntiStms v _)   = pprAnti "stms" v
+    ppr (AntiPragma v _)      = pprAnti "pragma" v
+    ppr (AntiComment v stm _) = pprAnti "pragma" v </> ppr stm
+    ppr (AntiStm v _)         = pprAnti "stm" v
+    ppr (AntiStms v _)        = pprAnti "stms" v
 
 instance Pretty BlockItem where
     ppr (BlockDecl decl) = ppr decl <> semi
