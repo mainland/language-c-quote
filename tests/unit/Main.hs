@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE QuasiQuotes #-}
 
 module Main where
@@ -12,12 +11,6 @@ import Language.C.Quote.C
 import qualified Language.C.Syntax as C
 import Numeric (showHex)
 import System.Exit (exitFailure, exitSuccess)
-
-#if !MIN_VERSION_template_haskell(2,7,0)
-import qualified Data.Loc
-import qualified Data.Symbol
-import qualified Language.C.Syntax
-#endif /* !MIN_VERSION_template_haskell(2,7,0) */
 
 main :: IO ()
 main = defaultMain tests
