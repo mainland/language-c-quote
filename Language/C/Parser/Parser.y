@@ -1438,7 +1438,7 @@ parameter_list_ :
       { rcons (AntiParams (getANTI_PARAMS $3) (srclocOf $3))  $1 }
 
 parameter_declaration :: { Param }
-parameter_declaration:
+parameter_declaration :
     declaration_specifiers
       { let (dspec, decl) = $1
         in
@@ -1467,7 +1467,7 @@ parameter_declaration:
 -- antiquoting.
 
 type_declaration :: { Type }
-type_declaration:
+type_declaration :
     declaration_specifiers
       { let (dspec, decl) = $1
         in
