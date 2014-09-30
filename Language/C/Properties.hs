@@ -1,7 +1,7 @@
 -- |
 -- Module      :  Language.C.Properties
 -- Copyright   :  (c) Harvard University 2006-2008
---             :  (c) Drexel University 2013
+--             :  (c) Drexel University 2013-2014
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
 
@@ -9,15 +9,14 @@ module Language.C.Properties where
 
 import qualified Data.ByteString.Char8 as B
 import Data.Loc
-import Data.Symbol
 import Text.PrettyPrint.Mainland
 
 import Language.C.Syntax as C
 import qualified Language.C.Parser as P
 
 prop_ParsePrintUnitId :: [C.Extensions] -> B.ByteString -> Bool
-prop_ParsePrintUnitId exts s =
-    case comp s of
+prop_ParsePrintUnitId exts s_ =
+    case comp s_ of
       Left _ ->  False
       Right x -> x
   where

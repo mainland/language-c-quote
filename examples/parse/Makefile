@@ -8,6 +8,8 @@ ALEX_ARGS=-gi
 
 APACHE_VERSION=2.2.22
 
+GHCFLAGS = -Wall
+
 #
 # To support cabal sandbox
 #

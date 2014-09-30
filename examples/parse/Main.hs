@@ -1,10 +1,7 @@
 import Control.Exception
-import Control.Monad (mapM_,
-                      when)
+import Control.Monad (when)
 import qualified Data.ByteString.Char8 as B
 import Data.Loc
-import Data.Symbol
-import System.IO
 import System.Environment (getArgs)
 import Text.PrettyPrint.Mainland
 
@@ -33,22 +30,22 @@ main = do
 lexFile :: [C.Extensions] -> String -> IO ()
 lexFile exts filename = do
     buf <- B.readFile filename
-    case ts buf of
+    case tokens buf of
       Left err -> fail $ show err
       Right ts -> mapM_ print ts
   where
-    ts :: B.ByteString -> Either SomeException [L T.Token]
-    ts buf = P.evalP tokens (P.emptyPState exts [] buf start)
+    tokens :: B.ByteString -> Either SomeException [L T.Token]
+    tokens buf = P.evalP tokensP (P.emptyPState exts [] buf start)
 
     start :: Pos
     start = startPos filename
 
-    tokens :: P.P [L T.Token]
-    tokens = do
+    tokensP :: P.P [L T.Token]
+    tokensP = do
         t <- P.lexToken
         case t of
           L _ T.Teof  -> return []
-          _           -> tokens >>= \ts -> return (t : ts)
+          _           -> tokensP >>= \ts -> return (t : ts)
 
 parseFile :: Bool -> [C.Extensions] -> String -> IO ()
 parseFile doPrint exts filename = do
@@ -63,6 +60,3 @@ parseFile doPrint exts filename = do
   where
     start :: Pos
     start = startPos filename
-
-    posToString :: Pos -> String
-    posToString p = "#line " ++ show (posLine p) ++ " " ++ show (posFile p)
