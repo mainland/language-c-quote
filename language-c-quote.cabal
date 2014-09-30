@@ -1,19 +1,19 @@
 name:          language-c-quote
-version:       0.8.0
+version:       0.9.0
 cabal-version: >= 1.10
 license:       BSD3
 license-file:  LICENSE
 copyright:     (c) 2006-2011 Harvard University
                (c) 2011-2013 Geoffrey Mainland
                (c) 2013 Manuel M. T. Chakravarty
-               (c) 2013 Drexel University
+               (c) 2013-2014 Drexel University
 author:        Geoffrey Mainland <mainland@cs.drexel.edu>
 maintainer:    Geoffrey Mainland <mainland@cs.drexel.edu>
 stability:     alpha
 homepage:      http://www.cs.drexel.edu/~mainland/
 category:      Language
 synopsis:      C/CUDA/OpenCL/Objective-C quasiquoting library.
-tested-with:   GHC==7.4.2, GHC==7.6.3
+tested-with:   GHC==7.6.3, GHC==7.8.3
 
 description:
   This package provides a general parser for the C language, including most GCC
