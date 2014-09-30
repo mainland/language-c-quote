@@ -73,6 +73,9 @@ $hexadecimalDigit = [0-9A-Fa-f]
 
 $whitechar = [\ \t\n\r\f\v]
 
+@ccomment   = "//" .*
+@cppcomment = "/*" ([^\*]|[\r\n]|("*"+([^\*\/]|[\r\n])))* "*"+ "/"
+
 c :-
 
 <0> {
@@ -126,8 +129,8 @@ c :-
 
  ^ $whitechar* "#" $whitechar* "pragma" $whitechar+ { lexPragmaTok }
 
- "//" .* ;
- "/*" ([^\*]|[\r\n]|("*"+([^\*\/]|[\r\n])))* "*"+ "/" ;
+ @ccomment ;
+ @cppcomment ;
 
  ^ $whitechar* "#" .* ;
  $whitechar+          ;
@@ -193,6 +196,12 @@ c :-
  "^="  { token Txor_assign }
  "<<=" { token Tlsh_assign }
  ">>=" { token Trsh_assign }
+
+ "{" $whitechar* @ccomment   { commentTok Tlbrace }
+ "{" $whitechar* @cppcomment { commentTok Tlbrace }
+
+ ";" $whitechar* @ccomment   { commentTok Tsemi }
+ ";" $whitechar* @cppcomment { commentTok Tsemi }
 
  "<<<" / { ifExtension cudaExts }
          { token TCUDA3lt }
@@ -323,6 +332,27 @@ lexPragmaTok beg _ = do
         case c of
           '\n' -> return (reverse s)
           _    -> lexPragma (c : s)
+
+-- XXX: Gross hack. We assume the first character of our input is the textual
+-- representation of tok, e.g., '{' or ';'. We then scan to the first '/', which
+-- we assume is the start of the comment.
+commentTok :: Token -> Action
+commentTok tok beg end = do
+    pushbackToken $ locateTok commentBeg end (Tcomment (inputString commentBeg end))
+    return $ locateTok beg tokEnd tok
+  where
+    tokEnd, commentBeg :: AlexInput
+    tokEnd = case alexGetChar beg of
+               Nothing          -> error "commentTok: the impossible happened"
+               Just (_, tokEnd) -> tokEnd
+    commentBeg  = findCommentStart tokEnd
+
+    findCommentStart :: AlexInput -> AlexInput
+    findCommentStart inp =
+        case alexGetChar inp of
+          Nothing          -> error "commentTok: the impossible happened"
+          Just ('/', inp') -> inp
+          Just (_,   inp') -> findCommentStart inp'
 
 lexCharTok :: Action
 lexCharTok beg cur = do

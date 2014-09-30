@@ -236,6 +236,7 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
           | Break !SrcLoc
           | Return (Maybe Exp) !SrcLoc
           | Pragma String !SrcLoc
+          | Comment String Stm !SrcLoc
           | AntiPragma String !SrcLoc
           | AntiStm String !SrcLoc
           | AntiStms String !SrcLoc
@@ -683,6 +684,7 @@ instance Located Stm where
     locOf (Break loc)                 = locOf loc
     locOf (Return _ loc)              = locOf loc
     locOf (Pragma _ loc)              = locOf loc
+    locOf (Comment _ _ loc)           = locOf loc
     locOf (Asm _ _ _ _ _ _ loc)       = locOf loc
     locOf (AsmGoto _ _ _ _ _ _ loc)   = locOf loc
     locOf (ObjCTry _ _ _ loc)         = locOf loc

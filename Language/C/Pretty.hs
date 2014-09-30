@@ -570,6 +570,9 @@ instance Pretty Stm where
     ppr (Pragma pragma sloc) =
         srcloc sloc <> text "#pragma" <+> text pragma
 
+    ppr (Comment com stm sloc) =
+        srcloc sloc <> text com </> ppr stm
+
     ppr (Asm isVolatile _ template outs ins clobbered sloc) =
         srcloc sloc <>
         text "__asm__"

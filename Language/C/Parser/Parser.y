@@ -131,6 +131,8 @@ import qualified Language.C.Syntax as C
 
  '#pragma'    { L _ (T.Tpragma _) }
 
+ '//'         { L _ (T.Tcomment _) }
+
  -- Used to indicate typedef's the parser hasn't seen first-hand
  'typename'   { L _ T.Ttypename }
 
@@ -392,6 +394,16 @@ constant :
  -
  ------------------------------------------------------------------------------}
 
+lbrace :: { L T.Token }
+lbrace :
+    '{'      { L (locOf $1) T.Tlbrace }
+  | '{' '//' { L (locOf $1) T.Tlbrace }
+
+semi :: { L T.Token }
+semi :
+    ';'      { L (locOf $1) T.Tsemi }
+  | ';' '//' { L (locOf $1) T.Tsemi }
+
 primary_expression :: { Exp }
 primary_expression :
     identifier
@@ -479,9 +491,9 @@ postfix_expression :
       { PostInc $1 ($1 `srcspan` $2) }
   | postfix_expression '--'
       { PostDec $1 ($1 `srcspan` $2) }
-  | '(' type_name ')' '{' initializer_list '}'
+  | '(' type_name ')' lbrace initializer_list '}'
       { CompoundLit ($2 :: Type) (rev $5) ($1 `srcspan` $6) }
-  | '(' type_name ')' '{' initializer_list ',' '}'
+  | '(' type_name ')' lbrace initializer_list ',' '}'
       { CompoundLit $2 (rev $5) ($1 `srcspan` $7) }
 
   -- GCC
@@ -991,19 +1003,19 @@ struct_or_union_specifier :
       { (unLoc $1) (Just $2) Nothing [] ($1 `srcspan` $2) }
   | struct_or_union attribute_specifiers identifier_or_typedef
       { (unLoc $1) (Just $3) Nothing $2 ($1 `srcspan` $3) }
-  | struct_or_union '{' struct_declaration_list '}'
+  | struct_or_union lbrace struct_declaration_list '}'
       { (unLoc $1) Nothing (Just (rev $3)) [] ($1 `srcspan` $4) }
-  | struct_or_union '{' struct_declaration_list error
+  | struct_or_union lbrace struct_declaration_list error
       {% unclosed ($1 <--> rev $3) "{" }
-  | struct_or_union identifier_or_typedef '{' struct_declaration_list '}'
+  | struct_or_union identifier_or_typedef lbrace struct_declaration_list '}'
       { (unLoc $1) (Just $2) (Just (rev $4)) [] ($1 `srcspan` $5) }
-  | struct_or_union identifier_or_typedef '{' struct_declaration_list error
+  | struct_or_union identifier_or_typedef lbrace struct_declaration_list error
       {% unclosed ($1 <--> rev $4) "{" }
-  | struct_or_union attribute_specifiers identifier_or_typedef '{' struct_declaration_list '}'
+  | struct_or_union attribute_specifiers identifier_or_typedef lbrace struct_declaration_list '}'
       { (unLoc $1) (Just $3) (Just (rev $5)) $2 ($1 `srcspan` $6) }
-  | struct_or_union attribute_specifiers '{' struct_declaration_list '}'
+  | struct_or_union attribute_specifiers lbrace struct_declaration_list '}'
       { (unLoc $1) Nothing (Just (rev $4)) $2 ($1 `srcspan` $5) }
-  | struct_or_union attribute_specifiers identifier_or_typedef '{' struct_declaration_list error
+  | struct_or_union attribute_specifiers identifier_or_typedef lbrace struct_declaration_list error
       {% unclosed ($1 <--> rev $5) "{" }
 
 struct_or_union :: { L (Maybe Id -> Maybe [FieldGroup] -> [Attr] -> SrcLoc -> TySpec) }
@@ -1024,12 +1036,12 @@ struct_declaration_list :
 
 struct_declaration :: { FieldGroup }
 struct_declaration :
-    ANTI_SPEC struct_declarator_list ';'
+    ANTI_SPEC struct_declarator_list semi
       { let dspec = AntiDeclSpec (getANTI_SPEC $1) (srclocOf $1)
         in
           FieldGroup dspec (map ($ Nothing) (rev $2)) ($1 `srcspan` $3)
       }
-  | specifier_qualifier_list ';'
+  | specifier_qualifier_list semi
       {%  do{ dspec <- mkDeclSpec $1
             ; gcc <- useGccExts
             ; c11 <- useC11Exts
@@ -1039,12 +1051,12 @@ struct_declaration :
             ; return $ FieldGroup dspec [] ($1 `srcspan` $2)
             }
       }
-  | specifier_qualifier_list struct_declarator_list ';'
+  | specifier_qualifier_list struct_declarator_list semi
       {%  do{ dspec <- mkDeclSpec $1
             ; return $ FieldGroup dspec (map ($ Nothing) (rev $2)) ($1 `srcspan` $3)
             }
       }
-  | ANTI_TYPE struct_declarator_list ';'
+  | ANTI_TYPE struct_declarator_list semi
       {%  do{ let v     = getANTI_TYPE $1
             ; let dspec = AntiTypeDeclSpec [] [] v (srclocOf $1)
             ; let decl  = AntiTypeDecl v (srclocOf $1)
@@ -1116,9 +1128,9 @@ enum_specifier :
       { TSenum (Just $2) [] [] ($1 `srcspan` $2) }
   | 'enum' attribute_specifiers identifier_or_typedef
       { TSenum (Just $3) [] $2 ($1 `srcspan` $3) }
-  | 'enum' '{' enumerator_list '}'
+  | 'enum' lbrace enumerator_list '}'
       { TSenum Nothing (rev $3) [] ($1 `srcspan` $4) }
-  | 'enum' identifier_or_typedef '{' enumerator_list '}'
+  | 'enum' identifier_or_typedef lbrace enumerator_list '}'
       { TSenum (Just $2) (rev $4) [] ($1 `srcspan` $5)}
 
 enumerator_list :: { RevList CEnum }
@@ -1594,16 +1606,16 @@ initializer :: { Initializer }
 initializer :
     assignment_expression
       { ExpInitializer $1 (srclocOf $1) }
-  | '{' initializer_list '}'
+  | lbrace initializer_list '}'
       { CompoundInitializer (rev $2) ($1 `srcspan` $3) }
-  | '{' initializer_list error
+  | lbrace initializer_list error
       {% do{  let (_, inits) = unzip (rev $2)
            ;  unclosed ($1 <--> inits) "{"
            }
       }
-  | '{' initializer_list ',' '}'
+  | lbrace initializer_list ',' '}'
       { CompoundInitializer (rev $2) ($1 `srcspan` $4) }
-  | '{' initializer_list ',' error
+  | lbrace initializer_list ',' error
       {% unclosed ($1 <--> $3) "{" }
   | ANTI_INIT
       { AntiInit (getANTI_INIT $1) (srclocOf $1) }
@@ -1656,6 +1668,7 @@ statement :
   | iteration_statement  { $1 }
   | jump_statement       { $1 }
   | '#pragma'            { Pragma (getPRAGMA $1) (srclocOf $1) }
+  | '//' statement       { mkCommentStm $1 $2 }
   | ANTI_PRAGMA          { AntiPragma (getANTI_PRAGMA $1) (srclocOf $1) }
   | ANTI_STM             { AntiStm (getANTI_STM $1) (srclocOf $1) }
 
@@ -1694,10 +1707,14 @@ compound_statement :: { Stm }
 compound_statement:
     '{' begin_scope end_scope '}'
       { Block [] ($1 `srcspan` $4) }
+  | '{' begin_scope '//' end_scope '}'
+      { Block [] ($1 `srcspan` $5) }
   | '{' begin_scope error
       {% unclosed (locOf $3) "{" }
   | '{' begin_scope block_item_list end_scope '}'
       { Block (rev $3) ($1 `srcspan` $5) }
+  | '{' begin_scope block_item_list '//' end_scope '}'
+      { Block (rev (rcons (BlockStm (mkEmptyCommentStm $4)) $3)) ($1 `srcspan` $6) }
 
 block_item_list :: { RevList BlockItem }
 block_item_list :
@@ -1728,6 +1745,8 @@ declaration_list :
   | ANTI_DECLS
       { rsingleton (AntiDecls (getANTI_DECLS $1) (srclocOf $1)) }
   | declaration_list declaration
+      { rcons $2 $1 }
+  | declaration_list declaration '//'
       { rcons $2 $1 }
   | declaration_list ANTI_DECLS
       { rcons (AntiDecls (getANTI_DECLS $2) (srclocOf $2)) $1 }
@@ -1765,17 +1784,17 @@ iteration_statement :
       {% unclosed ($4 <--> $5) "(" }
   | 'for' '(' error
       {% expected ["expression", "declaration"] Nothing }
-  | 'for' '(' declaration maybe_expression ';' ')' statement
+  | 'for' '(' declaration maybe_expression semi ')' statement
       { For (Left $3) $4 Nothing $7 ($1 `srcspan` $7) }
-  | 'for' '(' maybe_expression ';' maybe_expression ';' ')' statement
+  | 'for' '(' maybe_expression semi maybe_expression semi ')' statement
       { For (Right $3) $5 Nothing $8 ($1 `srcspan` $8) }
-  | 'for' '(' maybe_expression ';' maybe_expression ';' error
+  | 'for' '(' maybe_expression semi maybe_expression semi error
       {% unclosed ($2 <--> $6) "(" }
-  | 'for' '(' declaration maybe_expression ';' expression ')' statement
+  | 'for' '(' declaration maybe_expression semi expression ')' statement
       { For (Left $3) $4 (Just $6) $8 ($1 `srcspan` $8) }
-  | 'for' '(' maybe_expression ';' maybe_expression ';' expression ')' statement
+  | 'for' '(' maybe_expression semi maybe_expression semi expression ')' statement
       { For (Right $3) $5 (Just $7) $9 ($1 `srcspan` $9) }
-  | 'for' '(' maybe_expression ';' maybe_expression ';' expression error
+  | 'for' '(' maybe_expression semi maybe_expression semi expression error
       {% unclosed ($2 <--> $7) "(" }
 
 jump_statement :: { Stm }
@@ -2334,11 +2353,11 @@ objc_at_expression :
       { ObjCLitArray (rev $3) ($1 `srcspan` $4) }
   | '@' '[' assignment_expression_list ',' ']'
       { ObjCLitArray (rev $3) ($1 `srcspan` $5) }
-  | '@' '{' '}'
+  | '@' lbrace '}'
       { ObjCLitDict [] ($1 `srcspan` $3) }
-  | '@' '{' objc_key_value_list '}'
+  | '@' lbrace objc_key_value_list '}'
       { ObjCLitDict (rev $3) ($1 `srcspan` $4) }
-  | '@' '{' objc_key_value_list ',' '}'
+  | '@' lbrace objc_key_value_list ',' '}'
       { ObjCLitDict (rev $3) ($1 `srcspan` $5) }
   | '@' '(' expression ')'
       { ObjCLitBoxed $3 ($1 `srcspan` $4) }
@@ -2362,7 +2381,7 @@ objc_at_expression :
 --
 objc_class_declaration :: { Definition }
 objc_class_declaration :
-    '@' 'class' identifier_list ';'
+    '@' 'class' identifier_list semi
       {% do { let idents = rev $3
             ; mapM addClassdefId idents
             ; return $ ObjCClassDec idents ($1 `srcspan` $4)
@@ -2490,24 +2509,24 @@ objc_class_instance_variables_opt :: { RevList ObjCIvarDecl }
 objc_class_instance_variables_opt :
     {- empty -}
       { rnil }
-  | '{' '}'
+  | lbrace '}'
       { rnil }
-  | '{' objc_instance_variable_decl_list '}'
+  | lbrace objc_instance_variable_decl_list '}'
       { $2 }
 
 objc_instance_variable_decl_list :: { RevList ObjCIvarDecl }
 objc_instance_variable_decl_list :
     objc_visibility_spec
       { rsingleton (ObjCIvarVisi $1 (srclocOf $1)) }
-  | ';'
+  | semi
       { rnil }
-  | struct_declaration ';'
+  | struct_declaration semi
       { rsingleton (ObjCIvarDecl $1 (srclocOf $1)) }
   | objc_instance_variable_decl_list objc_visibility_spec
       { rcons (ObjCIvarVisi $2 (srclocOf $2)) $1 }
-  | objc_instance_variable_decl_list ';'
+  | objc_instance_variable_decl_list semi
       { $1 }
-  | objc_instance_variable_decl_list struct_declaration ';'
+  | objc_instance_variable_decl_list struct_declaration semi
       { rcons (ObjCIvarDecl $2 (srclocOf $2)) $1 }
 
 objc_visibility_spec :: { ObjCVisibilitySpec }
@@ -2530,13 +2549,13 @@ objc_interface_decl_list :: { RevList ObjCIfaceDecl }
 objc_interface_decl_list :
     {- empty -}
       { rnil }
-  | objc_interface_decl_list ';'
+  | objc_interface_decl_list semi
       { $1 }
   | objc_interface_decl_list objc_property_decl
       { rcons $2 $1 }
   | objc_interface_decl_list objc_method_requirement
       { rcons (ObjCIfaceReq $2 (srclocOf $2)) $1 }
-  | objc_interface_decl_list objc_method_proto ';'
+  | objc_interface_decl_list objc_method_proto semi
       { rcons (ObjCIfaceMeth $2 (srclocOf $2)) $1 }
   | objc_interface_decl_list declaration
       { rcons (ObjCIfaceDecl $2 (srclocOf $2)) $1 }
@@ -2662,9 +2681,9 @@ objc_protocol_declaration :: { Definition }
 objc_protocol_declaration :
     objc_protocol_prefix objc_protocol_refs_opt objc_interface_decl_list '@' 'end'
       { ObjCProtDef (fst $1) (rev $2) (rev $3) (snd $1 `srcspan` $5) }
-  | objc_protocol_prefix ';'                                  -- this rule wins the shift-reduce conflict
+  | objc_protocol_prefix semi                                  -- this rule wins the shift-reduce conflict
       { ObjCProtDec [fst $1] (snd $1 `srcspan` $2) }
-  | objc_protocol_prefix ',' identifier_list ';'
+  | objc_protocol_prefix ',' identifier_list semi
       { ObjCProtDec (fst $1 : rev $3) (snd $1 `srcspan` $4) }
 
 objc_protocol_prefix :: { (Id, Loc) }
@@ -2756,7 +2775,7 @@ objc_implementation_decl_list :
 
 property_synthesize :: { Definition }
 property_synthesize :
-  '@' 'synthesize' property_ivar_list ';'
+  '@' 'synthesize' property_ivar_list semi
     { ObjCSynDef (rev $3) ($1 `srcspan` $4) }
 
 property_ivar_list :: { RevList (Id, Maybe Id) }
@@ -2772,12 +2791,12 @@ property_ivar_list :
 
 property_dynamic :: { Definition }
 property_dynamic :
-  '@' 'dynamic' identifier_list ';'
+  '@' 'dynamic' identifier_list semi
     { ObjCDynDef (rev $3) ($1 `srcspan` $4) }
 
 objc_method_definition :: { Definition }
 objc_method_definition :
-    objc_method_proto ';' compound_statement
+    objc_method_proto semi compound_statement
       { let Block stmts loc = $3
         in
         ObjCMethDef $1 stmts ($1 `srcspan` loc)
@@ -2795,7 +2814,7 @@ objc_method_definition :
 --
 objc_compatibility_alias :: { Definition }
 objc_compatibility_alias :
-  '@' 'compatibility_alias' identifier OBJCNAMED ';'
+  '@' 'compatibility_alias' identifier OBJCNAMED semi
       {% do { addClassdefId $3
             ; return $ ObjCCompAlias $3 (Id (getOBJCNAMED $1) (srclocOf $1)) ($1 `srcspan` $5)
             }
@@ -2850,6 +2869,8 @@ getNAMED       (L _ (T.Tnamed ident))        = ident
 getOBJCNAMED   (L _ (T.TObjCnamed ident))    = ident
 
 getPRAGMA      (L _ (T.Tpragma pragma))      = pragma
+
+getCOMMENT     (L _ (T.Tcomment comment))    = comment
 
 getANTI_ID          (L _ (T.Tanti_id v))          = v
 getANTI_CONST       (L _ (T.Tanti_const v))       = v
@@ -3471,6 +3492,12 @@ assertObjCEnabled loc errMsg = do
     objc_enabled <- useObjCExts
     unless objc_enabled $
      throw $ ParserException loc $ text errMsg
+
+mkCommentStm :: L T.Token -> Stm -> Stm
+mkCommentStm tok stm = Comment (getCOMMENT tok) stm (srclocOf tok)
+
+mkEmptyCommentStm :: L T.Token -> Stm
+mkEmptyCommentStm tok = mkCommentStm tok (Exp Nothing noLoc)
 
 data RevList a  =  RNil
                 |  RCons a (RevList a)

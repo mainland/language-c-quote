@@ -26,6 +26,7 @@ import Language.C.Syntax (Extensions(..),
 
 data Token = Teof
            | Tpragma String
+           | Tcomment String -- ^ Raw comment string
            | TintConst (String, Signed, Integer)
            | TlongIntConst (String, Signed, Integer)
            | TlongLongIntConst (String, Signed, Integer)
@@ -241,6 +242,7 @@ instance Pretty Token where
 instance Show Token where
     show Teof                           = "EOF"
     show (Tpragma s)                    = "#pragma " ++ s
+    show (Tcomment s)                   = s
     show (TintConst (s, _, _))          = s
     show (TlongIntConst (s, _, _))      = s
     show (TlongLongIntConst (s, _, _))  = s
