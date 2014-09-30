@@ -530,11 +530,15 @@ lexToken = do
     sc   <- getLexState
     st   <- get
     case alexScanUser st beg sc of
-      AlexEOF              -> return $ L (Loc (alexPos beg) (alexPos beg)) Teof
-      AlexError end        -> lexerError end (text rest)
-                                where
-                                  rest :: String
-                                  rest = B.unpack $ B.take 80 (alexInput end)
-      AlexSkip end _       -> setInput end >> lexToken
-      AlexToken end len t  -> setInput end >> t beg end
+      AlexEOF ->
+          return $ L (Loc (alexPos beg) (alexPos beg)) Teof
+      AlexError end ->
+          lexerError end (text rest)
+        where
+          rest :: String
+          rest = B.unpack $ B.take 80 (alexInput end)
+      AlexSkip end _ ->
+          setInput end >> lexToken
+      AlexToken end len t ->
+          setInput end >> t beg end
 }
