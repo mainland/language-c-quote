@@ -115,7 +115,7 @@ c :-
  "$init:"    / { allowAnti } { lexAnti Tanti_init }
  "$inits:"   / { allowAnti } { lexAnti Tanti_inits }
  "$"         / { allowAnti } { lexAnti Tanti_exp }
- 
+
  "$ifdecl:"  / { allowAnti } { lexAnti Tanti_ifdecl }
  "$ifdecls:" / { allowAnti } { lexAnti Tanti_ifdecls }
 }
@@ -321,7 +321,7 @@ lexPragmaTok beg _ = do
     lexPragma s = do
         c <- nextChar
         case c of
-          '\n'  -> return (reverse s)
+          '\n' -> return (reverse s)
           _    -> lexPragma (c : s)
 
 lexCharTok :: Action
