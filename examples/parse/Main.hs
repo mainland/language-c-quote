@@ -12,20 +12,24 @@ import Language.C.Properties
 
 import Opts
 
+extsMap :: [(Flag, C.Extensions)]
+extsMap = [(C99,  C.C99)
+          ,(C11,  C.C11)
+          ,(Gcc,  C.Gcc)
+          ,(ObjC, C.ObjC)
+          ,(CUDA, C.CUDA)
+          ]
+
 main :: IO ()
 main = do
     args <- getArgs
     (flags, files) <- compilerOpts args
-    let exts = (if C99 `elem` flags then [C.C99] else []) ++
-               (if C11 `elem` flags then [C.C11] else []) ++
-               (if Gcc `elem` flags then [C.Gcc] else []) ++
-               (if CUDA `elem` flags then [C.CUDA] else [])
-    let doPrint = Print `elem` flags
+    let exts = [ext | (f, ext) <- extsMap, f `elem` flags]
     let doTokens = Tokens `elem` flags
     case length files of
       0 -> return ()
       _ -> do  when doTokens $ mapM_ (lexFile exts) files
-               mapM_ (parseFile doPrint exts) files
+               mapM_ (parseFile flags exts) files
 
 lexFile :: [C.Extensions] -> String -> IO ()
 lexFile exts filename = do
@@ -47,16 +51,24 @@ lexFile exts filename = do
           L _ T.Teof  -> return []
           _           -> tokensP >>= \ts -> return (t : ts)
 
-parseFile :: Bool -> [C.Extensions] -> String -> IO ()
-parseFile doPrint exts filename = do
+parseFile :: [Flag] -> [C.Extensions] -> String -> IO ()
+parseFile flags exts filename = do
     s <- B.readFile filename
     case P.parse exts [] P.parseUnit s start of
       Left err   -> fail $ show err
       Right defs -> if doPrint
-                    then putStr $ prettyPragma 80 (ppr defs)
+                    then if doPrama
+                         then putStr $ prettyPragma 80 (ppr defs)
+                         else putStr $ pretty 80 (ppr defs)
                     else return ()
     when (not (prop_ParsePrintUnitId exts s)) $
         putStrLn $ "Bad pretty-printing: " ++ filename
   where
+    doPrint :: Bool
+    doPrint = Print `elem` flags
+
+    doPrama :: Bool
+    doPrama = Pragma `elem` flags
+
     start :: Pos
     start = startPos filename

@@ -6,9 +6,11 @@ import Data.Maybe (fromMaybe)
 data Flag = C99
           | C11
           | Gcc
+          | ObjC
           | CUDA
           | Tokens
           | Print
+          | Pragma
           | Input String
           | Output String
   deriving (Eq, Show)
@@ -18,9 +20,11 @@ options =
     [ Option []    ["c99"]    (NoArg C99)          "support C99"
     , Option []    ["c11"]    (NoArg C11)          "support C11"
     , Option []    ["gcc"]    (NoArg Gcc)          "allow GCC extensions"
+    , Option []    ["objc"]   (NoArg ObjC)         "allow Objective-C extensions"
     , Option []    ["cuda"]   (NoArg CUDA)         "allow CUDA extensions"
     , Option []    ["tokens"] (NoArg Tokens)       "show tokens"
     , Option ['p'] ["print"]  (NoArg Print)        "pretty-print file"
+    , Option []    ["pragma"] (NoArg Pragma)       "pretty-print with #line pragmas"
     , Option ['o'] ["output"] (OptArg outp "FILE") "output FILE"
     ]
 
