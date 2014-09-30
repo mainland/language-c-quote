@@ -134,6 +134,8 @@ instance Pretty TypeQual where
 
     ppr (Trestrict _)     = text "__restrict"
 
+    ppr (TAttr attr)      = ppr [attr]
+
     ppr (TCUDAdevice _)   = text "__device__"
     ppr (TCUDAglobal _)   = text "__global__"
     ppr (TCUDAhost _)     = text "__host__"
@@ -181,12 +183,6 @@ instance Pretty TypeSpec where
     ppr (Tnamed ident refs _) =
         ppr ident <> if null refs then empty else angles (commasep (map ppr refs))
 
-    ppr (TtypeofExp e _) =
-        text "__typeof__" <> parens (pprPrec 14 e)
-
-    ppr (TtypeofType tipe _) =
-        text "__typeof__" <> parens (ppr tipe)
-
     ppr (T_Bool _) =
         text "_Bool"
 
@@ -195,6 +191,12 @@ instance Pretty TypeSpec where
 
     ppr (T_Imaginary _) =
         text "_Imaginary"
+
+    ppr (TtypeofExp e _) =
+        text "__typeof__" <> parens (pprPrec 14 e)
+
+    ppr (TtypeofType tipe _) =
+        text "__typeof__" <> parens (ppr tipe)
 
     ppr (Tva_list _) =
         text "__builtin_va_list"

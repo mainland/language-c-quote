@@ -50,6 +50,9 @@ data TypeQual = Tconst !SrcLoc
               -- C99
               | Trestrict !SrcLoc
 
+              -- GCC
+              | TAttr Attr
+
               -- CUDA
               | TCUDAdevice !SrcLoc
               | TCUDAglobal !SrcLoc
@@ -86,11 +89,15 @@ data TypeSpec = Tvoid !SrcLoc
               | Tunion (Maybe Id) (Maybe [FieldGroup]) [Attr] !SrcLoc
               | Tenum (Maybe Id) [CEnum] [Attr] !SrcLoc
               | Tnamed Id [Id] !SrcLoc           -- the '[Id]' are Objective-C protocol references
-              | TtypeofExp Exp !SrcLoc
-              | TtypeofType Type !SrcLoc
+
+              -- C99
               | T_Bool !SrcLoc
               | T_Complex !SrcLoc
               | T_Imaginary !SrcLoc
+
+              -- Gcc
+              | TtypeofExp Exp !SrcLoc
+              | TtypeofType Type !SrcLoc
               | Tva_list !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
@@ -487,6 +494,8 @@ instance Located TypeQual where
     locOf (Tinline loc)    = locOf loc
 
     locOf (Trestrict loc)  = locOf loc
+
+    locOf (TAttr attr)     = locOf attr
 
     locOf (TCUDAdevice loc)    = locOf loc
     locOf (TCUDAglobal loc)    = locOf loc

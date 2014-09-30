@@ -927,16 +927,15 @@ declaration :: { InitGroup }
 declaration :
     declaration_ ';' { $1 }
 
+declaration_no_leading_attributes :: { InitGroup }
+declaration_no_leading_attributes :
+    declaration_no_leading_attributes_ ';' { $1 }
+
 declaration_ :: { InitGroup }
 declaration_ :
     declaration_specifiers
       {% do{ let (dspec, decl)  = $1
            ; checkInitGroup dspec decl [] []
-           }
-      }
-  | declaration_specifiers attribute_specifiers
-      {% do{ let (dspec, decl)  = $1
-           ; checkInitGroup dspec decl $2 []
            }
       }
   | declaration_specifiers init_declarator_list
@@ -945,12 +944,28 @@ declaration_ :
            ; checkInitGroup dspec decl [] (rev $2)
            }
       }
-  | declaration_specifiers attribute_specifiers init_declarator_list
-      {% do{ let (dspec, decl) = $1
-           ; checkInitGroup dspec decl $2 (rev $3)
+  | declaration_specifiers error
+      {% do{ let (_, decl)  = $1
+           ; expected ["';'"] (Just "declaration")
            }
       }
-  | declaration_specifiers error
+  | ANTI_DECL
+      { AntiDecl (getANTI_DECL $1) (srclocOf $1) }
+
+declaration_no_leading_attributes_ :: { InitGroup }
+declaration_no_leading_attributes_ :
+    declaration_specifiers_no_leading_attributes
+      {% do{ let (dspec, decl)  = $1
+           ; checkInitGroup dspec decl [] []
+           }
+      }
+  | declaration_specifiers_no_leading_attributes init_declarator_list
+      {% do{ let (dspec, decl)  = $1
+           ; let inits          = rev $2
+           ; checkInitGroup dspec decl [] (rev $2)
+           }
+      }
+  | declaration_specifiers_no_leading_attributes error
       {% do{ let (_, decl)  = $1
            ; expected ["';'"] (Just "declaration")
            }
@@ -979,6 +994,29 @@ declaration_specifiers :
   | nontypedef_declaration_specifiers
       { $1 }
   | typedef_declaration_specifiers
+      { $1 }
+
+declaration_specifiers_no_leading_attributes :: { (DeclSpec, Decl) }
+declaration_specifiers_no_leading_attributes :
+    ANTI_TYPE
+      { let  {  v  = getANTI_TYPE $1
+             ;  l  = srclocOf $1
+             }
+        in
+          (AntiTypeDeclSpec [] [] v l, AntiTypeDecl v l)
+      }
+  | storage_qualifier_specifiers_no_leading_attributes ANTI_TYPE
+      { let { storage   = mkStorage $1
+            ; typeQuals = mkTypeQuals $1
+            ; v         = getANTI_TYPE $2
+            ; l         = $1 `srcspan` $2
+            }
+        in
+          (AntiTypeDeclSpec storage typeQuals v l, AntiTypeDecl v l)
+      }
+  | nontypedef_declaration_specifiers_no_leading_attributes
+      { $1 }
+  | typedef_declaration_specifiers_no_leading_attributes
       { $1 }
 
 nontypedef_declaration_specifiers :: { (DeclSpec, Decl) }
@@ -1014,6 +1052,39 @@ nontypedef_declaration_specifiers :
            }
       }
 
+nontypedef_declaration_specifiers_no_leading_attributes :: { (DeclSpec, Decl) }
+nontypedef_declaration_specifiers_no_leading_attributes :
+    ANTI_SPEC
+      { let dspec = AntiDeclSpec (getANTI_SPEC $1) (srclocOf $1)
+        in
+          (dspec, DeclRoot (srclocOf $1))
+      }
+  | storage_qualifier_specifiers_no_leading_attributes %prec NAMED
+      {% do{ dspec <- mkDeclSpec $1
+           ; return (dspec, DeclRoot (srclocOf $1))
+           }
+      }
+  | type_specifier
+      {% do{ dspec <- mkDeclSpec [$1]
+           ; return (dspec, DeclRoot (srclocOf $1) )
+           }
+      }
+  | type_specifier declaration_specifiers_
+      {% do{ dspec <- mkDeclSpec ($1 : rev $2)
+           ; return (dspec, DeclRoot ($1 `srcspan` $2))
+           }
+      }
+  | storage_qualifier_specifiers_no_leading_attributes type_specifier
+      {% do{ dspec <- mkDeclSpec ($1 ++ [$2])
+           ; return $(dspec, DeclRoot ($1 `srcspan` $2))
+           }
+      }
+  | storage_qualifier_specifiers_no_leading_attributes type_specifier declaration_specifiers_
+      {% do{ dspec <- mkDeclSpec ($1 ++ $2 : rev $3)
+           ; return (dspec, DeclRoot ($1 `srcspan` $3))
+           }
+      }
+
 typedef_declaration_specifiers :: { (DeclSpec, Decl) }
 typedef_declaration_specifiers :
     typedef_name
@@ -1037,6 +1108,29 @@ typedef_declaration_specifiers :
            }
       }
 
+typedef_declaration_specifiers_no_leading_attributes :: { (DeclSpec, Decl) }
+typedef_declaration_specifiers_no_leading_attributes :
+    typedef_name
+      {% do{ dspec <- mkDeclSpec [$1]
+           ; return (dspec, DeclRoot (srclocOf $1))
+           }
+      }
+  | typedef_name storage_qualifier_specifiers
+      {% do{ dspec <- mkDeclSpec ($1 : $2)
+           ; return (dspec, DeclRoot ($1 `srcspan` $2))
+           }
+      }
+  | storage_qualifier_specifiers_no_leading_attributes typedef_name
+      {% do{ dspec <- mkDeclSpec ($1 ++ [$2])
+           ; return (dspec, DeclRoot ($1 `srcspan` $2))
+           }
+      }
+  | storage_qualifier_specifiers_no_leading_attributes typedef_name storage_qualifier_specifiers
+      {% do{ dspec <- mkDeclSpec ($1 ++ $2 : $3)
+           ; return (dspec, DeclRoot ($1 `srcspan` $3))
+           }
+      }
+
 declaration_specifiers_ :: { RevList TySpec }
 declaration_specifiers_ :
     storage_class_specifier                         { rsingleton $1 }
@@ -1045,6 +1139,8 @@ declaration_specifiers_ :
   | declaration_specifiers_ type_specifier          { rcons $2 $1 }
   | type_qualifier                                  { rsingleton $1 }
   | declaration_specifiers_ type_qualifier          { rcons $2 $1 }
+  | attribute_specifier                             { rapp (map TSAttr $1) rnil }
+  | declaration_specifiers_ attribute_specifier     { rapp (map TSAttr $2) $1 }
 
 -- | This production allows us to add storage class specifiers and type
 -- qualifiers to an anti-quoted type.
@@ -1059,50 +1155,43 @@ storage_qualifier_specifiers_ :
   | storage_qualifier_specifiers_ storage_class_specifier { rcons $2 $1 }
   | type_qualifier                                        { rsingleton $1 }
   | storage_qualifier_specifiers_ type_qualifier          { rcons $2 $1 }
+  | attribute_specifier                                   { rapp (map TSAttr $1) rnil }
+  | storage_qualifier_specifiers_ attribute_specifier     { rapp (map TSAttr $2) $1 }
+
+storage_qualifier_specifiers_no_leading_attributes :: { [TySpec]}
+storage_qualifier_specifiers_no_leading_attributes :
+    storage_qualifier_specifiers_no_leading_attributes_ { rev $1 }
+
+storage_qualifier_specifiers_no_leading_attributes_ :: { RevList TySpec }
+storage_qualifier_specifiers_no_leading_attributes_ :
+    storage_class_specifier                                                     { rsingleton $1 }
+  | storage_qualifier_specifiers_no_leading_attributes_ storage_class_specifier { rcons $2 $1 }
+  | type_qualifier                                                              { rsingleton $1 }
+  | storage_qualifier_specifiers_no_leading_attributes_ type_qualifier          { rcons $2 $1 }
+  | storage_qualifier_specifiers_no_leading_attributes_ attribute_specifier     { rapp (map TSAttr $2) $1 }
 
 init_declarator_list :: { RevList Init }
 init_declarator_list :
     init_declarator                           { rsingleton $1 }
   | init_declarator_list ',' init_declarator  { rcons $3 $1 }
 
-maybe_asmlabel :: { Maybe AsmLabel }
-maybe_asmlabel :
-    {- empty -}
-      { Nothing }
-  | '__asm__' '(' error
-      {% expected ["string literal"] Nothing }
-  | '__asm__' '(' string_literal ')'
-      { Just $3 }
-
 init_declarator :: { Init }
 init_declarator :
-    declarator maybe_asmlabel
+    declarator attributes_and_label
       { let  {  (ident, declToDecl) = $1
              ;  decl                = declToDecl (declRoot ident)
+             ;  (attrs, asmlabel)   = unLoc $2
              }
         in
-          Init ident decl $2 Nothing [] (ident `srcspan` decl)
+          Init ident decl asmlabel Nothing attrs (ident `srcspan` $2)
       }
-  | declarator attribute_specifiers maybe_asmlabel
-      { let  { (ident, declToDecl) = $1
-             ;  decl               = declToDecl (declRoot ident)
-             }
-        in
-          Init ident decl $3 Nothing $2 (ident `srcspan` decl)
-      }
-  | declarator maybe_asmlabel '=' initializer
+  | declarator attributes_and_label '=' initializer
       { let  {  (ident, declToDecl) = $1
              ;  decl                = declToDecl (declRoot ident)
+             ;  (attrs, asmlabel)   = unLoc $2
              }
         in
-          Init ident decl $2 (Just $4) [] (ident `srcspan` $4)
-      }
-  | declarator attribute_specifiers maybe_asmlabel '=' initializer
-      { let  {  (ident, declToDecl) = $1
-             ;  decl                = declToDecl (declRoot ident)
-             }
-        in
-          Init ident decl $3 (Just $5) $2 (ident `srcspan` $5)
+          Init ident decl asmlabel (Just $4) attrs (ident `srcspan` $4)
       }
   | declarator error
       {% do{  let (ident, declToDecl) = $1
@@ -1110,6 +1199,28 @@ init_declarator :
            ;  expected ["'='"] Nothing
            }
       }
+
+attributes_and_label :: { L ([Attr], Maybe AsmLabel) }
+attributes_and_label :
+    {- empty -}
+      { L noLoc ([], Nothing) }
+  | asmlabel
+      { L (locOf $1) ([], Just $1) }
+  | asmlabel attribute_specifiers
+      { L ($1 <--> $2) ($2, Just $1) }
+  | attribute_specifiers
+      { L (locOf $1) ($1, Nothing) }
+  | attribute_specifiers asmlabel
+      { L ($1 <--> $2) ($1, Just $2) }
+  | attribute_specifiers asmlabel attribute_specifiers
+      { L ($1 <--> $3) ($1 ++ $3, Just $2) }
+
+asmlabel :: { AsmLabel }
+asmlabel :
+    '__asm__' '(' error
+      {% expected ["string literal"] Nothing }
+  | '__asm__' '(' string_literal ')'
+      { $3 }
 
 storage_class_specifier :: { TySpec }
 storage_class_specifier :
@@ -1232,9 +1343,10 @@ specifier_qualifier_list :
 
 specifier_qualifier_list_ :: { RevList TySpec }
 specifier_qualifier_list_ :
-    {- empty -}                               { rnil }
-  | specifier_qualifier_list_ type_specifier  { rcons $2 $1 }
-  | specifier_qualifier_list_ type_qualifier  { rcons $2 $1 }
+    {- empty -}                                   { rnil }
+  | specifier_qualifier_list_ type_specifier      { rcons $2 $1 }
+  | specifier_qualifier_list_ type_qualifier      { rcons $2 $1 }
+  | specifier_qualifier_list_ attribute_specifier { $1 }
 
 struct_declarator_list :: { RevList (Maybe Decl -> Field) }
 struct_declarator_list :
@@ -1866,9 +1978,11 @@ begin_scope : {% pushScope }
 end_scope :: { () }
 end_scope : {% popScope }
 
+-- To prevent ambiguity, the first declaration in a list of old-style function
+-- parameter declarations cannot start with an attribute.
 declaration_list :: { RevList InitGroup }
 declaration_list :
-    declaration
+    declaration_no_leading_attributes
       { rsingleton $1 }
   | ANTI_DECLS
       { rsingleton (AntiDecls (getANTI_DECLS $1) (srclocOf $1)) }
@@ -2177,6 +2291,10 @@ objc_class_declaration :
 --
 -- NB: We omit C-style parameters to methods as they don't appear to be current anymore.
 --
+
+-- To avoid a reduce/reduce conflict, we parse the attributes that can appear
+-- before an interface declaration using the storage_qualifier_specifiers
+-- non-terminal and check it for non-attributes in the body of the production.
 objc_interface :: { Definition }
 objc_interface :
                '@' 'interface' identifier objc_interface_body
@@ -2184,20 +2302,22 @@ objc_interface :
             ; addClassdefId $3
             ; return $ ObjCClassIface $3 Nothing prot vars decls [] ($1 `srcspan` loc)
             } }
-  | attribute_specifiers '@' 'interface' identifier objc_interface_body
+  | storage_qualifier_specifiers '@' 'interface' identifier objc_interface_body
       {% do { let (prot, vars, decls, loc) = $5
             ; addClassdefId $4
-            ; return $ ObjCClassIface $4 Nothing prot vars decls $1 ($2 `srcspan` loc)
+            ; attrs <- checkOnlyAttributes $1
+            ; return $ ObjCClassIface $4 Nothing prot vars decls attrs ($2 `srcspan` loc)
             } }
   |            '@' 'interface' identifier ':' identifier_or_typedef objc_interface_body
       {% do { let (prot, vars, decls, loc) = $6
             ; addClassdefId $3
             ; return $ ObjCClassIface $3 (Just $5) prot vars decls [] ($1 `srcspan` loc)
             } }
-  | attribute_specifiers '@' 'interface' identifier ':' identifier_or_typedef objc_interface_body
+  | storage_qualifier_specifiers '@' 'interface' identifier ':' identifier_or_typedef objc_interface_body
       {% do { let (prot, vars, decls, loc) = $7
             ; addClassdefId $4
-            ; return $ ObjCClassIface $4 (Just $6) prot vars decls $1 ($2 `srcspan` loc)
+            ; attrs <- checkOnlyAttributes $1
+            ; return $ ObjCClassIface $4 (Just $6) prot vars decls attrs ($2 `srcspan` loc)
             } }
   | '@' 'interface' identifier_or_typedef '(' ')' objc_interface_body
       { let (prot, vars, decls, loc) = $6
@@ -2773,15 +2893,17 @@ data TySpec = TSauto !SrcLoc
             | TSenum (Maybe Id) [CEnum] [Attr] !SrcLoc
             | TSnamed Id [Id] !SrcLoc           -- the '[Id]' are Objective-C protocol references
 
-            | TStypeofExp Exp !SrcLoc
-            | TStypeofType Type !SrcLoc
-            | TSva_list !SrcLoc
-
             -- C99
             | TS_Bool !SrcLoc
             | TS_Complex !SrcLoc
             | TS_Imaginary !SrcLoc
             | TSrestrict !SrcLoc
+
+            -- GCC
+            | TStypeofExp Exp !SrcLoc
+            | TStypeofType Type !SrcLoc
+            | TSva_list !SrcLoc
+            | TSAttr Attr
 
             -- CUDA
             | TSCUDAdevice !SrcLoc
@@ -2837,14 +2959,15 @@ instance Located TySpec where
     locOf (TSenum _ _ _ loc)    = locOf loc
     locOf (TSnamed _ _ loc)     = locOf loc
 
-    locOf (TStypeofExp _ loc)   = locOf loc
-    locOf (TStypeofType _ loc)  = locOf loc
-    locOf (TSva_list loc)       = locOf loc
-
     locOf (TS_Bool loc)         = locOf loc
     locOf (TS_Complex loc)      = locOf loc
     locOf (TS_Imaginary loc)    = locOf loc
     locOf (TSrestrict loc)      = locOf loc
+
+    locOf (TStypeofExp _ loc)   = locOf loc
+    locOf (TStypeofType _ loc)  = locOf loc
+    locOf (TSva_list loc)       = locOf loc
+    locOf (TSAttr attr)         = locOf attr
 
     locOf (TSCUDAdevice loc)    = locOf loc
     locOf (TSCUDAglobal loc)    = locOf loc
@@ -2876,7 +2999,6 @@ instance Pretty TySpec where
 
     ppr (TSconst _)    = text "const"
     ppr (TSinline _)   = text "inline"
-    ppr (TSrestrict _) = text "restrict"
     ppr (TSvolatile _) = text "volatile"
 
     ppr (TSsigned _)   = text "signed"
@@ -2899,11 +3021,18 @@ instance Pretty TySpec where
     ppr (TSenum maybe_id cenums attrs _) =
         pprEnum maybe_id cenums attrs
 
+    ppr (TSnamed ident ps _) =
+        ppr ident <> if null ps then empty else angles (commasep (map ppr ps))
+
+    ppr (TSrestrict _)   = text "restrict"
+    ppr (TS_Bool _)      = text "_Bool"
+    ppr (TS_Complex _)   = text "_Complex"
+    ppr (TS_Imaginary _) = text "_Imaginary"
+
     ppr (TStypeofExp e _)   = text "__typeof__" <> parens (ppr e)
     ppr (TStypeofType ty _) = text "__typeof__" <> parens (ppr ty)
-    ppr (TSnamed ident ps _)= ppr ident <> if null ps then empty else angles (commasep (map ppr ps))
-
     ppr (TSva_list _)       = text "__builtin_va_list"
+    ppr (TSAttr attr)       = ppr [attr]
 
     ppr (TSCUDAdevice _)    = text "__device__"
     ppr (TSCUDAglobal _)    = text "__global__"
@@ -2920,6 +3049,9 @@ instance Pretty TySpec where
     ppr (TSCLreadonly _)    = text "read_only"
     ppr (TSCLwriteonly _)   = text "write_only"
     ppr (TSCLkernel _)      = text "__kernel"
+
+instance Show TySpec where
+    showsPrec p = shows . pprPrec p
 
 isStorage :: TySpec -> Bool
 isStorage (TSauto _)                    = True
@@ -2953,6 +3085,7 @@ isTypeQual (TSconst _)        = True
 isTypeQual (TSvolatile _)     = True
 isTypeQual (TSinline _)       = True
 isTypeQual (TSrestrict _)     = True
+isTypeQual (TSAttr _)         = True
 isTypeQual (TSCUDAdevice _)   = True
 isTypeQual (TSCUDAglobal _)   = True
 isTypeQual (TSCUDAhost _)     = True
@@ -2977,6 +3110,7 @@ mkTypeQuals specs = map mk (filter isTypeQual specs)
       mk (TSvolatile loc)     = Tvolatile loc
       mk (TSinline loc)       = Tinline loc
       mk (TSrestrict loc)     = Trestrict loc
+      mk (TSAttr attr)        = TAttr attr
       mk (TSCUDAdevice loc)   = TCUDAdevice loc
       mk (TSCUDAglobal loc)   = TCUDAglobal loc
       mk (TSCUDAhost loc)     = TCUDAhost loc
@@ -3014,6 +3148,19 @@ checkNoSign :: [TySpec] -> String -> P ()
 checkNoSign spec msg  | hasSign spec  = fail msg
                       | otherwise     = return ()
 
+isAttr :: TySpec -> Bool
+isAttr (TSAttr _)  = True
+isAttr _           = False
+
+checkOnlyAttributes :: [TySpec] -> P [Attr]
+checkOnlyAttributes specs =
+    case filter (not . isAttr) specs of
+       [] -> return attrs
+       spec : _ -> expected ["attribute"] (Just (show spec))
+  where
+    attrs :: [Attr]
+    attrs = [attr | TSAttr attr <- specs]
+
 mkStringConst :: StringLit -> Const
 mkStringConst (StringLit raw s l) =
     StringConst raw s l
@@ -3046,6 +3193,14 @@ mkDeclSpec specs =
 
     quals :: [TypeQual]
     quals = mkTypeQuals specs
+
+    -- All TypeQuals except for attributes
+    qualsNoAttrs :: [TypeQual]
+    qualsNoAttrs = mkTypeQuals (filter (not . isAttr) specs)
+
+    -- Attributes pulled from the TySpecs
+    attrTySpecs :: [Attr]
+    attrTySpecs = [attr | TSAttr attr <- specs]
 
     rest :: [TySpec]
     rest = [x  |  x <- specs
@@ -3120,17 +3275,23 @@ mkDeclSpec specs =
         checkNoSign specs "sign specified for long double type"
         return $ cdeclSpec storage quals (Tlong_double (srclocOf rest))
 
+    -- Attributes for structs, unions, and enums may appear after the closing
+    -- brace. If this happens, they end up in the list of TypeQuals. We pull
+    -- them out here and associate them with the struct/union/enum.
     go [TSstruct ident fields attrs loc] = do
         checkNoSign specs "sign specified for struct type"
-        return $ cdeclSpec storage quals (Tstruct ident fields attrs loc)
+        return $ cdeclSpec storage qualsNoAttrs
+            (Tstruct ident fields (attrTySpecs ++ attrs) loc)
 
     go [TSunion ident fields attrs loc] = do
         checkNoSign specs "sign specified for union type"
-        return $ cdeclSpec storage quals (Tunion ident fields attrs loc)
+        return $ cdeclSpec storage qualsNoAttrs
+            (Tunion ident fields (attrTySpecs ++ attrs) loc)
 
     go [TSenum ident enums attrs loc] = do
         checkNoSign specs "sign specified for enum type"
-        return $ cdeclSpec storage quals (Tenum ident enums attrs loc)
+        return $ cdeclSpec storage qualsNoAttrs
+            (Tenum ident enums (attrTySpecs ++ attrs) loc)
 
     go [TSnamed ident refs loc] = do
         checkNoSign specs "sign specified for named type"
@@ -3273,6 +3434,7 @@ assertObjCEnabled loc errMsg
 
 data RevList a  =  RNil
                 |  RCons a (RevList a)
+                |  RApp [a] (RevList a)
 
 rnil :: RevList a
 rnil = RNil
@@ -3283,13 +3445,18 @@ rsingleton x = RCons x RNil
 rcons :: a -> RevList a -> RevList a
 rcons x xs  = RCons x xs
 
+rapp :: [a] -> RevList a -> RevList a
+rapp xs ys  = RApp xs ys
+
 rev :: RevList a -> [a]
 rev xs = go [] xs
   where
     go  l  RNil          = l
     go  l  (RCons x xs)  = go (x : l) xs
+    go  l  (RApp xs ys)  = go (xs ++ l) ys
 
 instance Located a => Located (RevList a) where
     locOf RNil         = mempty
     locOf (RCons x xs) = locOf x `mappend` locOf xs
+    locOf (RApp xs ys) = locOf xs `mappend` locOf ys
 }
