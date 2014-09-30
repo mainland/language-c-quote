@@ -112,11 +112,9 @@ import qualified Language.C.Syntax as C
  'for'        { L _ T.Tfor }
  'goto'       { L _ T.Tgoto }
  'if'         { L _ T.Tif }
- 'inline'     { L _ T.Tinline }
  'int'        { L _ T.Tint }
  'long'       { L _ T.Tlong }
  'register'   { L _ T.Tregister }
- 'restrict'   { L _ T.Trestrict }
  'return'     { L _ T.Treturn }
  'short'      { L _ T.Tshort }
  'signed'     { L _ T.Tsigned }
@@ -130,78 +128,11 @@ import qualified Language.C.Syntax as C
  'void'       { L _ T.Tvoid }
  'volatile'   { L _ T.Tvolatile }
  'while'      { L _ T.Twhile }
- '_Bool'      { L _ T.TBool }
- '_Complex'   { L _ T.TComplex }
- '_Imaginary' { L _ T.TImaginary }
 
  '#pragma'    { L _ (T.Tpragma _) }
 
- '__asm__'           { L _ T.Tasm }
- '__attribute__'     { L _ T.Tattribute }
- '__extension__'     { L _ T.Textension }
- '__builtin_va_arg'  { L _ T.Tbuiltin_va_arg }
- '__builtin_va_list' { L _ T.Tbuiltin_va_list }
- '__typeof__'        { L _ T.Ttypeof }
-
- '<<<'           { L _ T.TCUDA3lt }
- '>>>'           { L _ T.TCUDA3gt }
- '__device__'    { L _ T.TCUDAdevice }
- '__global__'    { L _ T.TCUDAglobal }
- '__host__'      { L _ T.TCUDAhost }
- '__constant__'  { L _ T.TCUDAconstant }
- '__shared__'    { L _ T.TCUDAshared }
- '__restrict__'  { L _ T.TCUDArestrict }
- '__noinline__'  { L _ T.TCUDAnoinline }
-
- 'private'      { L _ T.TCLprivate }
- '__private'    { L _ T.TCLprivate }
- 'local'        { L _ T.TCLlocal }
- '__local'      { L _ T.TCLlocal }
- 'global'       { L _ T.TCLglobal }
- '__global'     { L _ T.TCLglobal }
- 'constant'     { L _ T.TCLconstant }
- '__constant'   { L _ T.TCLconstant }
- 'read_only'    { L _ T.TCLreadonly }
- '__read_only'  { L _ T.TCLreadonly }
- 'write_only'   { L _ T.TCLwriteonly }
- '__write_only' { L _ T.TCLwriteonly }
- 'kernel'       { L _ T.TCLkernel }
- '__kernel'     { L _ T.TCLkernel }
-
- '__block'             { L _ T.T__block }
-
- OBJCNAMED             { L _ (T.TObjCnamed _) }
- '@'                   { L _ T.TObjCat }
- 'autoreleasepool'     { L _ T.TObjCautoreleasepool }
- 'catch'               { L _ T.TObjCcatch }
- 'class'               { L _ T.TObjCclass }
- 'compatibility_alias' { L _ T.TObjCcompatibility_alias }
- 'dynamic'             { L _ T.TObjCdynamic }
- 'encode'              { L _ T.TObjCencode }
- 'end'                 { L _ T.TObjCend }
- 'finally'             { L _ T.TObjCfinally }
- 'interface'           { L _ T.TObjCinterface }
- 'implementation'      { L _ T.TObjCimplementation }
- 'NO'                  { L _ T.TObjCNO }
- 'objc_private'        { L _ T.TObjCprivate }
- 'optional'            { L _ T.TObjCoptional }
- 'public'              { L _ T.TObjCpublic }
- 'property'            { L _ T.TObjCproperty }
- 'protected'           { L _ T.TObjCprotected }
- 'package'             { L _ T.TObjCpackage }
- 'protocol'            { L _ T.TObjCprotocol }
- 'required'            { L _ T.TObjCrequired }
- 'selector'            { L _ T.TObjCselector }
- 'synchronized'        { L _ T.TObjCsynchronized }
- 'synthesize'          { L _ T.TObjCsynthesize }
- 'throw'               { L _ T.TObjCthrow }
- 'try'                 { L _ T.TObjCtry }
- 'YES'                 { L _ T.TObjCYES }
- '__weak'              { L _ T.TObjC__weak }
- '__strong'            { L _ T.TObjC__strong }
- '__unsafe_unretained' { L _ T.TObjC__unsafe_unretained }
-
- 'typename'       { L _ T.Ttypename }
+ -- Used to indicate typedef's the parser hasn't seen first-hand
+ 'typename'   { L _ T.Ttypename }
 
  ANTI_ID          { L _ (T.Tanti_id _) }
  ANTI_CONST       { L _ (T.Tanti_const _) }
@@ -239,8 +170,86 @@ import qualified Language.C.Syntax as C
  ANTI_PRAGMA      { L _ (T.Tanti_pragma _) }
  ANTI_INIT        { L _ (T.Tanti_init _) }
  ANTI_INITS       { L _ (T.Tanti_inits _) }
- ANTI_IFDECL      { L _ (T.Tanti_ifdecl _) }
- ANTI_IFDECLS     { L _ (T.Tanti_ifdecls _) }
+
+ {- C99 -}
+ 'inline'     { L _ T.Tinline }
+ 'restrict'   { L _ T.Trestrict }
+ '_Bool'      { L _ T.TBool }
+ '_Complex'   { L _ T.TComplex }
+ '_Imaginary' { L _ T.TImaginary }
+
+ {- GCC -}
+ '__asm__'           { L _ T.Tasm }
+ '__attribute__'     { L _ T.Tattribute }
+ '__extension__'     { L _ T.Textension }
+ '__builtin_va_arg'  { L _ T.Tbuiltin_va_arg }
+ '__builtin_va_list' { L _ T.Tbuiltin_va_list }
+ '__typeof__'        { L _ T.Ttypeof }
+
+ {- Clang blocks -}
+ '__block'           { L _ T.T__block }
+
+ {- CUDA -}
+ '<<<'           { L _ T.TCUDA3lt }
+ '>>>'           { L _ T.TCUDA3gt }
+ '__device__'    { L _ T.TCUDAdevice }
+ '__global__'    { L _ T.TCUDAglobal }
+ '__host__'      { L _ T.TCUDAhost }
+ '__constant__'  { L _ T.TCUDAconstant }
+ '__shared__'    { L _ T.TCUDAshared }
+ '__restrict__'  { L _ T.TCUDArestrict }
+ '__noinline__'  { L _ T.TCUDAnoinline }
+
+ {- OpenCL -}
+ 'private'      { L _ T.TCLprivate }
+ '__private'    { L _ T.TCLprivate }
+ 'local'        { L _ T.TCLlocal }
+ '__local'      { L _ T.TCLlocal }
+ 'global'       { L _ T.TCLglobal }
+ '__global'     { L _ T.TCLglobal }
+ 'constant'     { L _ T.TCLconstant }
+ '__constant'   { L _ T.TCLconstant }
+ 'read_only'    { L _ T.TCLreadonly }
+ '__read_only'  { L _ T.TCLreadonly }
+ 'write_only'   { L _ T.TCLwriteonly }
+ '__write_only' { L _ T.TCLwriteonly }
+ 'kernel'       { L _ T.TCLkernel }
+ '__kernel'     { L _ T.TCLkernel }
+
+ {- Objective-C -}
+ OBJCNAMED             { L _ (T.TObjCnamed _) }
+ '@'                   { L _ T.TObjCat }
+ 'autoreleasepool'     { L _ T.TObjCautoreleasepool }
+ 'catch'               { L _ T.TObjCcatch }
+ 'class'               { L _ T.TObjCclass }
+ 'compatibility_alias' { L _ T.TObjCcompatibility_alias }
+ 'dynamic'             { L _ T.TObjCdynamic }
+ 'encode'              { L _ T.TObjCencode }
+ 'end'                 { L _ T.TObjCend }
+ 'finally'             { L _ T.TObjCfinally }
+ 'interface'           { L _ T.TObjCinterface }
+ 'implementation'      { L _ T.TObjCimplementation }
+ 'NO'                  { L _ T.TObjCNO }
+ 'objc_private'        { L _ T.TObjCprivate }
+ 'optional'            { L _ T.TObjCoptional }
+ 'public'              { L _ T.TObjCpublic }
+ 'property'            { L _ T.TObjCproperty }
+ 'protected'           { L _ T.TObjCprotected }
+ 'package'             { L _ T.TObjCpackage }
+ 'protocol'            { L _ T.TObjCprotocol }
+ 'required'            { L _ T.TObjCrequired }
+ 'selector'            { L _ T.TObjCselector }
+ 'synchronized'        { L _ T.TObjCsynchronized }
+ 'synthesize'          { L _ T.TObjCsynthesize }
+ 'throw'               { L _ T.TObjCthrow }
+ 'try'                 { L _ T.TObjCtry }
+ 'YES'                 { L _ T.TObjCYES }
+ '__weak'              { L _ T.TObjC__weak }
+ '__strong'            { L _ T.TObjC__strong }
+ '__unsafe_unretained' { L _ T.TObjC__unsafe_unretained }
+
+ ANTI_IFDECL  { L _ (T.Tanti_ifdecl _) }
+ ANTI_IFDECLS { L _ (T.Tanti_ifdecls _) }
 
 -- Three shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
@@ -272,14 +281,14 @@ import qualified Language.C.Syntax as C
 %name parseUnit       translation_unit
 %name parseFunc       function_definition
 
--- extension specific parsing functions
+-- Objective-C
 
 %name parseObjCProp       objc_property_decl
 %name parseObjCIfaceDecls objc_interface_decl_list_ext
 %name parseObjCImplDecls  objc_implementation_decl_list_ext
 
-
 %right NAMED OBJCNAMED
+
 %%
 
 {------------------------------------------------------------------------------
@@ -291,37 +300,41 @@ import qualified Language.C.Syntax as C
 identifier :: { Id }
 identifier :
     ID                    { Id (getID $1) (srclocOf $1) }
-  | 'autoreleasepool'     { Id "autoreleasepool" (srclocOf $1) }       -- Objective-C
-  | 'catch'               { Id "catch" (srclocOf $1) }                 -- Objective-C
-  | 'class'               { Id "class" (srclocOf $1) }                 -- Objective-C
-  | 'compatibility_alias' { Id "compatibility_alias" (srclocOf $1) }   -- Objective-C
-  | 'dynamic'             { Id "dynamic" (srclocOf $1) }               -- Objective-C
-  | 'encode'              { Id "encode" (srclocOf $1) }                -- Objective-C
-  | 'end'                 { Id "end" (srclocOf $1) }                   -- Objective-C
-  | 'finally'             { Id "finally" (srclocOf $1) }               -- Objective-C
-  | 'implementation'      { Id "implementation" (srclocOf $1) }        -- Objective-C
-  | 'interface'           { Id "interface" (srclocOf $1) }             -- Objective-C
-  | 'NO'                  { Id "NO" (srclocOf $1) }                    -- Objective-C
-  | 'objc_private'        { Id "private" (srclocOf $1) }               -- Objective-C
-  | 'optional'            { Id "optional" (srclocOf $1) }              -- Objective-C
-  | 'public'              { Id "public" (srclocOf $1) }                -- Objective-C
-  | 'property'            { Id "property" (srclocOf $1) }              -- Objective-C
-  | 'protected'           { Id "protected" (srclocOf $1) }             -- Objective-C
-  | 'package'             { Id "package" (srclocOf $1) }               -- Objective-C
-  | 'protocol'            { Id "protocol" (srclocOf $1) }              -- Objective-C
-  | 'required'            { Id "required" (srclocOf $1) }              -- Objective-C
-  | 'selector'            { Id "selector" (srclocOf $1) }              -- Objective-C
-  | 'synchronized'        { Id "synchronized" (srclocOf $1) }          -- Objective-C
-  | 'synthesize'          { Id "synthesize" (srclocOf $1) }            -- Objective-C
-  | 'throw'               { Id "throw" (srclocOf $1) }                 -- Objective-C
-  | 'try'                 { Id "try" (srclocOf $1) }                   -- Objective-C
-  | 'YES'                 { Id "YES" (srclocOf $1) }                   -- Objective-C
   | ANTI_ID               { AntiId (getANTI_ID $1) (srclocOf $1) }
+
+  -- Objective-C
+  | 'autoreleasepool'     { Id "autoreleasepool" (srclocOf $1) }
+  | 'catch'               { Id "catch" (srclocOf $1) }
+  | 'class'               { Id "class" (srclocOf $1) }
+  | 'compatibility_alias' { Id "compatibility_alias" (srclocOf $1) }
+  | 'dynamic'             { Id "dynamic" (srclocOf $1) }
+  | 'encode'              { Id "encode" (srclocOf $1) }
+  | 'end'                 { Id "end" (srclocOf $1) }
+  | 'finally'             { Id "finally" (srclocOf $1) }
+  | 'implementation'      { Id "implementation" (srclocOf $1) }
+  | 'interface'           { Id "interface" (srclocOf $1) }
+  | 'NO'                  { Id "NO" (srclocOf $1) }
+  | 'objc_private'        { Id "private" (srclocOf $1) }
+  | 'optional'            { Id "optional" (srclocOf $1) }
+  | 'public'              { Id "public" (srclocOf $1) }
+  | 'property'            { Id "property" (srclocOf $1) }
+  | 'protected'           { Id "protected" (srclocOf $1) }
+  | 'package'             { Id "package" (srclocOf $1) }
+  | 'protocol'            { Id "protocol" (srclocOf $1) }
+  | 'required'            { Id "required" (srclocOf $1) }
+  | 'selector'            { Id "selector" (srclocOf $1) }
+  | 'synchronized'        { Id "synchronized" (srclocOf $1) }
+  | 'synthesize'          { Id "synthesize" (srclocOf $1) }
+  | 'throw'               { Id "throw" (srclocOf $1) }
+  | 'try'                 { Id "try" (srclocOf $1) }
+  | 'YES'                 { Id "YES" (srclocOf $1) }
 
 identifier_or_typedef :: { Id }
 identifier_or_typedef :
     identifier  { $1 }
   | NAMED       { Id (getNAMED $1) (srclocOf $1) }
+
+  -- Objective-C
   | OBJCNAMED   { Id (getOBJCNAMED $1) (srclocOf $1) }
 
 {------------------------------------------------------------------------------
@@ -360,19 +373,18 @@ constant :
                         in
                           CharConst s c (srclocOf $1)
                       }
-  | ANTI_CONST        { AntiConst (getANTI_CONST $1) (srclocOf $1) }
-  | ANTI_INT          { AntiInt (getANTI_INT $1) (srclocOf $1) }
-  | ANTI_UINT         { AntiUInt (getANTI_UINT $1) (srclocOf $1) }
-  | ANTI_LINT         { AntiLInt (getANTI_LINT $1) (srclocOf $1) }
-  | ANTI_ULINT        { AntiULInt (getANTI_ULINT $1) (srclocOf $1) }
-  | ANTI_LLINT        { AntiLLInt (getANTI_LLINT $1) (srclocOf $1) }
-  | ANTI_ULLINT       { AntiULLInt (getANTI_ULLINT $1) (srclocOf $1) }
-  | ANTI_FLOAT        { AntiFloat (getANTI_FLOAT $1) (srclocOf $1) }
-  | ANTI_DOUBLE       { AntiDouble (getANTI_DOUBLE $1) (srclocOf $1) }
+  | ANTI_CONST        { AntiConst      (getANTI_CONST $1)       (srclocOf $1) }
+  | ANTI_INT          { AntiInt        (getANTI_INT $1)         (srclocOf $1) }
+  | ANTI_UINT         { AntiUInt       (getANTI_UINT $1)        (srclocOf $1) }
+  | ANTI_LINT         { AntiLInt       (getANTI_LINT $1)        (srclocOf $1) }
+  | ANTI_ULINT        { AntiULInt      (getANTI_ULINT $1)       (srclocOf $1) }
+  | ANTI_LLINT        { AntiLLInt      (getANTI_LLINT $1)       (srclocOf $1) }
+  | ANTI_ULLINT       { AntiULLInt     (getANTI_ULLINT $1)      (srclocOf $1) }
+  | ANTI_FLOAT        { AntiFloat      (getANTI_FLOAT $1)       (srclocOf $1) }
+  | ANTI_DOUBLE       { AntiDouble     (getANTI_DOUBLE $1)      (srclocOf $1) }
   | ANTI_LONG_DOUBLE  { AntiLongDouble (getANTI_LONG_DOUBLE $1) (srclocOf $1) }
-  | ANTI_CHAR         { AntiChar (getANTI_CHAR $1) (srclocOf $1) }
-  | ANTI_STRING       { AntiString (getANTI_STRING $1) (srclocOf $1) }
-
+  | ANTI_CHAR         { AntiChar       (getANTI_CHAR $1)        (srclocOf $1) }
+  | ANTI_STRING       { AntiString     (getANTI_STRING $1)      (srclocOf $1) }
 
 {------------------------------------------------------------------------------
  -
@@ -397,17 +409,15 @@ primary_expression :
         in
           StmExpr items ($1 `srcspan` $3)
       }
-  {- Extension: clang -}
-  | block_literal
-      { $1 }
-  {- Extension: ObjC -}
-  | objc_message_expr
-      { $1 }
-  {- Extension: ObjC -}
-  | objc_at_expression
-      { $1 }
   | ANTI_EXP
       { AntiExp (getANTI_EXP $1) (srclocOf $1) }
+
+  -- Clang blocks
+  | block_literal { $1 }
+
+  -- Objective-C
+  | objc_message_expression { $1 }
+  | objc_at_expression      { $1 }
 
 string_literal :: { StringLit }
 string_literal :
@@ -425,251 +435,12 @@ string_literal_ :
     STRING                  { rsingleton (L (locOf $1) (getSTRING $1)) }
   | string_literal_ STRING  { rcons (L (locOf $2) (getSTRING $2)) $1 }
 
--- Clang extension (currently only enabled with Objective-C): block literal expression
---
--- block-literal ->
---   '^' [block-type] attribute_specifiers_opt compound-statement
---
--- block-type ->
---   '(' parameter-list ')' | specifier-qualifier-list abstract-declarator
---
-block_literal :: { Exp }
-block_literal :
-    '^'                                              attribute_specifiers_opt compound_statement
-      {% do { assertObjCEnabled ($1 <--> $3) "To use blocks, enable Objective-C support"
-            ; let Block items _ = $3
-            ; return $ BlockLit (BlockVoid (srclocOf $1)) $2 items ($1 `srcspan` $3)
-            }
-      }
-  | '^' '(' parameter_list_ ')'                       attribute_specifiers_opt compound_statement
-      {% do { assertObjCEnabled ($1 <--> $6) "To use blocks, enable Objective-C support"
-            ; let Block items _ = $6
-            ; return $ BlockLit (BlockParam (rev $3) ($2 `srcspan` $4)) $5 items ($1 `srcspan` $6)
-            }
-      }
-  | '^' specifier_qualifier_list abstract_declarator attribute_specifiers_opt compound_statement
-      {% do { assertObjCEnabled ($1 <--> $5) "To use blocks, enable Objective-C support"
-            ; let { decl          = $3 (declRoot $2)
-                  ; Block items _ = $5
-                  }
-            ; dspec <- mkDeclSpec $2
-            ; let typeLoc = dspec `srcspan` decl
-            ; return $ BlockLit (BlockType (Type dspec decl typeLoc) typeLoc) $4 items ($1 `srcspan` $5)
-            }
-      }
-
--- Objective-C extension: message expression
---
--- objc-message-expr ->
---   '[' objc-receiver
---         ( objc-selector
---         | ([objc-selector] ':' assignment-expression)+  (',' assignment-expression)*
---         )
---   ']'
---
--- objc-receiver -> 'super' | expression | class-name | type-name
---
--- objc-selector is an identifier whose lexeme may also be that of the following keywords and type names:
---    asm auto bool break case char const continue default do double else enum
---    extern false float for goto if inline int long register restrict return
---    short signed sizeof static struct switch true try typedef type name
---    typeof union unsigned void volatile wchar_t while _Bool _Complex
---    _Imaginary __alignof
---
-objc_message_expr :: { Exp }
-objc_message_expr :
-    '[' objc_receiver objc_message_args ']'
-      {% do { assertObjCEnabled ($1 <--> $4) "To use a message expression, enable Objective-C support"
-            ; let (args, vargs) = $3
-            ; return $ ObjCMsg $2 args vargs ($1 `srcspan` $4)
-            }
-      }
-
-objc_receiver :: { ObjCRecv }
-objc_receiver :
-    NAMED
-      { ObjCRecvTypeName (Id (getNAMED $1) (srclocOf $1)) (srclocOf $1) }
-  | OBJCNAMED
-      { ObjCRecvClassName (Id (getOBJCNAMED $1) (srclocOf $1)) (srclocOf $1) }
-  | expression
-      { case $1 of
-          Var (Id "super" _) loc -> ObjCRecvSuper loc
-          _                      -> ObjCRecvExp $1 (srclocOf $1) }
-
-objc_message_args :: { ([ObjCArg], [Exp]) }
-objc_message_args :
-    objc_selector
-      { ([ObjCArg (Just $1) Nothing (srclocOf $1)], []) }
-  | objc_keywordarg_list objc_vararg_list
-      { (rev $1, rev $2) }
-
-objc_keywordarg_list :: { RevList ObjCArg }   -- will be non-empty
-objc_keywordarg_list :
-    objc_keywordarg
-      { rsingleton $1 }
-  | objc_keywordarg_list objc_keywordarg
-      { $2 `rcons` $1 }
-
-objc_keywordarg :: { ObjCArg }
-objc_keywordarg :
-    ':' assignment_expression
-      { ObjCArg Nothing (Just $2) ($1 `srcspan` $2) }
-  | objc_selector ':' assignment_expression
-      { ObjCArg (Just $1) (Just $3) ($1 `srcspan` $3) }
-
-objc_selector :: { Id }
-objc_selector :
-    identifier_or_typedef { $1 }
---    | 'asm'                 { Id "asm" (srclocOf $1) }
-    | 'auto'                { Id "auto" (srclocOf $1) }
---    | 'bool'                { Id "bool" (srclocOf $1) }
-    | 'break'               { Id "break" (srclocOf $1) }
-    | 'case'                { Id "case" (srclocOf $1) }
-    | 'char'                { Id "char" (srclocOf $1) }
-    | 'const'               { Id "const" (srclocOf $1) }
-    | 'continue'            { Id "continue" (srclocOf $1) }
-    | 'default'             { Id "default" (srclocOf $1) }
-    | 'do'                  { Id "do" (srclocOf $1) }
-    | 'double'              { Id "double" (srclocOf $1) }
-    | 'else'                { Id "else" (srclocOf $1) }
-    | 'enum'                { Id "enum" (srclocOf $1) }
-    | 'extern'              { Id "extern" (srclocOf $1) }
---    | 'false'               { Id "false" (srclocOf $1) }
-    | 'float'               { Id "float" (srclocOf $1) }
-    | 'for'                 { Id "for" (srclocOf $1) }
-    | 'goto'                { Id "goto" (srclocOf $1) }
-    | 'if'                  { Id "if" (srclocOf $1) }
-    | 'inline'              { Id "inline" (srclocOf $1) }
-    | 'int'                 { Id "int" (srclocOf $1) }
-    | 'long'                { Id "long" (srclocOf $1) }
-    | 'register'            { Id "register" (srclocOf $1) }
-    | 'restrict'            { Id "restrict" (srclocOf $1) }
-    | 'return'              { Id "return" (srclocOf $1) }
-    | 'short'               { Id "short" (srclocOf $1) }
-    | 'signed'              { Id "signed" (srclocOf $1) }
-    | 'sizeof'              { Id "sizeof" (srclocOf $1) }
-    | 'static'              { Id "static" (srclocOf $1) }
-    | 'struct'              { Id "struct" (srclocOf $1) }
-    | 'switch'              { Id "switch" (srclocOf $1) }
---    | 'true'                { Id "true" (srclocOf $1) }
---    | 'try'                 { Id "try" (srclocOf $1) }
-    | 'typedef'             { Id "typedef" (srclocOf $1) }
-    | 'typename'            { Id "typename" (srclocOf $1) }
---    | 'typeof'              { Id "typeof" (srclocOf $1) }
-    | 'union'               { Id "union" (srclocOf $1) }
-    | 'unsigned'            { Id "unsigned" (srclocOf $1) }
-    | 'void'                { Id "void" (srclocOf $1) }
-    | 'volatile'            { Id "volatile" (srclocOf $1) }
---    | 'wchar_t'             { Id "wchar_t" (srclocOf $1) }
-    | 'while'               { Id "while" (srclocOf $1) }
---    | '_Bool'               { Id "_Bool" (srclocOf $1) }
---    | '_Complex'            { Id "_Complex" (srclocOf $1) }
---    | '_Imaginary'          { Id "_Imaginary" (srclocOf $1) }
-    | '__block'             { Id "__block" (srclocOf $1) }
-    | '__weak'              { Id "__weak" (srclocOf $1) }
-    | '__strong'            { Id "__strong" (srclocOf $1) }
-    | '__unsafe_unretained' { Id "__unsafe_unretained" (srclocOf $1) }
---    | '__alignof'           { Id "__alignof" (srclocOf $1) }
-
-objc_vararg_list :: { RevList Exp }   -- might be empty
-objc_vararg_list :
-    -- epsilon
-      { rnil }
-  |  objc_vararg_list ',' assignment_expression
-      { $3 `rcons` $1 }
-
--- Objective-C extension: at expression
---
--- objc-at-expression ->
---     '@' ['+' | '-'] constant
---   | '@' string-literal
---   | '@' ('YES' | 'NO')
---   | '@' '[' [assignment-expression (',' assignment-expression)* [',']] ']'
---   | '@' '{' [objc-key-value (',' objc-key-value)* [',']] '}'
---   | '@' '(' assignment-expression ')'
---   | '@' 'encode' '(' type-name ')'
---   | '@' 'protocol' '(' identifier ')'
---   | '@' 'selector' '(' ( objc-selector | ([objc-selector] ':')+ ')'
---
--- objc-key-value ->
---   assignment-expression ':' assignment-expression
---
--- NB: We need to make 'NO' and 'YES' into special tokens. If we match on "'@' identifier" instead,
---     we get lots of shift-reduce conflicts as other special tokens that may appear behind a '@'
---     can also reduce to "identifier".
---
-objc_at_expression :: { Exp }
-objc_at_expression :
-    '@' constant
-      { ObjCLitConst Nothing $2 ($1 `srcspan` $2) }
-  | '@' '+' constant
-      { ObjCLitConst (Just Positive) $3 ($1 `srcspan` $3) }
-  | '@' '-' constant
-      { ObjCLitConst (Just Negate) $3 ($1 `srcspan` $3) }
-  | objc_string_literal_list
-      { let lits = rev $1 in ObjCLitString lits (head lits `srcspan` last lits) }
-  | '@' 'NO'
-      { ObjCLitBool False ($1 `srcspan` $2) }
-  | '@' 'YES'
-      { ObjCLitBool True ($1 `srcspan` $2) }
-  | '@' '[' ']'
-      { ObjCLitArray [] ($1 `srcspan` $3) }
-  | '@' '[' assignment_expression_list ']'
-      { ObjCLitArray (rev $3) ($1 `srcspan` $4) }
-  | '@' '[' assignment_expression_list ',' ']'
-      { ObjCLitArray (rev $3) ($1 `srcspan` $5) }
-  | '@' '{' '}'
-      { ObjCLitDict [] ($1 `srcspan` $3) }
-  | '@' '{' objc_key_value_list '}'
-      { ObjCLitDict (rev $3) ($1 `srcspan` $4) }
-  | '@' '{' objc_key_value_list ',' '}'
-      { ObjCLitDict (rev $3) ($1 `srcspan` $5) }
-  | '@' '(' expression ')'
-      { ObjCLitBoxed $3 ($1 `srcspan` $4) }
-  | '@' 'encode' '(' type_name ')'
-      { ObjCEncode $4 ($1 `srcspan` $5) }
-  | '@' 'protocol' '(' identifier ')'
-      { ObjCProtocol $4 ($1 `srcspan` $5) }
-  | '@' 'selector' '(' objc_selector ')'
-      { let Id str _ = $4
-        in
-        ObjCSelector str ($1 `srcspan` $5) }
-  | '@' 'selector' '(' objc_selector_list ')'
-      { let str = concat [s ++ ":" | Id s _ <- rev $4]
-        in
-        ObjCSelector str ($1 `srcspan` $5) }
-
 assignment_expression_list :: { RevList Exp }
 assignment_expression_list :
     assignment_expression
       { rsingleton $1 }
   | assignment_expression_list ',' assignment_expression
       { rcons $3 $1 }
-
-objc_key_value_list :: { RevList (Exp, Exp) }
-objc_key_value_list :
-    assignment_expression ':' assignment_expression
-      { rsingleton ($1, $3) }
-  | objc_key_value_list ',' assignment_expression ':' assignment_expression
-      { rcons ($3, $5) $1 }
-
-objc_string_literal_list :: { RevList Const }
-objc_string_literal_list :
-    '@' string_literal
-      { rsingleton (mkStringConst $2) }
-  | objc_string_literal_list '@' string_literal
-      { rcons (mkStringConst $3) $1 }
-
-objc_selector_list :: { RevList Id }
-objc_selector_list :
-    ':'
-      { rsingleton (Id "" (srclocOf $1)) }
-  | objc_selector ':'
-      { rsingleton $1 }
-  | objc_selector_list ':'
-      { rcons (Id "" (srclocOf $2)) $1 }
-  | objc_selector_list objc_selector ':'
-      { rcons $2 $1 }
 
 postfix_expression :: { Exp }
 postfix_expression :
@@ -712,35 +483,10 @@ postfix_expression :
       { CompoundLit ($2 :: Type) (rev $5) ($1 `srcspan` $6) }
   | '(' type_name ')' '{' initializer_list ',' '}'
       { CompoundLit $2 (rev $5) ($1 `srcspan` $7) }
-  {- Extension: GCC -}
+
+  -- GCC
   | '__builtin_va_arg' '(' assignment_expression ',' type_declaration ')'
       { BuiltinVaArg $3 $5 ($1 `srcspan` $6) }
-
-{- Extension: CUDA -}
-execution_configuration :: { ExeConfig }
-execution_configuration :
-  argument_expression_list
-    {%do {  let args = rev $1
-         ;  when (length args < 2 || length args > 4) $ do
-                parserError (locOf (rev $1)) $
-                  text "execution context should have 2-4 arguments, but saw" <+>
-                  ppr (length args)
-         ;  return $
-            case args of
-              [gridDim, blockDim] ->
-                  ExeConfig  gridDim blockDim
-                             Nothing Nothing
-                             (srclocOf args)
-              [gridDim, blockDim, sharedSize] ->
-                  ExeConfig  gridDim blockDim
-                             (Just sharedSize) Nothing
-                             (srclocOf args)
-              [gridDim, blockDim, sharedSize, exeStream] ->
-                  ExeConfig  gridDim blockDim
-                             (Just sharedSize) (Just exeStream)
-                             (srclocOf args)
-         }
-    }
 
 argument_expression_list :: { RevList Exp }
 argument_expression_list :
@@ -1142,8 +888,8 @@ declaration_specifiers_ :
   | attribute_specifier                             { rapp (map TSAttr $1) rnil }
   | declaration_specifiers_ attribute_specifier     { rapp (map TSAttr $2) $1 }
 
--- | This production allows us to add storage class specifiers and type
--- qualifiers to an anti-quoted type.
+-- This production allows us to add storage class specifiers and type qualifiers
+-- to an anti-quoted type.
 
 storage_qualifier_specifiers :: { [TySpec]}
 storage_qualifier_specifiers :
@@ -1200,28 +946,6 @@ init_declarator :
            }
       }
 
-attributes_and_label :: { L ([Attr], Maybe AsmLabel) }
-attributes_and_label :
-    {- empty -}
-      { L noLoc ([], Nothing) }
-  | asmlabel
-      { L (locOf $1) ([], Just $1) }
-  | asmlabel attribute_specifiers
-      { L ($1 <--> $2) ($2, Just $1) }
-  | attribute_specifiers
-      { L (locOf $1) ($1, Nothing) }
-  | attribute_specifiers asmlabel
-      { L ($1 <--> $2) ($1, Just $2) }
-  | attribute_specifiers asmlabel attribute_specifiers
-      { L ($1 <--> $3) ($1 ++ $3, Just $2) }
-
-asmlabel :: { AsmLabel }
-asmlabel :
-    '__asm__' '(' error
-      {% expected ["string literal"] Nothing }
-  | '__asm__' '(' string_literal ')'
-      { $3 }
-
 storage_class_specifier :: { TySpec }
 storage_class_specifier :
     'auto'                  { TSauto (srclocOf $1) }
@@ -1229,11 +953,15 @@ storage_class_specifier :
   | 'static'                { TSstatic (srclocOf $1) }
   | 'extern'                { TSextern Nothing (srclocOf $1) }
   | 'extern' string_literal { TSextern (Just $2) ($1 `srcspan` $2) }
+  | 'typedef'               { TStypedef (srclocOf $1) }
+
+  -- Clang blocks
   | '__block'               { TS__block (srclocOf $1) }
+
+  -- Objective-C
   | '__weak'                { TSObjC__weak (srclocOf $1) }
   | '__strong'              { TSObjC__strong (srclocOf $1) }
   | '__unsafe_unretained'   { TSObjC__unsafe_unretained (srclocOf $1) }
-  | 'typedef'               { TStypedef (srclocOf $1) }
 
 type_specifier :: { TySpec }
 type_specifier :
@@ -1249,12 +977,12 @@ type_specifier :
   | struct_or_union_specifier { $1 }
   | enum_specifier            { $1 }
 
-  {- Extension: C99 -}
+  -- C99
   | '_Bool'      { TS_Bool (srclocOf $1) }
   | '_Complex'   { TS_Complex (srclocOf $1) }
   | '_Imaginary' { TS_Imaginary (srclocOf $1) }
 
-  {- Extension: GCC -}
+  -- GCC
   | '__builtin_va_list' { TSva_list (srclocOf $1) }
 
 struct_or_union_specifier :: { TySpec }
@@ -1419,10 +1147,12 @@ type_qualifier :: { TySpec }
 type_qualifier :
     'const'    { TSconst (srclocOf $1) }
   | 'inline'   { TSinline (srclocOf $1) }
-  | 'restrict' { TSrestrict (srclocOf $1) }
   | 'volatile' { TSvolatile (srclocOf $1) }
 
-  {- Extension: CUDA -}
+  -- C99
+  | 'restrict' { TSrestrict (srclocOf $1) }
+
+  -- CUDA
   | '__device__'   { TSCUDAdevice (srclocOf $1) }
   | '__global__'   { TSCUDAglobal (srclocOf $1) }
   | '__host__'     { TSCUDAhost (srclocOf $1) }
@@ -1431,7 +1161,7 @@ type_qualifier :
   | '__restrict__' { TSCUDArestrict (srclocOf $1) }
   | '__noinline__' { TSCUDAnoinline (srclocOf $1) }
 
-  {- Extension: OpenCL -}
+  -- OpenCL
   | 'private'      { TSCLprivate (srclocOf $1) }
   | '__private'    { TSCLprivate (srclocOf $1) }
   | 'local'        { TSCLlocal (srclocOf $1) }
@@ -1530,8 +1260,6 @@ typedef_direct_declarator :: { (Id, Decl -> Decl) }
 typedef_direct_declarator :
     NAMED
       { (Id (getNAMED $1) (srclocOf $1), id) }
-  | OBJCNAMED
-      { (Id (getOBJCNAMED $1) (srclocOf $1), id) }
   | '(' typedef_declarator ')'
       { $2 }
   | '(' typedef_declarator error
@@ -1567,6 +1295,10 @@ typedef_direct_declarator :
           (ident, declToDecl . proto)
       }
 
+  -- Objective-C
+  | OBJCNAMED
+      { (Id (getOBJCNAMED $1) (srclocOf $1), id) }
+
 declarator :: { (Id, Decl -> Decl) }
 declarator :
     identifier_declarator
@@ -1588,8 +1320,6 @@ parameter_typedef_direct_declarator :: { (Id, Decl -> Decl) }
 parameter_typedef_direct_declarator :
     NAMED
       { (Id (getNAMED $1) (srclocOf $1), id) }
-  | OBJCNAMED
-      { (Id (getOBJCNAMED $1) (srclocOf $1), id) }
   | '(' pointer parameter_typedef_direct_declarator ')'
       { let (ident, dirDecl) = $3
         in
@@ -1621,6 +1351,10 @@ parameter_typedef_direct_declarator :
         in
           (ident, declToDecl . proto)
       }
+
+  -- Objective-C
+  | OBJCNAMED
+      { (Id (getOBJCNAMED $1) (srclocOf $1), id) }
 
 parameter_declarator :: { (Id, Decl -> Decl) }
 parameter_declarator :
@@ -1666,6 +1400,8 @@ pointer :
   | '*' type_qualifier_list          { mkPtr (rev $2) }
   | '*' pointer                      { $2 . mkPtr [] }
   | '*' type_qualifier_list pointer  { $3 . mkPtr (rev $2) }
+
+  -- Clang blocks
   | '^'                              {% mkBlockPtr (locOf $1) [] }
   | '^' type_qualifier_list          {% mkBlockPtr (locOf $1) (rev $2) }
   | '^' pointer                      {% ($2 .) `liftM` mkBlockPtr (locOf $1) [] }
@@ -1832,12 +1568,6 @@ typedef_name :
       {% do { assertObjCEnabled ($1 <--> $4) "To use protocol qualifiers, enable support for Objective-C"
             ; return $ TSnamed (Id (getNAMED $1) (srclocOf $1)) (rev $3) ($1 `srcspan` $4)
             } }
-  | OBJCNAMED
-      { TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) [] (srclocOf $1) }
-  | OBJCNAMED '<' identifier_list '>'
-      {% do { assertObjCEnabled ($1 <--> $4) "To use protocol qualifiers, enable support for Objective-C"
-            ; return $ TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) (rev $3) ($1 `srcspan` $4)
-            } }
   | 'typename' identifier
       { TSnamed $2 [] (srclocOf $1) }
   | 'typename' identifier '<' identifier_list '>'
@@ -1846,12 +1576,22 @@ typedef_name :
             } }
   | 'typename' error
       {% expected ["identifier"] (Just "'typename'")}
+
+  -- GCC
   | '__typeof__' '(' unary_expression ')'
       { TStypeofExp $3 ($1 `srcspan` $4) }
   | '__typeof__' '(' type_name ')'
       { TStypeofType $3 ($1 `srcspan` $4) }
   | '__typeof__' '(' type_name error
       {% unclosed ($2 <--> $3) "(" }
+
+  -- Objective-C
+  | OBJCNAMED
+      { TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) [] (srclocOf $1) }
+  | OBJCNAMED '<' identifier_list '>'
+      {% do { assertObjCEnabled ($1 <--> $4) "To use protocol qualifiers, enable support for Objective-C"
+            ; return $ TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) (rev $3) ($1 `srcspan` $4)
+            } }
 
 initializer :: { Initializer }
 initializer :
@@ -1918,12 +1658,15 @@ statement :
   | selection_statement  { $1 }
   | iteration_statement  { $1 }
   | jump_statement       { $1 }
-  | asm_statement        { $1 }
   | '#pragma'            { Pragma (getPRAGMA $1) (srclocOf $1) }
-  {- Extension: ObjC -}
-  | objc_at_statement    { $1 }
   | ANTI_PRAGMA          { AntiPragma (getANTI_PRAGMA $1) (srclocOf $1) }
   | ANTI_STM             { AntiStm (getANTI_STM $1) (srclocOf $1) }
+
+  -- GCC
+  | asm_statement        { $1 }
+
+  -- Objective-C
+  | objc_at_statement    { $1 }
 
 statement_list :: { [Stm] }
 statement_list :
@@ -1939,8 +1682,6 @@ statement_list_ :
 labeled_statement :: { Stm }
 labeled_statement :
     identifier ':' error                      {% expected ["statement"] (Just "label") }
-    {- GCC Extension -}
-  | identifier ':' attribute_specifiers ';'   { Label $1 $3 (Exp Nothing noLoc) ($1 `srcspan` $4) }
   | identifier ':' statement                  { Label $1 [] $3 ($1 `srcspan` $3) }
   | 'case' constant_expression error          {% expected ["`:'"] Nothing }
   | 'case' constant_expression ':' error      {% expected ["statement"] Nothing }
@@ -1948,6 +1689,9 @@ labeled_statement :
   | 'default' error                           {% expected ["`:'"] (Just "`default'")}
   | 'default' ':' error                       {% expected ["statement"] Nothing }
   | 'default' ':' statement                   { Default $3 ($1 `srcspan` $3) }
+
+  -- GCC
+  | identifier ':' attribute_specifiers ';'   { Label $1 $3 (Exp Nothing noLoc) ($1 `srcspan` $4) }
 
 compound_statement :: { Stm }
 compound_statement:
@@ -2051,76 +1795,6 @@ jump_statement :
   | 'return' expression ';'    { Return (Just $2) ($1 `srcspan` $3) }
   | 'return' expression error  {% expected ["';'"] Nothing }
 
--- Objective-C extension: at statement
---
--- objc-at-statement ->
---     '@' 'try' compound-statement objc-catch-statement+
---   | '@' 'try' compound-statement objc-catch-statement* '@' 'finally' compound-statement
---   | '@' 'throw' [expression] ';'
---   | '@' 'synchronized' '(' expression ')' compound-statement
---   | '@' 'autoreleasepool' compound-statement
---
--- objc-catch-statement ->
---   '@' 'catch' '(' (parameter-declaration | '...') ')' compound-statement
---
--- NB: If a try-catch statement without a finally clause is followed by another '@' statement,
---     we require a ';' after the try-catch statement. To avoid that, we would need a lookahead
---     of 2 (to see what special keyword comes after the '@'). In LALR(1), we get a shift-reduce
---     conflict that shifts to continue the try-catch statement.
---
-objc_at_statement :: { Stm }
-objc_at_statement :
-    '@' 'try' compound_statement objc_catch_statement_list '@' 'finally' compound_statement
-      { let { Block tryItems _     = $3
-            ; Block finallyItems _ = $7
-            }
-        in
-        ObjCTry tryItems (rev $4) (Just finallyItems) ($1 `srcspan` $7) }
-  | '@' 'try' compound_statement objc_catch_statement_list
-      {% do { let { Block tryItems _ = $3
-                  ; catchStmts       = rev $4
-                  }
-            ; when (null catchStmts) $
-                throw $ ParserException ($1 <--> $3) $
-                  text "@try statement without @finally needs at least one @catch statement"
-            ; return $ ObjCTry tryItems catchStmts Nothing ($1 `srcspan` catchStmts)
-            } }
-  | '@' 'try' compound_statement objc_catch_statement_list '@' error
-      {% parserError ($1 <--> $5)
-           (text $ "a @try-@catch statement without a @finally clause needs to be followed\n" ++
-                   "by a semicolon if the next statement begins with a '@'")
-      }
-  | '@' 'throw' expression ';'
-      { ObjCThrow (Just $3) ($1 `srcspan` $4) }
-  | '@' 'throw' expression error
-      {% expected ["';'"] Nothing }
-  | '@' 'throw' ';'
-      { ObjCThrow Nothing ($1 `srcspan` $3) }
-  | '@' 'throw' error
-      {% expected ["';'", "expression"] Nothing }
-  | '@' 'synchronized' '(' expression ')' compound_statement
-      { let Block items _ = $6
-        in
-        ObjCSynchronized $4 items ($1 `srcspan` $6) }
-  | '@' 'autoreleasepool' compound_statement
-      { let Block items _ = $3
-        in
-        ObjCAutoreleasepool items ($1 `srcspan` $3) }
-
-objc_catch_statement_list :: { RevList ObjCCatch }
-objc_catch_statement_list :
-    {- empty -}
-      { rnil }
-  | objc_catch_statement_list '@' 'catch' '(' parameter_declaration ')' compound_statement
-      { let Block items _ = $7
-        in
-        rcons (ObjCCatch (Just $5) items ($2 `srcspan` $7)) $1 }
-  | objc_catch_statement_list '@' 'catch' '(' '...' ')' compound_statement
-      { let Block items _ = $7
-        in
-        rcons (ObjCCatch Nothing items ($2 `srcspan` $7)) $1 }
-
-
 {------------------------------------------------------------------------------
  -
  - External definitions
@@ -2149,27 +1823,19 @@ external_declaration :
       { FuncDef $1 (srclocOf $1) }
   | declaration
       { DecDef $1 (srclocOf $1) }
-  {- Extension: ObjC -}
-  | objc_class_declaration
-      { $1 }
-  {- Extension: ObjC -}
-  | objc_interface
-      { $1 }
-  {- Extension: ObjC -}
-  | objc_protocol_declaration
-      { $1 }
-  {- Extension: ObjC -}
-  | objc_implementation
-      { $1 }
-  {- Extension: ObjC -}
-  | objc_compatibility_alias
-      { $1 }
   | ANTI_FUNC
       { AntiFunc (getANTI_FUNC $1) (srclocOf $1) }
   | ANTI_ESC
       { AntiEsc (getANTI_ESC $1) (srclocOf $1) }
   | ANTI_EDECL
       { AntiEdecl (getANTI_EDECL $1) (srclocOf $1) }
+
+  -- Objective-C
+  | objc_class_declaration    { $1 }
+  | objc_interface            { $1 }
+  | objc_protocol_declaration { $1 }
+  | objc_implementation       { $1 }
+  | objc_compatibility_alias  { $1 }
 
 function_definition :: { Func }
 function_definition :
@@ -2208,6 +1874,489 @@ function_definition :
                }
            }
       }
+
+{------------------------------------------------------------------------------
+ -
+ - GCC extensions
+ -
+ ------------------------------------------------------------------------------}
+
+attributes_and_label :: { L ([Attr], Maybe AsmLabel) }
+attributes_and_label :
+    {- empty -}
+      { L noLoc ([], Nothing) }
+  | asmlabel
+      { L (locOf $1) ([], Just $1) }
+  | asmlabel attribute_specifiers
+      { L ($1 <--> $2) ($2, Just $1) }
+  | attribute_specifiers
+      { L (locOf $1) ($1, Nothing) }
+  | attribute_specifiers asmlabel
+      { L ($1 <--> $2) ($1, Just $2) }
+  | attribute_specifiers asmlabel attribute_specifiers
+      { L ($1 <--> $3) ($1 ++ $3, Just $2) }
+
+asmlabel :: { AsmLabel }
+asmlabel :
+    '__asm__' '(' error
+      {% expected ["string literal"] Nothing }
+  | '__asm__' '(' string_literal ')'
+      { $3 }
+
+attribute_specifiers_opt :: { [Attr] }
+attribute_specifiers_opt :
+    {- empty -}
+      { [] }
+  | attribute_specifiers
+      { $1 }
+
+attribute_specifiers :: { [Attr] }
+attribute_specifiers :
+    attribute_specifier                      { $1 }
+  | attribute_specifiers attribute_specifier { $1 ++ $2 }
+
+attribute_specifier :: { [Attr] }
+attribute_specifier :
+    '__attribute__' '(' '(' attribute_list ')' ')' { rev $4 }
+
+attribute_list :: { RevList Attr }
+attribute_list :
+    attrib                    { rsingleton $1 }
+  | attribute_list ',' attrib { rcons $3 $1 }
+
+attrib :: { Attr }
+attrib :
+    attrib_name
+      { Attr $1 [] (srclocOf $1)}
+  | attrib_name '(' argument_expression_list ')'
+      { Attr $1 (rev $3) ($1 `srcspan` $4) }
+
+attrib_name :: { Id }
+attrib_name :
+    identifier_or_typedef { $1 }
+  | 'static'              { Id "static" (srclocOf $1) }
+  | 'extern'              { Id "extern" (srclocOf $1) }
+  | 'register'            { Id "register" (srclocOf $1) }
+  | '__block'             { Id "__block" (srclocOf $1) }
+  | 'typedef'             { Id "typedef" (srclocOf $1) }
+  | 'inline'              { Id "inline" (srclocOf $1) }
+  | 'auto'                { Id "auto" (srclocOf $1) }
+  | 'const'               { Id "const" (srclocOf $1) }
+  | 'volatile'            { Id "volatile" (srclocOf $1) }
+  | 'unsigned'            { Id "unsigned" (srclocOf $1) }
+  | 'long'                { Id "long" (srclocOf $1) }
+  | 'short'               { Id "short" (srclocOf $1) }
+  | 'signed'              { Id "signed" (srclocOf $1) }
+  | 'int'                 { Id "int" (srclocOf $1) }
+  | 'char'                { Id "char" (srclocOf $1) }
+  | 'float'               { Id "float" (srclocOf $1) }
+  | 'double'              { Id "double" (srclocOf $1) }
+  | 'void'                { Id "void" (srclocOf $1) }
+
+maybe_volatile :: { Bool }
+maybe_volatile :
+     {- empty -} { False}
+  |  'volatile'  { True}
+
+asm_statement :: { Stm }
+asm_statement :
+    '__asm__' maybe_volatile '(' string_literal ')' ';'
+      { Asm $2 [] $4 [] [] [] ($1 `srcspan` $6) }
+  | '__asm__' maybe_volatile '(' string_literal ':' asm_outs ')' ';'
+      { Asm $2 [] $4 $6 [] [] ($1 `srcspan` $8) }
+  | '__asm__' maybe_volatile '(' string_literal ':' asm_outs
+                                                ':' asm_ins ')' ';'
+      { Asm $2 [] $4 $6 $8 [] ($1 `srcspan` $10) }
+  | '__asm__' maybe_volatile '(' string_literal ':' asm_outs
+                                                ':' asm_ins
+                                                ':' asm_clobbers ')' ';'
+      { Asm $2 [] $4 $6 $8 $10 ($1 `srcspan` $12) }
+  | '__asm__' maybe_volatile 'goto' '(' string_literal ':'
+                                                       ':' asm_ins
+                                                       ':' asm_clobbers
+                                                       ':' asm_goto_labels ')' ';'
+      { AsmGoto $2 [] $5 $8 $10 $12 ($1 `srcspan` $14) }
+
+asm_ins :: { [AsmIn] }
+asm_ins :
+    {- empty -} { [] }
+  | asm_ins_    { rev $1 }
+
+asm_ins_ :: { RevList AsmIn }
+asm_ins_ :
+    asm_in              { rsingleton $1 }
+  | asm_ins_ ',' asm_in { rcons $3 $1 }
+
+asm_in :: { AsmIn }
+asm_in :
+    asm_symbolic_name_opt STRING '(' expression ')'
+      { AsmIn $1 ((fst . getSTRING) $2) $4 }
+
+asm_outs :: { [AsmOut] }
+asm_outs :
+    {- empty -} { [] }
+  | asm_outs_ { rev $1 }
+
+asm_outs_ :: { RevList AsmOut }
+asm_outs_ :
+    asm_out               { rsingleton $1 }
+  | asm_outs_ ',' asm_out { rcons $3 $1 }
+
+asm_out :: { AsmOut }
+asm_out :
+    asm_symbolic_name_opt STRING '(' identifier ')'
+      { AsmOut $1 ((fst . getSTRING) $2) $4 }
+
+asm_clobbers :: { [String] }
+asm_clobbers :
+    {- empty -}    { [] }
+  | asm_clobbers_  { rev $1 }
+
+asm_clobbers_ :: { RevList String }
+asm_clobbers_ :
+    asm_clobber                   { rsingleton $1 }
+  | asm_clobbers_ ',' asm_clobber { rcons $3 $1 }
+
+asm_clobber :: { String }
+asm_clobber :
+    STRING { (fst . getSTRING) $1 }
+
+asm_symbolic_name_opt :: { Maybe Id }
+asm_symbolic_name_opt :
+    {- empty -}        { Nothing }
+  | '[' identifier ']' { Just $2 }
+
+asm_goto_labels :: { [Id] }
+asm_goto_labels :
+    asm_goto_labels_ { rev $1 }
+
+asm_goto_labels_ :: { RevList Id }
+asm_goto_labels_ :
+    identifier                      { rsingleton $1 }
+  | asm_goto_labels_ ',' identifier { rcons $3 $1 }
+
+{------------------------------------------------------------------------------
+ -
+ - Clang blocks
+ -
+ ------------------------------------------------------------------------------}
+
+-- Clang extension (currently only enabled with Objective-C): block literal expression
+--
+-- block-literal ->
+--   '^' [block-type] attribute_specifiers_opt compound-statement
+--
+-- block-type ->
+--   '(' parameter-list ')' | specifier-qualifier-list abstract-declarator
+--
+block_literal :: { Exp }
+block_literal :
+    '^'                                              attribute_specifiers_opt compound_statement
+      {% do { assertObjCEnabled ($1 <--> $3) "To use blocks, enable Objective-C support"
+            ; let Block items _ = $3
+            ; return $ BlockLit (BlockVoid (srclocOf $1)) $2 items ($1 `srcspan` $3)
+            }
+      }
+  | '^' '(' parameter_list_ ')'                       attribute_specifiers_opt compound_statement
+      {% do { assertObjCEnabled ($1 <--> $6) "To use blocks, enable Objective-C support"
+            ; let Block items _ = $6
+            ; return $ BlockLit (BlockParam (rev $3) ($2 `srcspan` $4)) $5 items ($1 `srcspan` $6)
+            }
+      }
+  | '^' specifier_qualifier_list abstract_declarator attribute_specifiers_opt compound_statement
+      {% do { assertObjCEnabled ($1 <--> $5) "To use blocks, enable Objective-C support"
+            ; let { decl          = $3 (declRoot $2)
+                  ; Block items _ = $5
+                  }
+            ; dspec <- mkDeclSpec $2
+            ; let typeLoc = dspec `srcspan` decl
+            ; return $ BlockLit (BlockType (Type dspec decl typeLoc) typeLoc) $4 items ($1 `srcspan` $5)
+            }
+      }
+
+{------------------------------------------------------------------------------
+ -
+ - Objective-C
+ -
+ ------------------------------------------------------------------------------}
+
+objc_key_value_list :: { RevList (Exp, Exp) }
+objc_key_value_list :
+    assignment_expression ':' assignment_expression
+      { rsingleton ($1, $3) }
+  | objc_key_value_list ',' assignment_expression ':' assignment_expression
+      { rcons ($3, $5) $1 }
+
+objc_string_literal_list :: { RevList Const }
+objc_string_literal_list :
+    '@' string_literal
+      { rsingleton (mkStringConst $2) }
+  | objc_string_literal_list '@' string_literal
+      { rcons (mkStringConst $3) $1 }
+
+objc_selector_list :: { RevList Id }
+objc_selector_list :
+    ':'
+      { rsingleton (Id "" (srclocOf $1)) }
+  | objc_selector ':'
+      { rsingleton $1 }
+  | objc_selector_list ':'
+      { rcons (Id "" (srclocOf $2)) $1 }
+  | objc_selector_list objc_selector ':'
+      { rcons $2 $1 }
+
+-- Objective-C extension: at statement
+--
+-- objc-at-statement ->
+--     '@' 'try' compound-statement objc-catch-statement+
+--   | '@' 'try' compound-statement objc-catch-statement* '@' 'finally' compound-statement
+--   | '@' 'throw' [expression] ';'
+--   | '@' 'synchronized' '(' expression ')' compound-statement
+--   | '@' 'autoreleasepool' compound-statement
+--
+-- objc-catch-statement ->
+--   '@' 'catch' '(' (parameter-declaration | '...') ')' compound-statement
+--
+-- NB: If a try-catch statement without a finally clause is followed by another '@' statement,
+--     we require a ';' after the try-catch statement. To avoid that, we would need a lookahead
+--     of 2 (to see what special keyword comes after the '@'). In LALR(1), we get a shift-reduce
+--     conflict that shifts to continue the try-catch statement.
+--
+objc_at_statement :: { Stm }
+objc_at_statement :
+    '@' 'try' compound_statement objc_catch_statement_list '@' 'finally' compound_statement
+      { let { Block tryItems _     = $3
+            ; Block finallyItems _ = $7
+            }
+        in
+         ObjCTry tryItems (rev $4) (Just finallyItems) ($1 `srcspan` $7)
+      }
+  | '@' 'try' compound_statement objc_catch_statement_list
+      {% do { let { Block tryItems _ = $3
+                  ; catchStmts       = rev $4
+                  }
+            ; when (null catchStmts) $
+                throw $ ParserException ($1 <--> $3) $
+                  text "@try statement without @finally needs at least one @catch statement"
+            ; return $ ObjCTry tryItems catchStmts Nothing ($1 `srcspan` catchStmts)
+            } }
+  | '@' 'try' compound_statement objc_catch_statement_list '@' error
+      {% parserError ($1 <--> $5)
+           (text $ "a @try-@catch statement without a @finally clause needs to be followed\n" ++
+                   "by a semicolon if the next statement begins with a '@'")
+      }
+  | '@' 'throw' expression ';'
+      { ObjCThrow (Just $3) ($1 `srcspan` $4) }
+  | '@' 'throw' expression error
+      {% expected ["';'"] Nothing }
+  | '@' 'throw' ';'
+      { ObjCThrow Nothing ($1 `srcspan` $3) }
+  | '@' 'throw' error
+      {% expected ["';'", "expression"] Nothing }
+  | '@' 'synchronized' '(' expression ')' compound_statement
+      { let Block items _ = $6
+        in
+         ObjCSynchronized $4 items ($1 `srcspan` $6)
+      }
+  | '@' 'autoreleasepool' compound_statement
+      { let Block items _ = $3
+        in
+         ObjCAutoreleasepool items ($1 `srcspan` $3)
+      }
+
+objc_catch_statement_list :: { RevList ObjCCatch }
+objc_catch_statement_list :
+    {- empty -}
+      { rnil }
+  | objc_catch_statement_list '@' 'catch' '(' parameter_declaration ')' compound_statement
+      { let Block items _ = $7
+        in
+        rcons (ObjCCatch (Just $5) items ($2 `srcspan` $7)) $1 }
+  | objc_catch_statement_list '@' 'catch' '(' '...' ')' compound_statement
+      { let Block items _ = $7
+        in
+        rcons (ObjCCatch Nothing items ($2 `srcspan` $7)) $1 }
+
+-- Objective-C extension: message expression
+--
+-- objc-message-expr ->
+--   '[' objc-receiver
+--         ( objc-selector
+--         | ([objc-selector] ':' assignment-expression)+  (',' assignment-expression)*
+--         )
+--   ']'
+--
+-- objc-receiver -> 'super' | expression | class-name | type-name
+--
+-- objc-selector is an identifier whose lexeme may also be that of the following keywords and type names:
+--    asm auto bool break case char const continue default do double else enum
+--    extern false float for goto if inline int long register restrict return
+--    short signed sizeof static struct switch true try typedef type name
+--    typeof union unsigned void volatile wchar_t while _Bool _Complex
+--    _Imaginary __alignof
+--
+objc_message_expression :: { Exp }
+objc_message_expression :
+    '[' objc_receiver objc_message_args ']'
+      {% do { assertObjCEnabled ($1 <--> $4) "To use a message expression, enable Objective-C support"
+            ; let (args, vargs) = $3
+            ; return $ ObjCMsg $2 args vargs ($1 `srcspan` $4)
+            }
+      }
+
+objc_receiver :: { ObjCRecv }
+objc_receiver :
+    NAMED
+      { ObjCRecvTypeName (Id (getNAMED $1) (srclocOf $1)) (srclocOf $1) }
+  | OBJCNAMED
+      { ObjCRecvClassName (Id (getOBJCNAMED $1) (srclocOf $1)) (srclocOf $1) }
+  | expression
+      { case $1 of
+          Var (Id "super" _) loc -> ObjCRecvSuper loc
+          _                      -> ObjCRecvExp $1 (srclocOf $1) }
+
+objc_message_args :: { ([ObjCArg], [Exp]) }
+objc_message_args :
+    objc_selector
+      { ([ObjCArg (Just $1) Nothing (srclocOf $1)], []) }
+  | objc_keywordarg_list objc_vararg_list
+      { (rev $1, rev $2) }
+
+objc_selector :: { Id }
+objc_selector :
+    identifier_or_typedef { $1 }
+--    | 'asm'                 { Id "asm" (srclocOf $1) }
+    | 'auto'                { Id "auto" (srclocOf $1) }
+--    | 'bool'                { Id "bool" (srclocOf $1) }
+    | 'break'               { Id "break" (srclocOf $1) }
+    | 'case'                { Id "case" (srclocOf $1) }
+    | 'char'                { Id "char" (srclocOf $1) }
+    | 'const'               { Id "const" (srclocOf $1) }
+    | 'continue'            { Id "continue" (srclocOf $1) }
+    | 'default'             { Id "default" (srclocOf $1) }
+    | 'do'                  { Id "do" (srclocOf $1) }
+    | 'double'              { Id "double" (srclocOf $1) }
+    | 'else'                { Id "else" (srclocOf $1) }
+    | 'enum'                { Id "enum" (srclocOf $1) }
+    | 'extern'              { Id "extern" (srclocOf $1) }
+--    | 'false'               { Id "false" (srclocOf $1) }
+    | 'float'               { Id "float" (srclocOf $1) }
+    | 'for'                 { Id "for" (srclocOf $1) }
+    | 'goto'                { Id "goto" (srclocOf $1) }
+    | 'if'                  { Id "if" (srclocOf $1) }
+    | 'inline'              { Id "inline" (srclocOf $1) }
+    | 'int'                 { Id "int" (srclocOf $1) }
+    | 'long'                { Id "long" (srclocOf $1) }
+    | 'register'            { Id "register" (srclocOf $1) }
+    | 'restrict'            { Id "restrict" (srclocOf $1) }
+    | 'return'              { Id "return" (srclocOf $1) }
+    | 'short'               { Id "short" (srclocOf $1) }
+    | 'signed'              { Id "signed" (srclocOf $1) }
+    | 'sizeof'              { Id "sizeof" (srclocOf $1) }
+    | 'static'              { Id "static" (srclocOf $1) }
+    | 'struct'              { Id "struct" (srclocOf $1) }
+    | 'switch'              { Id "switch" (srclocOf $1) }
+--    | 'true'                { Id "true" (srclocOf $1) }
+--    | 'try'                 { Id "try" (srclocOf $1) }
+    | 'typedef'             { Id "typedef" (srclocOf $1) }
+    | 'typename'            { Id "typename" (srclocOf $1) }
+--    | 'typeof'              { Id "typeof" (srclocOf $1) }
+    | 'union'               { Id "union" (srclocOf $1) }
+    | 'unsigned'            { Id "unsigned" (srclocOf $1) }
+    | 'void'                { Id "void" (srclocOf $1) }
+    | 'volatile'            { Id "volatile" (srclocOf $1) }
+--    | 'wchar_t'             { Id "wchar_t" (srclocOf $1) }
+    | 'while'               { Id "while" (srclocOf $1) }
+--    | '_Bool'               { Id "_Bool" (srclocOf $1) }
+--    | '_Complex'            { Id "_Complex" (srclocOf $1) }
+--    | '_Imaginary'          { Id "_Imaginary" (srclocOf $1) }
+    | '__block'             { Id "__block" (srclocOf $1) }
+    | '__weak'              { Id "__weak" (srclocOf $1) }
+    | '__strong'            { Id "__strong" (srclocOf $1) }
+    | '__unsafe_unretained' { Id "__unsafe_unretained" (srclocOf $1) }
+--    | '__alignof'           { Id "__alignof" (srclocOf $1) }
+
+objc_keywordarg_list :: { RevList ObjCArg }   -- will be non-empty
+objc_keywordarg_list :
+    objc_keywordarg
+      { rsingleton $1 }
+  | objc_keywordarg_list objc_keywordarg
+      { $2 `rcons` $1 }
+
+objc_keywordarg :: { ObjCArg }
+objc_keywordarg :
+    ':' assignment_expression
+      { ObjCArg Nothing (Just $2) ($1 `srcspan` $2) }
+  | objc_selector ':' assignment_expression
+      { ObjCArg (Just $1) (Just $3) ($1 `srcspan` $3) }
+
+objc_vararg_list :: { RevList Exp }   -- might be empty
+objc_vararg_list :
+    {- empty -}
+      { rnil }
+  | objc_vararg_list ',' assignment_expression
+      { $3 `rcons` $1 }
+
+-- Objective-C extension: at expression
+--
+-- objc-at-expression ->
+--     '@' ['+' | '-'] constant
+--   | '@' string-literal
+--   | '@' ('YES' | 'NO')
+--   | '@' '[' [assignment-expression (',' assignment-expression)* [',']] ']'
+--   | '@' '{' [objc-key-value (',' objc-key-value)* [',']] '}'
+--   | '@' '(' assignment-expression ')'
+--   | '@' 'encode' '(' type-name ')'
+--   | '@' 'protocol' '(' identifier ')'
+--   | '@' 'selector' '(' ( objc-selector | ([objc-selector] ':')+ ')'
+--
+-- objc-key-value ->
+--   assignment-expression ':' assignment-expression
+--
+-- NB: We need to make 'NO' and 'YES' into special tokens. If we match on "'@' identifier" instead,
+--     we get lots of shift-reduce conflicts as other special tokens that may appear behind a '@'
+--     can also reduce to "identifier".
+--
+objc_at_expression :: { Exp }
+objc_at_expression :
+    '@' constant
+      { ObjCLitConst Nothing $2 ($1 `srcspan` $2) }
+  | '@' '+' constant
+      { ObjCLitConst (Just Positive) $3 ($1 `srcspan` $3) }
+  | '@' '-' constant
+      { ObjCLitConst (Just Negate) $3 ($1 `srcspan` $3) }
+  | objc_string_literal_list
+      { let lits = rev $1 in ObjCLitString lits (head lits `srcspan` last lits) }
+  | '@' 'NO'
+      { ObjCLitBool False ($1 `srcspan` $2) }
+  | '@' 'YES'
+      { ObjCLitBool True ($1 `srcspan` $2) }
+  | '@' '[' ']'
+      { ObjCLitArray [] ($1 `srcspan` $3) }
+  | '@' '[' assignment_expression_list ']'
+      { ObjCLitArray (rev $3) ($1 `srcspan` $4) }
+  | '@' '[' assignment_expression_list ',' ']'
+      { ObjCLitArray (rev $3) ($1 `srcspan` $5) }
+  | '@' '{' '}'
+      { ObjCLitDict [] ($1 `srcspan` $3) }
+  | '@' '{' objc_key_value_list '}'
+      { ObjCLitDict (rev $3) ($1 `srcspan` $4) }
+  | '@' '{' objc_key_value_list ',' '}'
+      { ObjCLitDict (rev $3) ($1 `srcspan` $5) }
+  | '@' '(' expression ')'
+      { ObjCLitBoxed $3 ($1 `srcspan` $4) }
+  | '@' 'encode' '(' type_name ')'
+      { ObjCEncode $4 ($1 `srcspan` $5) }
+  | '@' 'protocol' '(' identifier ')'
+      { ObjCProtocol $4 ($1 `srcspan` $5) }
+  | '@' 'selector' '(' objc_selector ')'
+      { let Id str _ = $4
+        in
+        ObjCSelector str ($1 `srcspan` $5) }
+  | '@' 'selector' '(' objc_selector_list ')'
+      { let str = concat [s ++ ":" | Id s _ <- rev $4]
+        in
+        ObjCSelector str ($1 `srcspan` $5) }
 
 -- Objective-C extension: class declaration
 --
@@ -2657,141 +2806,34 @@ objc_compatibility_alias :
 
 {------------------------------------------------------------------------------
  -
- - GCC extensions
+ - Objective-C
  -
  ------------------------------------------------------------------------------}
 
-attribute_specifiers_opt :: { [Attr] }
-attribute_specifiers_opt :
-    {- empty -}
-      { [] }
-  | attribute_specifiers
-      { $1 }
-
-attribute_specifiers :: { [Attr] }
-attribute_specifiers :
-    attribute_specifier                      { $1 }
-  | attribute_specifiers attribute_specifier { $1 ++ $2 }
-
-attribute_specifier :: { [Attr] }
-attribute_specifier :
-    '__attribute__' '(' '(' attribute_list ')' ')' { rev $4 }
-
-attribute_list :: { RevList Attr }
-attribute_list :
-    attrib                    { rsingleton $1 }
-  | attribute_list ',' attrib { rcons $3 $1 }
-
-attrib :: { Attr }
-attrib :
-    attrib_name
-      { Attr $1 [] (srclocOf $1)}
-  | attrib_name '(' argument_expression_list ')'
-      { Attr $1 (rev $3) ($1 `srcspan` $4) }
-
-attrib_name :: { Id }
-attrib_name :
-    identifier_or_typedef { $1 }
-  | 'static'              { Id "static" (srclocOf $1) }
-  | 'extern'              { Id "extern" (srclocOf $1) }
-  | 'register'            { Id "register" (srclocOf $1) }
-  | '__block'             { Id "__block" (srclocOf $1) }
-  | 'typedef'             { Id "typedef" (srclocOf $1) }
-  | 'inline'              { Id "inline" (srclocOf $1) }
-  | 'auto'                { Id "auto" (srclocOf $1) }
-  | 'const'               { Id "const" (srclocOf $1) }
-  | 'volatile'            { Id "volatile" (srclocOf $1) }
-  | 'unsigned'            { Id "unsigned" (srclocOf $1) }
-  | 'long'                { Id "long" (srclocOf $1) }
-  | 'short'               { Id "short" (srclocOf $1) }
-  | 'signed'              { Id "signed" (srclocOf $1) }
-  | 'int'                 { Id "int" (srclocOf $1) }
-  | 'char'                { Id "char" (srclocOf $1) }
-  | 'float'               { Id "float" (srclocOf $1) }
-  | 'double'              { Id "double" (srclocOf $1) }
-  | 'void'                { Id "void" (srclocOf $1) }
-
-maybe_volatile :: { Bool }
-maybe_volatile :
-     {- empty -} { False}
-  |  'volatile'  { True}
-
-asm_statement :: { Stm }
-asm_statement :
-    '__asm__' maybe_volatile '(' string_literal ')' ';'
-      { Asm $2 [] $4 [] [] [] ($1 `srcspan` $6) }
-  | '__asm__' maybe_volatile '(' string_literal ':' asm_outs ')' ';'
-      { Asm $2 [] $4 $6 [] [] ($1 `srcspan` $8) }
-  | '__asm__' maybe_volatile '(' string_literal ':' asm_outs
-                                                ':' asm_ins ')' ';'
-      { Asm $2 [] $4 $6 $8 [] ($1 `srcspan` $10) }
-  | '__asm__' maybe_volatile '(' string_literal ':' asm_outs
-                                                ':' asm_ins
-                                                ':' asm_clobbers ')' ';'
-      { Asm $2 [] $4 $6 $8 $10 ($1 `srcspan` $12) }
-  | '__asm__' maybe_volatile 'goto' '(' string_literal ':'
-                                                       ':' asm_ins
-                                                       ':' asm_clobbers
-                                                       ':' asm_goto_labels ')' ';'
-      { AsmGoto $2 [] $5 $8 $10 $12 ($1 `srcspan` $14) }
-
-asm_ins :: { [AsmIn] }
-asm_ins :
-    {- empty -} { [] }
-  | asm_ins_    { rev $1 }
-
-asm_ins_ :: { RevList AsmIn }
-asm_ins_ :
-    asm_in              { rsingleton $1 }
-  | asm_ins_ ',' asm_in { rcons $3 $1 }
-
-asm_in :: { AsmIn }
-asm_in :
-    asm_symbolic_name_opt STRING '(' expression ')'
-      { AsmIn $1 ((fst . getSTRING) $2) $4 }
-
-asm_outs :: { [AsmOut] }
-asm_outs :
-    {- empty -} { [] }
-  | asm_outs_ { rev $1 }
-
-asm_outs_ :: { RevList AsmOut }
-asm_outs_ :
-    asm_out               { rsingleton $1 }
-  | asm_outs_ ',' asm_out { rcons $3 $1 }
-
-asm_out :: { AsmOut }
-asm_out :
-    asm_symbolic_name_opt STRING '(' identifier ')'
-      { AsmOut $1 ((fst . getSTRING) $2) $4 }
-
-asm_clobbers :: { [String] }
-asm_clobbers :
-    {- empty -}    { [] }
-  | asm_clobbers_  { rev $1 }
-
-asm_clobbers_ :: { RevList String }
-asm_clobbers_ :
-    asm_clobber                   { rsingleton $1 }
-  | asm_clobbers_ ',' asm_clobber { rcons $3 $1 }
-
-asm_clobber :: { String }
-asm_clobber :
-    STRING { (fst . getSTRING) $1 }
-
-asm_symbolic_name_opt :: { Maybe Id }
-asm_symbolic_name_opt :
-    {- empty -}        { Nothing }
-  | '[' identifier ']' { Just $2 }
-
-asm_goto_labels :: { [Id] }
-asm_goto_labels :
-    asm_goto_labels_ { rev $1 }
-
-asm_goto_labels_ :: { RevList Id }
-asm_goto_labels_ :
-    identifier                      { rsingleton $1 }
-  | asm_goto_labels_ ',' identifier { rcons $3 $1 }
+execution_configuration :: { ExeConfig }
+execution_configuration :
+  argument_expression_list
+    {%do {  let args = rev $1
+         ;  when (length args < 2 || length args > 4) $ do
+                parserError (locOf (rev $1)) $
+                  text "execution context should have 2-4 arguments, but saw" <+>
+                  ppr (length args)
+         ;  return $
+            case args of
+              [gridDim, blockDim] ->
+                  ExeConfig  gridDim blockDim
+                             Nothing Nothing
+                             (srclocOf args)
+              [gridDim, blockDim, sharedSize] ->
+                  ExeConfig  gridDim blockDim
+                             (Just sharedSize) Nothing
+                             (srclocOf args)
+              [gridDim, blockDim, sharedSize, exeStream] ->
+                  ExeConfig  gridDim blockDim
+                             (Just sharedSize) (Just exeStream)
+                             (srclocOf args)
+         }
+    }
 
 {
 happyError :: L T.Token -> P a

@@ -103,11 +103,9 @@ data Token = Teof
            | Tfor
            | Tgoto
            | Tif
-           | Tinline
            | Tint
            | Tlong
            | Tregister
-           | Trestrict
            | Treturn
            | Tshort
            | Tsigned
@@ -121,6 +119,12 @@ data Token = Teof
            | Tvoid
            | Tvolatile
            | Twhile
+
+           | Ttypename
+
+           -- C99
+           | Tinline
+           | Trestrict
            | TBool
            | TComplex
            | TImaginary
@@ -189,8 +193,6 @@ data Token = Teof
            | TObjC__unsafe_unretained
 
            -- Antiquoting
-           | Ttypename
-
            | Tanti_id String
            | Tanti_const String
            | Tanti_int String
@@ -249,7 +251,6 @@ instance Show Token where
     show (TstringConst (s, _))          = s
     show (Tidentifier s)                = s
     show (Tnamed s)                     = s
-    show (TObjCnamed s)                 = s
 
     show (Tanti_id s)                   = "$id:" ++ s
     show (Tanti_const s)                = "$const:" ++ s
@@ -287,6 +288,8 @@ instance Show Token where
     show (Tanti_pragma s)               = "$pragma:" ++ s
     show (Tanti_init s)                 = "$init:" ++ s
     show (Tanti_inits s)                = "$inits:" ++ s
+
+    show (TObjCnamed s)                 = s
 
     show (Tanti_ifdecl s)               = "$ifdecl:" ++ s
     show (Tanti_ifdecls s)              = "$ifdecls:" ++ s
@@ -361,11 +364,9 @@ tokenStrings = [(Tlparen,     "("),
                 (Tfor,       "for"),
                 (Tgoto,      "goto"),
                 (Tif,        "if"),
-                (Tinline,    "inline"),
                 (Tint,       "int"),
                 (Tlong,      "long"),
                 (Tregister,  "register"),
-                (Trestrict,  "restrict"),
                 (Treturn,    "return"),
                 (Tshort,     "short"),
                 (Tsigned,    "signed"),
@@ -379,6 +380,14 @@ tokenStrings = [(Tlparen,     "("),
                 (Tvoid,      "void"),
                 (Tvolatile,  "volatile"),
                 (Twhile,     "while"),
+
+                (Ttypename,  "typename"),
+
+                --
+                -- C99 extensions
+                --
+                (Tinline,    "inline"),
+                (Trestrict,  "restrict"),
                 (TBool,      "_Bool"),
                 (TComplex,   "_TComplex"),
                 (TImaginary, "_TImaginary"),
@@ -394,31 +403,9 @@ tokenStrings = [(Tlparen,     "("),
                 (Ttypeof,          "typeof"),
 
                 --
-                -- CUDA extensions
-                --
-                (TCUDAdevice,   "__device__"),
-                (TCUDAglobal,   "__global__"),
-                (TCUDAhost,     "__host__"),
-                (TCUDAconstant, "__constant__"),
-                (TCUDAshared,   "__shared__"),
-                (TCUDArestrict, "__restrict__"),
-                (TCUDAnoinline, "__noinline__"),
-
-                --
-                -- OpenCL extensions
-                --
-                (TCLprivate,   "private"),    -- must be without '__' prefix for Objective-C
-                (TCLlocal,     "__local"),
-                (TCLglobal,    "__global"),
-                (TCLconstant,  "__constant"),
-                (TCLreadonly,  "read_only"),
-                (TCLwriteonly, "write_only"),
-                (TCLkernel,    "__kernel"),
-
-                --
                 -- Clang extensions
                 --
-                (T__block                , "__block"),
+                (T__block , "__block"),
 
                 --
                 -- Objective-C extensions
@@ -453,7 +440,27 @@ tokenStrings = [(Tlparen,     "("),
                 (TObjC__strong             , "__strong"),
                 (TObjC__unsafe_unretained  , "__unsafe_unretained"),
 
-                (Ttypename, "typename")
+                --
+                -- CUDA extensions
+                --
+                (TCUDAdevice,   "__device__"),
+                (TCUDAglobal,   "__global__"),
+                (TCUDAhost,     "__host__"),
+                (TCUDAconstant, "__constant__"),
+                (TCUDAshared,   "__shared__"),
+                (TCUDArestrict, "__restrict__"),
+                (TCUDAnoinline, "__noinline__"),
+
+                --
+                -- OpenCL extensions
+                --
+                (TCLprivate,   "private"),    -- must be without '__' prefix for Objective-C
+                (TCLlocal,     "__local"),
+                (TCLglobal,    "__global"),
+                (TCLconstant,  "__constant"),
+                (TCLreadonly,  "read_only"),
+                (TCLwriteonly, "write_only"),
+                (TCLkernel,    "__kernel")
                 ]
 
 keywords :: [(String,      Token,      Maybe [Extensions])]

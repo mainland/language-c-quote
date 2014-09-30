@@ -21,89 +21,98 @@ data Extensions = Antiquotation
                 | C99
                 | C11
                 | Gcc
+                | ObjC
                 | CUDA
                 | OpenCL
-                | ObjC
   deriving (Eq, Ord, Enum, Show)
 
-data Id = Id String !SrcLoc
+data Id = Id     String !SrcLoc
         | AntiId String !SrcLoc
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data StringLit = StringLit [String] String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 type Linkage = StringLit
 
-data Storage = Tauto !SrcLoc
-             | Tregister !SrcLoc
-             | Tstatic !SrcLoc
+data Storage = Tauto                   !SrcLoc
+             | Tregister               !SrcLoc
+             | Tstatic                 !SrcLoc
              | Textern (Maybe Linkage) !SrcLoc
-             | Ttypedef !SrcLoc
-             | T__block !SrcLoc                 -- Extension: clang blocks extension
-             | TObjC__weak !SrcLoc              -- Extension: Objective-C
-             | TObjC__strong !SrcLoc            -- Extension: Objective-C
-             | TObjC__unsafe_unretained !SrcLoc -- Extension: Objective-C
+             | Ttypedef                !SrcLoc
+
+             -- Clang blocks
+             | T__block !SrcLoc
+
+             -- Objective-C
+             | TObjC__weak              !SrcLoc
+             | TObjC__strong            !SrcLoc
+             | TObjC__unsafe_unretained !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
-data TypeQual = Tconst !SrcLoc
+data TypeQual = Tconst    !SrcLoc
               | Tvolatile !SrcLoc
-              | Tinline !SrcLoc
 
               -- C99
+              | Tinline   !SrcLoc
               | Trestrict !SrcLoc
 
               -- GCC
               | TAttr Attr
 
               -- CUDA
-              | TCUDAdevice !SrcLoc
-              | TCUDAglobal !SrcLoc
-              | TCUDAhost !SrcLoc
+              | TCUDAdevice   !SrcLoc
+              | TCUDAglobal   !SrcLoc
+              | TCUDAhost     !SrcLoc
               | TCUDAconstant !SrcLoc
-              | TCUDAshared !SrcLoc
+              | TCUDAshared   !SrcLoc
               | TCUDArestrict !SrcLoc
               | TCUDAnoinline !SrcLoc
 
               -- OpenCL
-              | TCLprivate !SrcLoc
-              | TCLlocal !SrcLoc
-              | TCLglobal !SrcLoc
-              | TCLconstant !SrcLoc
-              | TCLreadonly !SrcLoc
+              | TCLprivate   !SrcLoc
+              | TCLlocal     !SrcLoc
+              | TCLglobal    !SrcLoc
+              | TCLconstant  !SrcLoc
+              | TCLreadonly  !SrcLoc
               | TCLwriteonly !SrcLoc
-              | TCLkernel !SrcLoc
+              | TCLkernel    !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
-data Sign = Tsigned !SrcLoc
+data Sign = Tsigned   !SrcLoc
           | Tunsigned !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
-data TypeSpec = Tvoid !SrcLoc
-              | Tchar (Maybe Sign) !SrcLoc
-              | Tshort (Maybe Sign) !SrcLoc
-              | Tint (Maybe Sign) !SrcLoc
-              | Tlong (Maybe Sign) !SrcLoc
+data TypeSpec = Tvoid                   !SrcLoc
+              | Tchar      (Maybe Sign) !SrcLoc
+              | Tshort     (Maybe Sign) !SrcLoc
+              | Tint       (Maybe Sign) !SrcLoc
+              | Tlong      (Maybe Sign) !SrcLoc
               | Tlong_long (Maybe Sign) !SrcLoc
-              | Tfloat !SrcLoc
-              | Tdouble !SrcLoc
-              | Tlong_double !SrcLoc
+              | Tfloat                  !SrcLoc
+              | Tdouble                 !SrcLoc
+              | Tlong_double            !SrcLoc
               | Tstruct (Maybe Id) (Maybe [FieldGroup]) [Attr] !SrcLoc
-              | Tunion (Maybe Id) (Maybe [FieldGroup]) [Attr] !SrcLoc
-              | Tenum (Maybe Id) [CEnum] [Attr] !SrcLoc
-              | Tnamed Id [Id] !SrcLoc           -- the '[Id]' are Objective-C protocol references
+              | Tunion  (Maybe Id) (Maybe [FieldGroup]) [Attr] !SrcLoc
+              | Tenum   (Maybe Id) [CEnum]              [Attr] !SrcLoc
+              | Tnamed Id       -- ^ A typedef name
+                       [Id]     -- ^ Objective-C protocol references
+                       !SrcLoc
 
               -- C99
-              | T_Bool !SrcLoc
-              | T_Complex !SrcLoc
+              | T_Bool      !SrcLoc
+              | T_Complex   !SrcLoc
               | T_Imaginary !SrcLoc
 
               -- Gcc
-              | TtypeofExp Exp !SrcLoc
+              | TtypeofExp  Exp  !SrcLoc
               | TtypeofType Type !SrcLoc
-              | Tva_list !SrcLoc
+              | Tva_list         !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
-data DeclSpec = DeclSpec [Storage] [TypeQual] TypeSpec !SrcLoc
-              | AntiDeclSpec String !SrcLoc
-              | AntiTypeDeclSpec [Storage] [TypeQual] String !SrcLoc
+data DeclSpec = DeclSpec         [Storage] [TypeQual] TypeSpec !SrcLoc
+              | AntiDeclSpec                          String   !SrcLoc
+              | AntiTypeDeclSpec [Storage] [TypeQual] String   !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 -- | There are two types of declarators in C, regular declarators and abstract
@@ -120,11 +129,13 @@ data ArraySize = ArraySize Bool Exp !SrcLoc
 
 data Decl = DeclRoot !SrcLoc
           | Ptr [TypeQual] Decl !SrcLoc
-          | BlockPtr [TypeQual] Decl !SrcLoc             -- Extension: clang blocks extension
           | Array [TypeQual] ArraySize Decl !SrcLoc
           | Proto Decl Params !SrcLoc
           | OldProto Decl [Id] !SrcLoc
           | AntiTypeDecl String !SrcLoc
+
+          -- Clang blocks
+          | BlockPtr [TypeQual] Decl !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data Type = Type DeclSpec Decl !SrcLoc
@@ -140,7 +151,7 @@ data Designation = Designation [Designator] !SrcLoc
 
 data Initializer = ExpInitializer Exp !SrcLoc
                  | CompoundInitializer [(Maybe Designation, Initializer)] !SrcLoc
-                 | AntiInit String !SrcLoc
+                 | AntiInit  String !SrcLoc
                  | AntiInits String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
@@ -152,9 +163,9 @@ data Init = Init Id Decl (Maybe AsmLabel) (Maybe Initializer) [Attr] !SrcLoc
 data Typedef = Typedef Id Decl [Attr] !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
-data InitGroup = InitGroup DeclSpec [Attr] [Init] !SrcLoc
+data InitGroup = InitGroup    DeclSpec [Attr] [Init]    !SrcLoc
                | TypedefGroup DeclSpec [Attr] [Typedef] !SrcLoc
-               | AntiDecl String !SrcLoc
+               | AntiDecl  String !SrcLoc
                | AntiDecls String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
@@ -162,12 +173,12 @@ data Field = Field (Maybe Id) (Maybe Decl) (Maybe Exp) !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data FieldGroup  =  FieldGroup DeclSpec [Field] !SrcLoc
-                 |  AntiSdecl String !SrcLoc
+                 |  AntiSdecl  String !SrcLoc
                  |  AntiSdecls String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data CEnum  =  CEnum Id (Maybe Exp) !SrcLoc
-            |  AntiEnum String !SrcLoc
+            |  AntiEnum  String !SrcLoc
             |  AntiEnums String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
@@ -175,37 +186,240 @@ data Attr  =  Attr Id [Exp] !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data Param  =  Param (Maybe Id) DeclSpec Decl !SrcLoc
-            |  AntiParam String !SrcLoc
+            |  AntiParam  String !SrcLoc
             |  AntiParams String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data Params = Params [Param] Bool !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
-data Func  =  Func DeclSpec Id Decl Params [BlockItem] !SrcLoc
+data Func  =  Func    DeclSpec Id Decl Params                   [BlockItem] !SrcLoc
            |  OldFunc DeclSpec Id Decl [Id] (Maybe [InitGroup]) [BlockItem] !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
-data Definition  =  FuncDef Func !SrcLoc
-                 |  DecDef InitGroup !SrcLoc
-                 |  EscDef String !SrcLoc
-                 |  ObjCClassDec [Id] !SrcLoc
+data Definition  =  FuncDef    Func      !SrcLoc
+                 |  DecDef     InitGroup !SrcLoc
+                 |  EscDef     String    !SrcLoc
+                 |  AntiFunc   String    !SrcLoc
+                 |  AntiEsc    String    !SrcLoc
+                 |  AntiEdecl  String    !SrcLoc
+                 |  AntiEdecls String    !SrcLoc
+
+                 -- Objective-C
+                 |  ObjCClassDec   [Id] !SrcLoc
                  |  ObjCClassIface Id (Maybe Id) [Id] [ObjCIvarDecl] [ObjCIfaceDecl] [Attr] !SrcLoc
-                 |  ObjCCatIface Id (Maybe Id) [Id] [ObjCIvarDecl] [ObjCIfaceDecl] !SrcLoc
-                 |  ObjCProtDec [Id] !SrcLoc
-                 |  ObjCProtDef Id [Id] [ObjCIfaceDecl] !SrcLoc
-                 |  ObjCClassImpl Id (Maybe Id) [ObjCIvarDecl] [Definition] !SrcLoc
-                 |  ObjCCatImpl Id Id [Definition] !SrcLoc
-                 |  ObjCSynDef [(Id, Maybe Id)] !SrcLoc
-                 |  ObjCDynDef [Id] !SrcLoc
-                 |  ObjCMethDef ObjCMethodProto [BlockItem] !SrcLoc
-                 |  ObjCCompAlias Id Id !SrcLoc
+                 |  ObjCCatIface   Id (Maybe Id) [Id] [ObjCIvarDecl] [ObjCIfaceDecl]        !SrcLoc
+                 |  ObjCProtDec    [Id] !SrcLoc
+                 |  ObjCProtDef    Id [Id] [ObjCIfaceDecl] !SrcLoc
+                 |  ObjCClassImpl  Id (Maybe Id) [ObjCIvarDecl] [Definition] !SrcLoc
+                 |  ObjCCatImpl    Id Id [Definition] !SrcLoc
+                 |  ObjCSynDef     [(Id, Maybe Id)] !SrcLoc
+                 |  ObjCDynDef     [Id] !SrcLoc
+                 |  ObjCMethDef    ObjCMethodProto [BlockItem] !SrcLoc
+                 |  ObjCCompAlias  Id Id !SrcLoc
                  -- -=chak FIXME: do we need an AntiObjCMeth?
-                 |  AntiFunc String !SrcLoc
-                 |  AntiEsc String !SrcLoc
-                 |  AntiEdecl String !SrcLoc
-                 |  AntiEdecls String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
+
+data Stm  = Label Id [Attr] Stm !SrcLoc
+          | Case Exp Stm !SrcLoc
+          | Default Stm !SrcLoc
+          | Exp (Maybe Exp) !SrcLoc
+          | Block [BlockItem] !SrcLoc
+          | If Exp Stm (Maybe Stm) !SrcLoc
+          | Switch Exp Stm !SrcLoc
+          | While Exp Stm !SrcLoc
+          | DoWhile Stm Exp !SrcLoc
+          | For (Either InitGroup (Maybe Exp)) (Maybe Exp) (Maybe Exp) Stm !SrcLoc
+          | Goto Id !SrcLoc
+          | Continue !SrcLoc
+          | Break !SrcLoc
+          | Return (Maybe Exp) !SrcLoc
+          | Pragma String !SrcLoc
+          | AntiPragma String !SrcLoc
+          | AntiStm String !SrcLoc
+          | AntiStms String !SrcLoc
+
+          -- GCC
+          | Asm Bool         -- ^ @True@ if volatile, @False@ otherwise
+                [Attr]       -- ^ Attributes
+                AsmTemplate  -- ^ Assembly template
+                [AsmOut]     -- ^ Output operands
+                [AsmIn]      -- ^ Input operands
+                [AsmClobber] -- ^ Clobbered registers
+                !SrcLoc
+          | AsmGoto Bool         -- ^ @True@ if volatile, @False@ otherwise
+                    [Attr]       -- ^ Attributes
+                    AsmTemplate  -- ^ Assembly template
+                    [AsmIn]      -- ^ Input operands
+                    [AsmClobber] -- ^ Clobbered registers
+                    [Id]         -- ^ Labels
+                    !SrcLoc
+
+          -- Objective-C
+          | ObjCTry [BlockItem] [ObjCCatch] (Maybe [BlockItem]) !SrcLoc
+            -- ^Invariant: There is either at least one 'ObjCCatch' or the finally block is present.
+          | ObjCThrow (Maybe Exp) !SrcLoc
+          | ObjCSynchronized Exp [BlockItem] !SrcLoc
+          | ObjCAutoreleasepool [BlockItem] !SrcLoc
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data BlockItem = BlockDecl InitGroup
+               | BlockStm Stm
+               | AntiBlockItem  String !SrcLoc
+               | AntiBlockItems String !SrcLoc
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data Signed = Signed
+            | Unsigned
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+-- | The 'String' parameter to 'Const' data constructors is the raw string
+-- representation of the constant as it was parsed.
+data Const = IntConst         String   Signed Integer !SrcLoc
+           | LongIntConst     String   Signed Integer !SrcLoc
+           | LongLongIntConst String   Signed Integer !SrcLoc
+           | FloatConst       String   Rational       !SrcLoc
+           | DoubleConst      String   Rational       !SrcLoc
+           | LongDoubleConst  String   Rational       !SrcLoc
+           | CharConst        String   Char           !SrcLoc
+           | StringConst      [String] String         !SrcLoc
+
+           | AntiConst      String !SrcLoc
+           | AntiInt        String !SrcLoc
+           | AntiUInt       String !SrcLoc
+           | AntiLInt       String !SrcLoc
+           | AntiULInt      String !SrcLoc
+           | AntiLLInt      String !SrcLoc
+           | AntiULLInt     String !SrcLoc
+           | AntiFloat      String !SrcLoc
+           | AntiDouble     String !SrcLoc
+           | AntiLongDouble String !SrcLoc
+           | AntiChar       String !SrcLoc
+           | AntiString     String !SrcLoc
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data Exp = Var Id !SrcLoc
+         | Const Const !SrcLoc
+         | BinOp BinOp Exp Exp !SrcLoc
+         | Assign Exp AssignOp Exp !SrcLoc
+         | PreInc Exp !SrcLoc
+         | PostInc Exp !SrcLoc
+         | PreDec Exp !SrcLoc
+         | PostDec Exp !SrcLoc
+         | UnOp UnOp Exp !SrcLoc
+         | SizeofExp Exp !SrcLoc
+         | SizeofType Type !SrcLoc
+         | Cast Type Exp !SrcLoc
+         | Cond Exp Exp Exp !SrcLoc
+         | Member Exp Id !SrcLoc
+         | PtrMember Exp Id !SrcLoc
+         | Index Exp Exp !SrcLoc
+         | FnCall Exp [Exp] !SrcLoc
+         | CudaCall Exp ExeConfig [Exp] !SrcLoc
+         | Seq Exp Exp !SrcLoc
+         | CompoundLit Type [(Maybe Designation, Initializer)] !SrcLoc
+         | StmExpr [BlockItem] !SrcLoc
+         | AntiExp String !SrcLoc
+         | AntiArgs String !SrcLoc
+
+         -- GCC
+         | BuiltinVaArg Exp Type !SrcLoc
+
+         -- Clang blocks
+         | BlockLit BlockType [Attr] [BlockItem] !SrcLoc
+
+         -- Objective-C
+         | ObjCMsg ObjCRecv [ObjCArg] [Exp] !SrcLoc
+           -- ^Invariant: First argument must at least have either a selector or an expression;
+           --  all other arguments must have an expression.
+         | ObjCLitConst (Maybe UnOp)
+                        Const        -- ^ Anything except 'StringConst'
+                        !SrcLoc
+         | ObjCLitString [Const] -- ^ Must all be 'StringConst'
+                         !SrcLoc
+         | ObjCLitBool Bool !SrcLoc
+         | ObjCLitArray [Exp] !SrcLoc
+         | ObjCLitDict [(Exp, Exp)] !SrcLoc
+         | ObjCLitBoxed Exp !SrcLoc
+         | ObjCEncode Type !SrcLoc
+         | ObjCProtocol Id !SrcLoc
+         | ObjCSelector String !SrcLoc
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data BinOp = Add
+           | Sub
+           | Mul
+           | Div
+           | Mod
+           | Eq
+           | Ne
+           | Lt
+           | Gt
+           | Le
+           | Ge
+           | Land
+           | Lor
+           | And
+           | Or
+           | Xor
+           | Lsh
+           | Rsh
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data AssignOp = JustAssign
+              | AddAssign
+              | SubAssign
+              | MulAssign
+              | DivAssign
+              | ModAssign
+              | LshAssign
+              | RshAssign
+              | AndAssign
+              | XorAssign
+              | OrAssign
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data UnOp = AddrOf
+          | Deref
+          | Positive
+          | Negate
+          | Not
+          | Lnot
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+{------------------------------------------------------------------------------
+ -
+ - GCC extensions
+ -
+ ------------------------------------------------------------------------------}
+
+type AsmTemplate = StringLit
+
+data AsmOut = AsmOut (Maybe Id) String Id
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+data AsmIn = AsmIn (Maybe Id) String Exp
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+type AsmClobber = String
+
+{------------------------------------------------------------------------------
+ -
+ - Clang blocks
+ -
+ ------------------------------------------------------------------------------}
+data BlockType = BlockVoid !SrcLoc
+               | BlockParam [Param] !SrcLoc
+               | BlockType Type !SrcLoc
+                 -- NB: Type may be something other than 'Proto', in which case clang defaults to
+                 --     regard the type as the return type and assume the arguments to be 'void'.
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+{------------------------------------------------------------------------------
+ -
+ - Objective-C
+ -
+ ------------------------------------------------------------------------------}
 
 data ObjCIvarDecl = ObjCIvarVisi ObjCVisibilitySpec !SrcLoc
                   | ObjCIvarDecl FieldGroup !SrcLoc
@@ -254,213 +468,7 @@ data ObjCMethodProto = ObjCMethodProto Bool (Maybe Type) [Attr] [ObjCParam] Bool
                        --  an identifier; all other parameters must have an identifier.
     deriving (Eq, Ord, Show, Data, Typeable)
 
-data Stm  = Label Id [Attr] Stm !SrcLoc
-          | Case Exp Stm !SrcLoc
-          | Default Stm !SrcLoc
-          | Exp (Maybe Exp) !SrcLoc
-          | Block [BlockItem] !SrcLoc
-          | If Exp Stm (Maybe Stm) !SrcLoc
-          | Switch Exp Stm !SrcLoc
-          | While Exp Stm !SrcLoc
-          | DoWhile Stm Exp !SrcLoc
-          | For  (Either InitGroup (Maybe Exp)) (Maybe Exp) (Maybe Exp) Stm
-                 !SrcLoc
-          | Goto Id !SrcLoc
-          | Continue !SrcLoc
-          | Break !SrcLoc
-          | Return (Maybe Exp) !SrcLoc
-          | Pragma String !SrcLoc
-          | Asm Bool         -- ^ @True@ if volatile, @False@ otherwise
-                [Attr]       -- ^ Attributes
-                AsmTemplate  -- ^ Assembly template
-                [AsmOut]     -- ^ Output operands
-                [AsmIn]      -- ^ Input operands
-                [AsmClobber] -- ^ Clobbered registers
-                !SrcLoc
-          | AsmGoto Bool         -- ^ @True@ if volatile, @False@ otherwise
-                    [Attr]       -- ^ Attributes
-                    AsmTemplate  -- ^ Assembly template
-                    [AsmIn]      -- ^ Input operands
-                    [AsmClobber] -- ^ Clobbered registers
-                    [Id]         -- ^ Labels
-                    !SrcLoc
-          | ObjCTry [BlockItem] [ObjCCatch] (Maybe [BlockItem]) !SrcLoc
-            -- ^Invariant: There is either at least one 'ObjCCatch' or the finally block is present.
-          | ObjCThrow (Maybe Exp) !SrcLoc
-          | ObjCSynchronized Exp [BlockItem] !SrcLoc
-          | ObjCAutoreleasepool [BlockItem] !SrcLoc
-          | AntiPragma String !SrcLoc
-          | AntiStm String !SrcLoc
-          | AntiStms String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
-
-type AsmTemplate = StringLit
-
-data AsmOut = AsmOut (Maybe Id) String Id
-    deriving (Eq, Ord, Show, Data, Typeable)
-
-data AsmIn = AsmIn (Maybe Id) String Exp
-    deriving (Eq, Ord, Show, Data, Typeable)
-
-type AsmClobber = String
-
-data BlockItem = BlockDecl InitGroup
-               | BlockStm Stm
-               | AntiBlockItem String !SrcLoc
-               | AntiBlockItems String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
-
 data ObjCCatch = ObjCCatch (Maybe Param) [BlockItem] !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
-
-funcProto :: Func -> InitGroup
-funcProto f@(Func decl_spec ident decl params _ _) =
-    InitGroup decl_spec []
-      [Init ident (Proto decl params l) Nothing Nothing [] l] l
-  where
-    l = srclocOf f
-
-funcProto f@(OldFunc decl_spec ident decl params _ _ _) =
-    InitGroup decl_spec []
-      [Init ident (OldProto decl params l) Nothing Nothing [] l] l
-  where
-    l = srclocOf f
-
-isPtr :: Type -> Bool
-isPtr  (Type _ decl _)  = go decl
-  where
-    go  (DeclRoot _)        = False
-    go  (Ptr _ _ _)         = True
-    go  (BlockPtr _ _ _)    = True
-    go  (Array _ _ _ _)     = True
-    go  (Proto _ _ _)       = False
-    go  (OldProto _ _ _)    = False
-    go  (AntiTypeDecl _ _)  = error "isPtr: encountered antiquoted type declaration"
-isPtr  (AntiType _ _)       = error "isPtr: encountered antiquoted type"
-
-data Signed = Signed
-            | Unsigned
-    deriving (Eq, Ord, Show, Data, Typeable)
-
-data StringLit = StringLit [String] String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
-
-data Const = IntConst String Signed Integer !SrcLoc
-           | LongIntConst String Signed Integer !SrcLoc
-           | LongLongIntConst String Signed Integer !SrcLoc
-           | FloatConst String Rational !SrcLoc
-           | DoubleConst String Rational !SrcLoc
-           | LongDoubleConst String Rational !SrcLoc
-           | CharConst String Char !SrcLoc
-           | StringConst [String] String !SrcLoc
-           | AntiConst String !SrcLoc
-           | AntiInt String !SrcLoc
-           | AntiUInt String !SrcLoc
-           | AntiLInt String !SrcLoc
-           | AntiULInt String !SrcLoc
-           | AntiLLInt String !SrcLoc
-           | AntiULLInt String !SrcLoc
-           | AntiFloat String !SrcLoc
-           | AntiDouble String !SrcLoc
-           | AntiLongDouble String !SrcLoc
-           | AntiChar String !SrcLoc
-           | AntiString String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
-
-data ExeConfig = ExeConfig
-    {  exeGridDim    :: Exp
-    ,  exeBlockDim   :: Exp
-    ,  exeSharedSize :: Maybe Exp
-    ,  exeStream     :: Maybe Exp
-    ,  exeLoc        :: !SrcLoc
-    }
-    deriving (Eq, Ord, Show, Data, Typeable)
-
-data Exp = Var Id !SrcLoc
-         | Const Const !SrcLoc
-         | BinOp BinOp Exp Exp !SrcLoc
-         | Assign Exp AssignOp Exp !SrcLoc
-         | PreInc Exp !SrcLoc
-         | PostInc Exp !SrcLoc
-         | PreDec Exp !SrcLoc
-         | PostDec Exp !SrcLoc
-         | UnOp UnOp Exp !SrcLoc
-         | SizeofExp Exp !SrcLoc
-         | SizeofType Type !SrcLoc
-         | Cast Type Exp !SrcLoc
-         | Cond Exp Exp Exp !SrcLoc
-         | Member Exp Id !SrcLoc
-         | PtrMember Exp Id !SrcLoc
-         | Index Exp Exp !SrcLoc
-         | FnCall Exp [Exp] !SrcLoc
-         | CudaCall Exp ExeConfig [Exp] !SrcLoc
-         | Seq Exp Exp !SrcLoc
-         | CompoundLit Type [(Maybe Designation, Initializer)] !SrcLoc
-         | StmExpr [BlockItem] !SrcLoc
-         | BuiltinVaArg Exp Type !SrcLoc
-         | BlockLit BlockType [Attr] [BlockItem] !SrcLoc             -- Extension: clang blocks extension
-         | ObjCMsg ObjCRecv [ObjCArg] [Exp] !SrcLoc
-           -- ^Invariant: First argument must at least have either a selector or an expression;
-           --  all other arguments must have an expression.
-         | ObjCLitConst (Maybe UnOp) Const !SrcLoc    -- anything, but 'StringConst'
-         | ObjCLitString [Const] !SrcLoc              -- they are all 'StringConst'
-         | ObjCLitBool Bool !SrcLoc
-         | ObjCLitArray [Exp] !SrcLoc
-         | ObjCLitDict [(Exp, Exp)] !SrcLoc
-         | ObjCLitBoxed Exp !SrcLoc
-         | ObjCEncode Type !SrcLoc
-         | ObjCProtocol Id !SrcLoc
-         | ObjCSelector String !SrcLoc
-         | AntiExp String !SrcLoc
-         | AntiArgs String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
-
-data BinOp = Add
-           | Sub
-           | Mul
-           | Div
-           | Mod
-           | Eq
-           | Ne
-           | Lt
-           | Gt
-           | Le
-           | Ge
-           | Land
-           | Lor
-           | And
-           | Or
-           | Xor
-           | Lsh
-           | Rsh
-    deriving (Eq, Ord, Show, Data, Typeable)
-
-data AssignOp = JustAssign
-              | AddAssign
-              | SubAssign
-              | MulAssign
-              | DivAssign
-              | ModAssign
-              | LshAssign
-              | RshAssign
-              | AndAssign
-              | XorAssign
-              | OrAssign
-    deriving (Eq, Ord, Show, Data, Typeable)
-
-data UnOp = AddrOf
-          | Deref
-          | Positive
-          | Negate
-          | Not
-          | Lnot
-    deriving (Eq, Ord, Show, Data, Typeable)
-
-data BlockType = BlockVoid !SrcLoc
-               | BlockParam [Param] !SrcLoc
-               | BlockType Type !SrcLoc
-                 -- NB: Type may be something other than 'Proto', in which case clang defaults to
-                 --     regard the type as the return type and assume the arguments to be 'void'.
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data ObjCRecv = ObjCRecvSuper !SrcLoc
@@ -473,9 +481,33 @@ data ObjCArg = ObjCArg (Maybe Id) (Maybe Exp) !SrcLoc
     -- -=chak FIXME: provide an ANTI form (singular and plural)
     deriving (Eq, Ord, Show, Data, Typeable)
 
+{------------------------------------------------------------------------------
+ -
+ - CUDA
+ -
+ ------------------------------------------------------------------------------}
+
+data ExeConfig = ExeConfig
+    {  exeGridDim    :: Exp
+    ,  exeBlockDim   :: Exp
+    ,  exeSharedSize :: Maybe Exp
+    ,  exeStream     :: Maybe Exp
+    ,  exeLoc        :: !SrcLoc
+    }
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+{------------------------------------------------------------------------------
+ -
+ - Instances
+ -
+ ------------------------------------------------------------------------------}
+
 instance Located Id where
     locOf (Id _ loc)      = locOf loc
     locOf (AntiId _ loc)  = locOf loc
+
+instance Located StringLit where
+    locOf (StringLit _ _ loc) = locOf loc
 
 instance Located Storage where
     locOf (Tauto loc)                    = locOf loc
@@ -634,48 +666,6 @@ instance Located Definition where
     locOf (AntiEdecl _ loc)                = locOf loc
     locOf (AntiEdecls _ loc)               = locOf loc
 
-instance Located ObjCIvarDecl where
-    locOf (ObjCIvarVisi _ loc) = locOf loc
-    locOf (ObjCIvarDecl _ loc) = locOf loc
-
-instance Located ObjCVisibilitySpec where
-    locOf (ObjCPrivate loc)   = locOf loc
-    locOf (ObjCPublic loc)    = locOf loc
-    locOf (ObjCProtected loc) = locOf loc
-    locOf (ObjCPackage loc)   = locOf loc
-
-instance Located ObjCIfaceDecl where
-    locOf (ObjCIfaceProp _ _ loc)    = locOf loc
-    locOf (ObjCIfaceReq _ loc)       = locOf loc
-    locOf (ObjCIfaceMeth _ loc)      = locOf loc
-    locOf (ObjCIfaceDecl _ loc)      = locOf loc
-    locOf (AntiObjCIfaceDecl _ loc)  = locOf loc
-    locOf (AntiObjCIfaceDecls _ loc) = locOf loc
-
-instance Located ObjCPropAttr where
-    locOf (ObjCGetter _ loc)         = locOf loc
-    locOf (ObjCSetter _ loc)         = locOf loc
-    locOf (ObjCReadonly loc)         = locOf loc
-    locOf (ObjCReadwrite loc)        = locOf loc
-    locOf (ObjCAssign loc)           = locOf loc
-    locOf (ObjCRetain loc)           = locOf loc
-    locOf (ObjCCopy loc)             = locOf loc
-    locOf (ObjCNonatomic loc)        = locOf loc
-    locOf (ObjCAtomic loc)           = locOf loc
-    locOf (ObjCStrong loc)           = locOf loc
-    locOf (ObjCWeak loc)             = locOf loc
-    locOf (ObjCUnsafeUnretained loc) = locOf loc
-
-instance Located ObjCMethodReq where
-    locOf (ObjCRequired loc) = locOf loc
-    locOf (ObjCOptional loc) = locOf loc
-
-instance Located ObjCParam where
-    locOf (ObjCParam _ _ _ _ loc) = locOf loc
-
-instance Located ObjCMethodProto where
-    locOf (ObjCMethodProto _ _ _ _ _ _ loc) = locOf loc
-
 instance Located Stm where
     locOf (Label _ _ _ loc)           = locOf loc
     locOf (Case _ _ loc)              = locOf loc
@@ -708,12 +698,6 @@ instance Located BlockItem where
     locOf (AntiBlockItem _ loc)  = locOf loc
     locOf (AntiBlockItems _ loc) = locOf loc
 
-instance Located ObjCCatch where
-    locOf (ObjCCatch _ _ loc) = locOf loc
-
-instance Located StringLit where
-    locOf (StringLit _ _ loc) = locOf loc
-
 instance Located Const where
     locOf (IntConst _ _ _ loc)          = locOf loc
     locOf (LongIntConst _ _ _ loc)      = locOf loc
@@ -735,9 +719,6 @@ instance Located Const where
     locOf (AntiLongDouble _ loc)        = locOf loc
     locOf (AntiChar _ loc)              = locOf loc
     locOf (AntiString _ loc)            = locOf loc
-
-instance Located ExeConfig where
-    locOf conf = locOf (exeLoc conf)
 
 instance Located Exp where
     locOf (Var _ loc)             = locOf loc
@@ -781,6 +762,54 @@ instance Located BlockType where
     locOf (BlockParam _ loc) = locOf loc
     locOf (BlockType _ loc)  = locOf loc
 
+instance Located ExeConfig where
+    locOf conf = locOf (exeLoc conf)
+
+instance Located ObjCIvarDecl where
+    locOf (ObjCIvarVisi _ loc) = locOf loc
+    locOf (ObjCIvarDecl _ loc) = locOf loc
+
+instance Located ObjCVisibilitySpec where
+    locOf (ObjCPrivate loc)   = locOf loc
+    locOf (ObjCPublic loc)    = locOf loc
+    locOf (ObjCProtected loc) = locOf loc
+    locOf (ObjCPackage loc)   = locOf loc
+
+instance Located ObjCIfaceDecl where
+    locOf (ObjCIfaceProp _ _ loc)    = locOf loc
+    locOf (ObjCIfaceReq _ loc)       = locOf loc
+    locOf (ObjCIfaceMeth _ loc)      = locOf loc
+    locOf (ObjCIfaceDecl _ loc)      = locOf loc
+    locOf (AntiObjCIfaceDecl _ loc)  = locOf loc
+    locOf (AntiObjCIfaceDecls _ loc) = locOf loc
+
+instance Located ObjCPropAttr where
+    locOf (ObjCGetter _ loc)         = locOf loc
+    locOf (ObjCSetter _ loc)         = locOf loc
+    locOf (ObjCReadonly loc)         = locOf loc
+    locOf (ObjCReadwrite loc)        = locOf loc
+    locOf (ObjCAssign loc)           = locOf loc
+    locOf (ObjCRetain loc)           = locOf loc
+    locOf (ObjCCopy loc)             = locOf loc
+    locOf (ObjCNonatomic loc)        = locOf loc
+    locOf (ObjCAtomic loc)           = locOf loc
+    locOf (ObjCStrong loc)           = locOf loc
+    locOf (ObjCWeak loc)             = locOf loc
+    locOf (ObjCUnsafeUnretained loc) = locOf loc
+
+instance Located ObjCMethodReq where
+    locOf (ObjCRequired loc) = locOf loc
+    locOf (ObjCOptional loc) = locOf loc
+
+instance Located ObjCParam where
+    locOf (ObjCParam _ _ _ _ loc) = locOf loc
+
+instance Located ObjCMethodProto where
+    locOf (ObjCMethodProto _ _ _ _ _ _ loc) = locOf loc
+
+instance Located ObjCCatch where
+    locOf (ObjCCatch _ _ loc) = locOf loc
+
 instance Located ObjCRecv where
     locOf (ObjCRecvSuper loc)       = locOf loc
     locOf (ObjCRecvExp _ loc)       = locOf loc
@@ -789,6 +818,37 @@ instance Located ObjCRecv where
 
 instance Located ObjCArg where
     locOf (ObjCArg _ _ loc) = locOf loc
+
+{------------------------------------------------------------------------------
+ -
+ - Utilities
+ -
+ ------------------------------------------------------------------------------}
+
+funcProto :: Func -> InitGroup
+funcProto f@(Func decl_spec ident decl params _ _) =
+    InitGroup decl_spec []
+      [Init ident (Proto decl params l) Nothing Nothing [] l] l
+  where
+    l = srclocOf f
+
+funcProto f@(OldFunc decl_spec ident decl params _ _ _) =
+    InitGroup decl_spec []
+      [Init ident (OldProto decl params l) Nothing Nothing [] l] l
+  where
+    l = srclocOf f
+
+isPtr :: Type -> Bool
+isPtr  (Type _ decl _)  = go decl
+  where
+    go  (DeclRoot _)        = False
+    go  (Ptr _ _ _)         = True
+    go  (BlockPtr _ _ _)    = True
+    go  (Array _ _ _ _)     = True
+    go  (Proto _ _ _)       = False
+    go  (OldProto _ _ _)    = False
+    go  (AntiTypeDecl _ _)  = error "isPtr: encountered antiquoted type declaration"
+isPtr  (AntiType _ _)       = error "isPtr: encountered antiquoted type"
 
 ctypedef :: Id -> Decl -> [Attr] -> Typedef
 ctypedef ident decl attrs =
