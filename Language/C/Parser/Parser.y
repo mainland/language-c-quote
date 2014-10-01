@@ -2593,18 +2593,23 @@ objc_interface_decl_rlist :
       { rnil }
   | objc_interface_decl_rlist semi
       { $1 }
-  | objc_interface_decl_rlist objc_property_decl
+  | objc_interface_decl_rlist objc_interface_decl
       { rcons $2 $1 }
-  | objc_interface_decl_rlist objc_method_requirement
-      { rcons (ObjCIfaceReq $2 (srclocOf $2)) $1 }
-  | objc_interface_decl_rlist objc_method_proto semi
-      { rcons (ObjCIfaceMeth $2 (srclocOf $2)) $1 }
-  | objc_interface_decl_rlist declaration
-      { rcons (ObjCIfaceDecl $2 (srclocOf $2)) $1 }
-  | objc_interface_decl_rlist ANTI_OBJC_IFDECL
-      { rcons (AntiObjCIfaceDecl (getANTI_OBJC_IFDECL $2) (srclocOf $2)) $1 }
   | objc_interface_decl_rlist ANTI_OBJC_IFDECLS
       { rcons (AntiObjCIfaceDecls (getANTI_OBJC_IFDECLS $2) (srclocOf $2)) $1 }
+
+objc_interface_decl :: { ObjCIfaceDecl }
+objc_interface_decl :
+    objc_property_decl
+      { $1 }
+  | objc_method_requirement
+      { ObjCIfaceReq $1 (srclocOf $1) }
+  | objc_method_proto semi
+      { ObjCIfaceMeth $1 (srclocOf $1) }
+  | declaration
+      { ObjCIfaceDecl $1 (srclocOf $1) }
+  | ANTI_OBJC_IFDECL
+      { AntiObjCIfaceDecl (getANTI_OBJC_IFDECL $1) (srclocOf $1) }
 
 objc_property_decl :: { ObjCIfaceDecl }
 objc_property_decl :
