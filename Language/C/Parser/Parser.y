@@ -300,8 +300,8 @@ import qualified Language.C.Syntax as C
 -- Objective-C
 --
 %name parseObjCProp       objc_property_decl
-%name parseObjCIfaceDecls objc_interface_decl_list_ext
-%name parseObjCImplDecls  objc_implementation_decl_list_ext
+%name parseObjCIfaceDecls objc_interface_decl_list
+%name parseObjCImplDecls  objc_implementation_decl_list
 
 %right NAMED OBJCNAMED
 
@@ -459,7 +459,7 @@ primary_expression :
 
 string_literal :: { StringLit }
 string_literal :
-    string_literal_
+    string_literal_rlist
       { let { slits = rev $1
             ; raw   = map (fst . unLoc) slits
             ; s     = (concat . map (snd . unLoc)) slits
@@ -468,16 +468,16 @@ string_literal :
          StringLit raw s (srclocOf slits)
       }
 
-string_literal_ :: { RevList (L (String, String)) }
-string_literal_ :
-    STRING                  { rsingleton (L (locOf $1) (getSTRING $1)) }
-  | string_literal_ STRING  { rcons (L (locOf $2) (getSTRING $2)) $1 }
+string_literal_rlist :: { RevList (L (String, String)) }
+string_literal_rlist :
+    STRING                      { rsingleton (L (locOf $1) (getSTRING $1)) }
+  | string_literal_rlist STRING { rcons (L (locOf $2) (getSTRING $2)) $1 }
 
-assignment_expression_list :: { RevList Exp }
-assignment_expression_list :
+assignment_expression_rlist :: { RevList Exp }
+assignment_expression_rlist :
     assignment_expression
       { rsingleton $1 }
-  | assignment_expression_list ',' assignment_expression
+  | assignment_expression_rlist ',' assignment_expression
       { rcons $3 $1 }
 
 postfix_expression :: { Exp }
@@ -493,9 +493,9 @@ postfix_expression :
       {% unclosed (locOf $2) "(" }
   | postfix_expression '(' ')'
       { FnCall $1 [] ($1 `srcspan` $3) }
-  | postfix_expression '(' argument_expression_list error
+  | postfix_expression '(' argument_expression_rlist error
       {% unclosed ($2 <--> rev $3) "(" }
-  | postfix_expression '(' argument_expression_list ')'
+  | postfix_expression '(' argument_expression_rlist ')'
       { FnCall $1 (rev $3) ($1 `srcspan` $4) }
 
   | postfix_expression '<<<' execution_configuration error
@@ -503,10 +503,10 @@ postfix_expression :
   | postfix_expression '<<<' execution_configuration '>>>' '(' ')'
       { CudaCall $1 $3 [] ($1 `srcspan` $6) }
   | postfix_expression '<<<' execution_configuration '>>>'
-                       '(' argument_expression_list error
+                       '(' argument_expression_rlist error
       {% unclosed ($5 <--> rev $6) "(" }
   | postfix_expression '<<<' execution_configuration '>>>'
-                       '(' argument_expression_list ')'
+                       '(' argument_expression_rlist ')'
       { CudaCall $1 $3 (rev $6) ($1 `srcspan` $7) }
 
   | postfix_expression '.' identifier_or_typedef
@@ -517,24 +517,24 @@ postfix_expression :
       { PostInc $1 ($1 `srcspan` $2) }
   | postfix_expression '--'
       { PostDec $1 ($1 `srcspan` $2) }
-  | '(' type_name ')' lbrace initializer_list '}'
+  | '(' type_name ')' lbrace initializer_rlist '}'
       { CompoundLit ($2 :: Type) (rev $5) ($1 `srcspan` $6) }
-  | '(' type_name ')' lbrace initializer_list ',' '}'
+  | '(' type_name ')' lbrace initializer_rlist ',' '}'
       { CompoundLit $2 (rev $5) ($1 `srcspan` $7) }
 
   -- GCC
   | '__builtin_va_arg' '(' assignment_expression ',' type_declaration ')'
       { BuiltinVaArg $3 $5 ($1 `srcspan` $6) }
 
-argument_expression_list :: { RevList Exp }
-argument_expression_list :
+argument_expression_rlist :: { RevList Exp }
+argument_expression_rlist :
     assignment_expression
       { rsingleton $1 }
   | ANTI_ARGS
       { rsingleton (AntiArgs (getANTI_ARGS $1) (srclocOf $1)) }
-  | argument_expression_list ',' assignment_expression
+  | argument_expression_rlist ',' assignment_expression
       { rcons $3 $1}
-  | argument_expression_list ',' ANTI_ARGS
+  | argument_expression_rlist ',' ANTI_ARGS
       { rcons (AntiArgs (getANTI_ARGS $3) (srclocOf $3)) $1 }
 
 unary_expression :: { Exp }
@@ -722,7 +722,7 @@ declaration_ :
            ; checkInitGroup dspec decl [] []
            }
       }
-  | declaration_specifiers init_declarator_list
+  | declaration_specifiers init_declarator_rlist
       {% do{ let (dspec, decl)  = $1
            ; let inits          = rev $2
            ; checkInitGroup dspec decl [] (rev $2)
@@ -743,7 +743,7 @@ declaration_nla_ :
            ; checkInitGroup dspec decl [] []
            }
       }
-  | declaration_specifiers_nla init_declarator_list
+  | declaration_specifiers_nla init_declarator_rlist
       {% do{ let (dspec, decl)  = $1
            ; let inits          = rev $2
            ; checkInitGroup dspec decl [] (rev $2)
@@ -820,7 +820,7 @@ nontypedef_declaration_specifiers :
            ; return (dspec, DeclRoot (srclocOf $1) )
            }
       }
-  | type_specifier declaration_specifiers_
+  | type_specifier declaration_specifiers_rlist
       {% do{ dspec <- mkDeclSpec ($1 : rev $2)
            ; return (dspec, DeclRoot ($1 `srcspan` $2))
            }
@@ -830,7 +830,7 @@ nontypedef_declaration_specifiers :
            ; return $(dspec, DeclRoot ($1 `srcspan` $2))
            }
       }
-  | storage_qualifier_specifiers type_specifier declaration_specifiers_
+  | storage_qualifier_specifiers type_specifier declaration_specifiers_rlist
       {% do{ dspec <- mkDeclSpec ($1 ++ $2 : rev $3)
            ; return (dspec, DeclRoot ($1 `srcspan` $3))
            }
@@ -853,7 +853,7 @@ nontypedef_declaration_specifiers_nla :
            ; return (dspec, DeclRoot (srclocOf $1) )
            }
       }
-  | type_specifier declaration_specifiers_
+  | type_specifier declaration_specifiers_rlist
       {% do{ dspec <- mkDeclSpec ($1 : rev $2)
            ; return (dspec, DeclRoot ($1 `srcspan` $2))
            }
@@ -863,7 +863,7 @@ nontypedef_declaration_specifiers_nla :
            ; return $(dspec, DeclRoot ($1 `srcspan` $2))
            }
       }
-  | storage_qualifier_specifiers_nla type_specifier declaration_specifiers_
+  | storage_qualifier_specifiers_nla type_specifier declaration_specifiers_rlist
       {% do{ dspec <- mkDeclSpec ($1 ++ $2 : rev $3)
            ; return (dspec, DeclRoot ($1 `srcspan` $3))
            }
@@ -915,49 +915,49 @@ typedef_declaration_specifiers_nla :
            }
       }
 
-declaration_specifiers_ :: { RevList TySpec }
-declaration_specifiers_ :
-    storage_class_specifier                         { rsingleton $1 }
-  | declaration_specifiers_ storage_class_specifier { rcons $2 $1 }
-  | type_specifier                                  { rsingleton $1 }
-  | declaration_specifiers_ type_specifier          { rcons $2 $1 }
-  | type_qualifier                                  { rsingleton $1 }
-  | declaration_specifiers_ type_qualifier          { rcons $2 $1 }
-  | attribute_specifier                             { rapp (map TSAttr $1) rnil }
-  | declaration_specifiers_ attribute_specifier     { rapp (map TSAttr $2) $1 }
+declaration_specifiers_rlist :: { RevList TySpec }
+declaration_specifiers_rlist :
+    storage_class_specifier                              { rsingleton $1 }
+  | type_specifier                                       { rsingleton $1 }
+  | type_qualifier                                       { rsingleton $1 }
+  | attribute_specifier                                  { rapp (map TSAttr $1) rnil }
+  | declaration_specifiers_rlist storage_class_specifier { rcons $2 $1 }
+  | declaration_specifiers_rlist type_specifier          { rcons $2 $1 }
+  | declaration_specifiers_rlist type_qualifier          { rcons $2 $1 }
+  | declaration_specifiers_rlist attribute_specifier     { rapp (map TSAttr $2) $1 }
 
 -- This production allows us to add storage class specifiers and type qualifiers
 -- to an anti-quoted type.
 
 storage_qualifier_specifiers :: { [TySpec]}
 storage_qualifier_specifiers :
-    storage_qualifier_specifiers_ { rev $1 }
+    storage_qualifier_specifiers_rlist { rev $1 }
 
-storage_qualifier_specifiers_ :: { RevList TySpec }
-storage_qualifier_specifiers_ :
-    storage_class_specifier                               { rsingleton $1 }
-  | storage_qualifier_specifiers_ storage_class_specifier { rcons $2 $1 }
-  | type_qualifier                                        { rsingleton $1 }
-  | storage_qualifier_specifiers_ type_qualifier          { rcons $2 $1 }
-  | attribute_specifier                                   { rapp (map TSAttr $1) rnil }
-  | storage_qualifier_specifiers_ attribute_specifier     { rapp (map TSAttr $2) $1 }
+storage_qualifier_specifiers_rlist :: { RevList TySpec }
+storage_qualifier_specifiers_rlist :
+    storage_class_specifier                                    { rsingleton $1 }
+  | type_qualifier                                             { rsingleton $1 }
+  | attribute_specifier                                        { rapp (map TSAttr $1) rnil }
+  | storage_qualifier_specifiers_rlist storage_class_specifier { rcons $2 $1 }
+  | storage_qualifier_specifiers_rlist type_qualifier          { rcons $2 $1 }
+  | storage_qualifier_specifiers_rlist attribute_specifier     { rapp (map TSAttr $2) $1 }
 
 storage_qualifier_specifiers_nla :: { [TySpec]}
 storage_qualifier_specifiers_nla :
-    storage_qualifier_specifiers_nla_ { rev $1 }
+    storage_qualifier_specifiers_rlist_nla { rev $1 }
 
-storage_qualifier_specifiers_nla_ :: { RevList TySpec }
-storage_qualifier_specifiers_nla_ :
-    storage_class_specifier                                   { rsingleton $1 }
-  | storage_qualifier_specifiers_nla_ storage_class_specifier { rcons $2 $1 }
-  | type_qualifier                                            { rsingleton $1 }
-  | storage_qualifier_specifiers_nla_ type_qualifier          { rcons $2 $1 }
-  | storage_qualifier_specifiers_nla_ attribute_specifier     { rapp (map TSAttr $2) $1 }
+storage_qualifier_specifiers_rlist_nla :: { RevList TySpec }
+storage_qualifier_specifiers_rlist_nla :
+    storage_class_specifier                                        { rsingleton $1 }
+  | type_qualifier                                                 { rsingleton $1 }
+  | storage_qualifier_specifiers_rlist_nla storage_class_specifier { rcons $2 $1 }
+  | storage_qualifier_specifiers_rlist_nla type_qualifier          { rcons $2 $1 }
+  | storage_qualifier_specifiers_rlist_nla attribute_specifier     { rapp (map TSAttr $2) $1 }
 
-init_declarator_list :: { RevList Init }
-init_declarator_list :
-    init_declarator                           { rsingleton $1 }
-  | init_declarator_list ',' init_declarator  { rcons $3 $1 }
+init_declarator_rlist :: { RevList Init }
+init_declarator_rlist :
+    init_declarator                            { rsingleton $1 }
+  | init_declarator_rlist ',' init_declarator  { rcons $3 $1 }
 
 init_declarator :: { Init }
 init_declarator :
@@ -1029,19 +1029,19 @@ struct_or_union_specifier :
       { (unLoc $1) (Just $2) Nothing [] ($1 `srcspan` $2) }
   | struct_or_union attribute_specifiers identifier_or_typedef
       { (unLoc $1) (Just $3) Nothing $2 ($1 `srcspan` $3) }
-  | struct_or_union lbrace struct_declaration_list '}'
+  | struct_or_union lbrace struct_declaration_rlist '}'
       { (unLoc $1) Nothing (Just (rev $3)) [] ($1 `srcspan` $4) }
-  | struct_or_union lbrace struct_declaration_list error
+  | struct_or_union lbrace struct_declaration_rlist error
       {% unclosed ($1 <--> rev $3) "{" }
-  | struct_or_union identifier_or_typedef lbrace struct_declaration_list '}'
+  | struct_or_union identifier_or_typedef lbrace struct_declaration_rlist '}'
       { (unLoc $1) (Just $2) (Just (rev $4)) [] ($1 `srcspan` $5) }
-  | struct_or_union identifier_or_typedef lbrace struct_declaration_list error
+  | struct_or_union identifier_or_typedef lbrace struct_declaration_rlist error
       {% unclosed ($1 <--> rev $4) "{" }
-  | struct_or_union attribute_specifiers identifier_or_typedef lbrace struct_declaration_list '}'
+  | struct_or_union attribute_specifiers identifier_or_typedef lbrace struct_declaration_rlist '}'
       { (unLoc $1) (Just $3) (Just (rev $5)) $2 ($1 `srcspan` $6) }
-  | struct_or_union attribute_specifiers lbrace struct_declaration_list '}'
+  | struct_or_union attribute_specifiers lbrace struct_declaration_rlist '}'
       { (unLoc $1) Nothing (Just (rev $4)) $2 ($1 `srcspan` $5) }
-  | struct_or_union attribute_specifiers identifier_or_typedef lbrace struct_declaration_list error
+  | struct_or_union attribute_specifiers identifier_or_typedef lbrace struct_declaration_rlist error
       {% unclosed ($1 <--> rev $5) "{" }
 
 struct_or_union :: { L (Maybe Id -> Maybe [FieldGroup] -> [Attr] -> SrcLoc -> TySpec) }
@@ -1049,20 +1049,20 @@ struct_or_union :
     'struct' { L (locOf $1) TSstruct }
   | 'union'  { L (locOf $1) TSunion }
 
-struct_declaration_list :: { RevList FieldGroup }
-struct_declaration_list :
+struct_declaration_rlist :: { RevList FieldGroup }
+struct_declaration_rlist :
     struct_declaration
       { rsingleton $1 }
   | ANTI_SDECLS
       { rsingleton (AntiSdecls (getANTI_SDECLS $1) (srclocOf $1)) }
-  | struct_declaration_list struct_declaration
+  | struct_declaration_rlist struct_declaration
       { rcons $2 $1 }
-  | struct_declaration_list ANTI_SDECLS
+  | struct_declaration_rlist ANTI_SDECLS
       { rcons (AntiSdecls (getANTI_SDECLS $2) (srclocOf $2)) $1 }
 
 struct_declaration :: { FieldGroup }
 struct_declaration :
-    ANTI_SPEC struct_declarator_list semi
+    ANTI_SPEC struct_declarator_rlist semi
       { let dspec = AntiDeclSpec (getANTI_SPEC $1) (srclocOf $1)
         in
           FieldGroup dspec (map ($ Nothing) (rev $2)) ($1 `srcspan` $3)
@@ -1077,12 +1077,12 @@ struct_declaration :
             ; return $ FieldGroup dspec [] ($1 `srcspan` $2)
             }
       }
-  | specifier_qualifier_list struct_declarator_list semi
+  | specifier_qualifier_list struct_declarator_rlist semi
       {%  do{ dspec <- mkDeclSpec $1
             ; return $ FieldGroup dspec (map ($ Nothing) (rev $2)) ($1 `srcspan` $3)
             }
       }
-  | ANTI_TYPE struct_declarator_list semi
+  | ANTI_TYPE struct_declarator_rlist semi
       {%  do{ let v     = getANTI_TYPE $1
             ; let dspec = AntiTypeDeclSpec [] [] v (srclocOf $1)
             ; let decl  = AntiTypeDecl v (srclocOf $1)
@@ -1094,30 +1094,30 @@ struct_declaration :
 
 specifier_qualifier_list :: { [TySpec] }
 specifier_qualifier_list :
-    type_specifier specifier_qualifier_list_
+    type_specifier specifier_qualifier_rlist
       { $1 : rev $2 }
-  | type_qualifier_list type_specifier specifier_qualifier_list_
+  | type_qualifier_rlist type_specifier specifier_qualifier_rlist
       { rev $1 ++ [$2] ++ rev $3 }
   | typedef_name
       { [$1] }
-  | typedef_name type_qualifier_list
+  | typedef_name type_qualifier_rlist
       { $1 : rev $2 }
-  | type_qualifier_list typedef_name
+  | type_qualifier_rlist typedef_name
       { rev $1 ++ [$2] }
-  | type_qualifier_list typedef_name type_qualifier_list
+  | type_qualifier_rlist typedef_name type_qualifier_rlist
       { rev $1 ++ [$2] ++ rev $3 }
 
-specifier_qualifier_list_ :: { RevList TySpec }
-specifier_qualifier_list_ :
+specifier_qualifier_rlist :: { RevList TySpec }
+specifier_qualifier_rlist :
     {- empty -}                                   { rnil }
-  | specifier_qualifier_list_ type_specifier      { rcons $2 $1 }
-  | specifier_qualifier_list_ type_qualifier      { rcons $2 $1 }
-  | specifier_qualifier_list_ attribute_specifier { $1 }
+  | specifier_qualifier_rlist type_specifier      { rcons $2 $1 }
+  | specifier_qualifier_rlist type_qualifier      { rcons $2 $1 }
+  | specifier_qualifier_rlist attribute_specifier { $1 }
 
-struct_declarator_list :: { RevList (Maybe Decl -> Field) }
-struct_declarator_list :
-    struct_declarator                            { rsingleton $1 }
-  | struct_declarator_list ',' struct_declarator { rcons $3 $1 }
+struct_declarator_rlist :: { RevList (Maybe Decl -> Field) }
+struct_declarator_rlist :
+    struct_declarator                             { rsingleton $1 }
+  | struct_declarator_rlist ',' struct_declarator { rcons $3 $1 }
 
 struct_declarator :: { Maybe Decl -> Field }
 struct_declarator :
@@ -1154,22 +1154,22 @@ enum_specifier :
       { TSenum (Just $2) [] [] ($1 `srcspan` $2) }
   | 'enum' attribute_specifiers identifier_or_typedef
       { TSenum (Just $3) [] $2 ($1 `srcspan` $3) }
-  | 'enum' lbrace enumerator_list '}'
+  | 'enum' lbrace enumerator_rlist '}'
       { TSenum Nothing (rev $3) [] ($1 `srcspan` $4) }
-  | 'enum' identifier_or_typedef lbrace enumerator_list '}'
+  | 'enum' identifier_or_typedef lbrace enumerator_rlist '}'
       { TSenum (Just $2) (rev $4) [] ($1 `srcspan` $5)}
 
-enumerator_list :: { RevList CEnum }
-enumerator_list :
+enumerator_rlist :: { RevList CEnum }
+enumerator_rlist :
     enumerator
       { rsingleton $1 }
   | ANTI_ENUMS
       { rsingleton (AntiEnums (getANTI_ENUMS $1) (srclocOf $1)) }
-  | enumerator_list ','
+  | enumerator_rlist ','
       { $1 }
-  | enumerator_list ',' enumerator
+  | enumerator_rlist ',' enumerator
       { rcons $3 $1 }
-  | enumerator_list ',' ANTI_ENUMS
+  | enumerator_rlist ',' ANTI_ENUMS
       { rcons (AntiEnums (getANTI_ENUMS $3) (srclocOf $3)) $1 }
 
 enumerator :: { CEnum }
@@ -1276,7 +1276,7 @@ identifier_direct_declarator :
         in
           (ident, declToDecl . proto)
       }
-  | identifier_direct_declarator '(' identifier_list ')'
+  | identifier_direct_declarator '(' identifier_rlist ')'
       { let { (ident, declToDecl) = $1
             ; proto = mkOldProto (rev $3)
             }
@@ -1325,7 +1325,7 @@ typedef_direct_declarator :
         in
           (ident, declToDecl . proto)
       }
-  | typedef_direct_declarator '(' identifier_list ')'
+  | typedef_direct_declarator '(' identifier_rlist ')'
       { let { (ident, declToDecl) = $1
             ; proto = mkOldProto (rev $3)
             }
@@ -1382,7 +1382,7 @@ parameter_typedef_direct_declarator :
         in
           (ident, declToDecl . proto)
       }
-  | parameter_typedef_direct_declarator '(' identifier_list ')'
+  | parameter_typedef_direct_declarator '(' identifier_rlist ')'
       { let { (ident, declToDecl) = $1
             ; proto = mkOldProto (rev $3)
             }
@@ -1407,21 +1407,21 @@ array_declarator :
       { mkArray [] (NoArraySize ($1 `srcspan` $2)) }
   | '[' error
       {% unclosed (locOf $1) "[" }
-  | '[' type_qualifier_list ']'
+  | '[' type_qualifier_rlist ']'
       { mkArray (rev $2) (NoArraySize ($1 `srcspan` $3)) }
   | '[' assignment_expression ']'
       { mkArray [] (ArraySize False $2 (srclocOf $2)) }
-  | '[' type_qualifier_list assignment_expression ']'
+  | '[' type_qualifier_rlist assignment_expression ']'
       { mkArray (rev $2) (ArraySize False $3 (srclocOf $3)) }
   | '[' 'static' assignment_expression ']'
       { mkArray [] (ArraySize True $3 (srclocOf $3)) }
-  | '[' 'static' type_qualifier_list assignment_expression ']'
+  | '[' 'static' type_qualifier_rlist assignment_expression ']'
       { mkArray (rev $3) (ArraySize True $4 (srclocOf $4)) }
-  | '[' type_qualifier_list 'static' assignment_expression ']'
+  | '[' type_qualifier_rlist 'static' assignment_expression ']'
       { mkArray (rev $2) (ArraySize True $4 (srclocOf $4)) }
   | '[' '*' ']'
       { mkArray [] (VariableArraySize ($1 `srcspan` $3)) }
-  | '[' type_qualifier_list  '*' ']'
+  | '[' type_qualifier_rlist  '*' ']'
       { mkArray (rev $2) (VariableArraySize ($1 `srcspan` $4)) }
 
 -- Extension: blocks <http://clang.llvm.org/docs/BlockLanguageSpec.html>
@@ -1432,29 +1432,29 @@ array_declarator :
 pointer :: { Decl -> Decl }
 pointer :
     '*'                              { mkPtr [] }
-  | '*' type_qualifier_list          { mkPtr (rev $2) }
+  | '*' type_qualifier_rlist         { mkPtr (rev $2) }
   | '*' pointer                      { $2 . mkPtr [] }
-  | '*' type_qualifier_list pointer  { $3 . mkPtr (rev $2) }
+  | '*' type_qualifier_rlist pointer { $3 . mkPtr (rev $2) }
 
   -- Clang blocks
   | '^'                              {% mkBlockPtr (locOf $1) [] }
-  | '^' type_qualifier_list          {% mkBlockPtr (locOf $1) (rev $2) }
+  | '^' type_qualifier_rlist         {% mkBlockPtr (locOf $1) (rev $2) }
   | '^' pointer                      {% ($2 .) `liftM` mkBlockPtr (locOf $1) [] }
-  | '^' type_qualifier_list pointer  {% ($3 .) `liftM` mkBlockPtr (locOf $1) (rev $2) }
+  | '^' type_qualifier_rlist pointer {% ($3 .) `liftM` mkBlockPtr (locOf $1) (rev $2) }
 
-type_qualifier_list :: { RevList TySpec }
-type_qualifier_list :
-    type_qualifier                     { rsingleton $1 }
-  | type_qualifier_list type_qualifier { rcons $2 $1 }
+type_qualifier_rlist :: { RevList TySpec }
+type_qualifier_rlist :
+    type_qualifier                      { rsingleton $1 }
+  | type_qualifier_rlist type_qualifier { rcons $2 $1 }
 
 parameter_type_list :: { Params }
 parameter_type_list :
-    parameter_list_
+    parameter_rlist
       { let params = rev $1
         in
           Params params False (srclocOf params)
       }
-  | parameter_list_ ',' '...'
+  | parameter_rlist ',' '...'
       { let params = rev $1
         in
           Params params True (params `srcspan` $3)
@@ -1462,17 +1462,17 @@ parameter_type_list :
 
 parameter_list :: { [Param] }
 parameter_list :
-    parameter_list_ { rev $1 }
+    parameter_rlist { rev $1 }
 
-parameter_list_ :: { RevList Param }
-parameter_list_ :
+parameter_rlist :: { RevList Param }
+parameter_rlist :
     parameter_declaration
       { rsingleton $1 }
   | ANTI_PARAMS
       { rsingleton (AntiParams (getANTI_PARAMS $1) (srclocOf $1)) }
-  | parameter_list_ ',' parameter_declaration
+  | parameter_rlist ',' parameter_declaration
       { rcons $3 $1 }
-  | parameter_list_ ',' ANTI_PARAMS
+  | parameter_rlist ',' ANTI_PARAMS
       { rcons (AntiParams (getANTI_PARAMS $3) (srclocOf $3))  $1 }
 
 parameter_declaration :: { Param }
@@ -1527,10 +1527,10 @@ type_declaration :
           Type dspec decl (dspec `srcspan` decl)
       }
 
-identifier_list :: { RevList Id }
-identifier_list :
-    identifier                      { rsingleton $1 }
-  | identifier_list ',' identifier  { rcons $3 $1 }
+identifier_rlist :: { RevList Id }
+identifier_rlist :
+    identifier                       { rsingleton $1 }
+  | identifier_rlist ',' identifier  { rcons $3 $1 }
 
 type_name :: { Type }
 type_name :
@@ -1599,13 +1599,13 @@ typedef_name :: { TySpec }
 typedef_name :
     NAMED
       { TSnamed (Id (getNAMED $1) (srclocOf $1)) [] (srclocOf $1) }
-  | NAMED '<' identifier_list '>'
+  | NAMED '<' identifier_rlist '>'
       {% do { assertObjCEnabled ($1 <--> $4) "To use protocol qualifiers, enable support for Objective-C"
             ; return $ TSnamed (Id (getNAMED $1) (srclocOf $1)) (rev $3) ($1 `srcspan` $4)
             } }
   | 'typename' identifier
       { TSnamed $2 [] (srclocOf $1) }
-  | 'typename' identifier '<' identifier_list '>'
+  | 'typename' identifier '<' identifier_rlist '>'
       {% do { assertObjCEnabled ($1 <--> $5) "To use protocol qualifiers, enable support for Objective-C"
             ; return $ TSnamed $2 (rev $4) ($1 `srcspan` $5)
             } }
@@ -1623,7 +1623,7 @@ typedef_name :
   -- Objective-C
   | OBJCNAMED
       { TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) [] (srclocOf $1) }
-  | OBJCNAMED '<' identifier_list '>'
+  | OBJCNAMED '<' identifier_rlist '>'
       {% do { assertObjCEnabled ($1 <--> $4) "To use protocol qualifiers, enable support for Objective-C"
             ; return $ TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) (rev $3) ($1 `srcspan` $4)
             }
@@ -1633,45 +1633,45 @@ initializer :: { Initializer }
 initializer :
     assignment_expression
       { ExpInitializer $1 (srclocOf $1) }
-  | lbrace initializer_list '}'
+  | lbrace initializer_rlist '}'
       { CompoundInitializer (rev $2) ($1 `srcspan` $3) }
-  | lbrace initializer_list error
+  | lbrace initializer_rlist error
       {% do{  let (_, inits) = unzip (rev $2)
            ;  unclosed ($1 <--> inits) "{"
            }
       }
-  | lbrace initializer_list ',' '}'
+  | lbrace initializer_rlist ',' '}'
       { CompoundInitializer (rev $2) ($1 `srcspan` $4) }
-  | lbrace initializer_list ',' error
+  | lbrace initializer_rlist ',' error
       {% unclosed ($1 <--> $3) "{" }
   | ANTI_INIT
       { AntiInit (getANTI_INIT $1) (srclocOf $1) }
 
-initializer_list :: { RevList (Maybe Designation, Initializer) }
-initializer_list :
+initializer_rlist :: { RevList (Maybe Designation, Initializer) }
+initializer_rlist :
     initializer
       { rsingleton (Nothing, $1) }
   | ANTI_INITS
       { rsingleton (Nothing, AntiInits (getANTI_INITS $1) (srclocOf $1)) }
   | designation initializer
       { rsingleton (Just $1, $2) }
-  | initializer_list ',' initializer
+  | initializer_rlist ',' initializer
       { rcons (Nothing, $3) $1 }
-  | initializer_list ',' designation initializer
+  | initializer_rlist ',' designation initializer
       { rcons (Just $3, $4) $1 }
 
 designation :: { Designation }
 designation :
-    designator_list '='
+    designator_rlist '='
       { let designators = rev $1
         in
           Designation designators (designators `srcspan` $2)
       }
 
-designator_list :: { RevList Designator }
-designator_list :
-    designator                 { rsingleton $1 }
-  | designator_list designator { rcons $2 $1 }
+designator_rlist :: { RevList Designator }
+designator_rlist :
+    designator                  { rsingleton $1 }
+  | designator_rlist designator { rcons $2 $1 }
 
 designator :: { Designator }
 designator :
@@ -1708,14 +1708,14 @@ statement :
 
 statement_list :: { [Stm] }
 statement_list :
-    statement_list_ { rev $1 }
+    statement_rlist { rev $1 }
 
-statement_list_ :: { RevList Stm }
-statement_list_ :
+statement_rlist :: { RevList Stm }
+statement_rlist :
      statement                 { rsingleton $1 }
   |  ANTI_STMS                 { rsingleton (AntiStms (getANTI_STMS $1) (srclocOf $1)) }
-  |  statement_list_ statement { rcons $2 $1 }
-  |  statement_list_ ANTI_STMS { rcons (AntiStms (getANTI_STMS $2) (srclocOf $2)) $1 }
+  |  statement_rlist statement { rcons $2 $1 }
+  |  statement_rlist ANTI_STMS { rcons (AntiStms (getANTI_STMS $2) (srclocOf $2)) $1 }
 
 labeled_statement :: { Stm }
 labeled_statement :
@@ -1739,23 +1739,23 @@ compound_statement:
       { Block [] ($1 `srcspan` $5) }
   | '{' begin_scope error
       {% unclosed (locOf $3) "{" }
-  | '{' begin_scope block_item_list end_scope '}'
+  | '{' begin_scope block_item_rlist end_scope '}'
       { Block (rev $3) ($1 `srcspan` $5) }
-  | '{' begin_scope block_item_list '//' end_scope '}'
+  | '{' begin_scope block_item_rlist '//' end_scope '}'
       { let commentStm = BlockStm (mkEmptyCommentStm $4)
         in
          Block (rev (rcons commentStm $3)) ($1 `srcspan` $6)
       }
-  | '{' begin_scope block_item_list ANTI_COMMENT end_scope '}'
+  | '{' begin_scope block_item_rlist ANTI_COMMENT end_scope '}'
       { let commentStm = BlockStm (AntiComment (getANTI_COMMENT $4) (mkEmptyCommentStm $4) (srclocOf $4))
         in
          Block (rev (rcons commentStm $3)) ($1 `srcspan` $6)
       }
 
-block_item_list :: { RevList BlockItem }
-block_item_list :
-     block_item                 { rsingleton $1 }
-  |  block_item_list block_item { rcons $2 $1 }
+block_item_rlist :: { RevList BlockItem }
+block_item_rlist :
+     block_item                  { rsingleton $1 }
+  |  block_item_rlist block_item { rcons $2 $1 }
 
 block_item  :: { BlockItem }
 block_item :
@@ -1840,18 +1840,18 @@ jump_statement :
 
 translation_unit :: { [Definition] }
 translation_unit :
-    {- empty -}       { [] }
-  | translation_unit_ { rev $1 }
+    {- empty -}            { [] }
+  | translation_unit_rlist { rev $1 }
 
-translation_unit_ :: { RevList Definition }
-translation_unit_ :
+translation_unit_rlist :: { RevList Definition }
+translation_unit_rlist :
     external_declaration
       { rsingleton $1 }
   | ANTI_EDECLS
       { rsingleton (AntiEdecls (getANTI_EDECLS $1) (srclocOf $1)) }
-  | translation_unit_ external_declaration
+  | translation_unit_rlist external_declaration
       { rcons $2 $1 }
-  | translation_unit_ ANTI_EDECLS
+  | translation_unit_rlist ANTI_EDECLS
       { rcons (AntiEdecls (getANTI_EDECLS $2) (srclocOf $2)) $1 }
 
 external_declaration :: { Definition }
@@ -1895,7 +1895,7 @@ function_definition :
                }
            }
       }
-  | declaration_specifiers declarator declaration_list compound_statement
+  | declaration_specifiers declarator declaration_rlist compound_statement
       {% do{ let (dspec, declRoot)   =  $1
            ; let (ident, declToDecl) =  $2
            ; let argDecls            =  $3
@@ -1914,17 +1914,17 @@ function_definition :
 
 -- To prevent ambiguity, the first declaration in a list of old-style function
 -- parameter declarations cannot start with an attribute.
-declaration_list :: { RevList InitGroup }
-declaration_list :
+declaration_rlist :: { RevList InitGroup }
+declaration_rlist :
     declaration_nla
       { rsingleton $1 }
   | ANTI_DECLS
       { rsingleton (AntiDecls (getANTI_DECLS $1) (srclocOf $1)) }
-  | declaration_list declaration
+  | declaration_rlist declaration
       { rcons $2 $1 }
-  | declaration_list declaration '//'
+  | declaration_rlist declaration '//'
       { rcons $2 $1 }
-  | declaration_list ANTI_DECLS
+  | declaration_rlist ANTI_DECLS
       { rcons (AntiDecls (getANTI_DECLS $2) (srclocOf $2)) $1 }
 
 {------------------------------------------------------------------------------
@@ -1969,18 +1969,18 @@ attribute_specifiers :
 
 attribute_specifier :: { [Attr] }
 attribute_specifier :
-    '__attribute__' '(' '(' attribute_list ')' ')' { rev $4 }
+    '__attribute__' '(' '(' attribute_rlist ')' ')' { rev $4 }
 
-attribute_list :: { RevList Attr }
-attribute_list :
-    attrib                    { rsingleton $1 }
-  | attribute_list ',' attrib { rcons $3 $1 }
+attribute_rlist :: { RevList Attr }
+attribute_rlist :
+    attrib                     { rsingleton $1 }
+  | attribute_rlist ',' attrib { rcons $3 $1 }
 
 attrib :: { Attr }
 attrib :
     attrib_name
       { Attr $1 [] (srclocOf $1)}
-  | attrib_name '(' argument_expression_list ')'
+  | attrib_name '(' argument_expression_rlist ')'
       { Attr $1 (rev $3) ($1 `srcspan` $4) }
 
 attrib_name :: { Id }
@@ -2031,13 +2031,13 @@ asm_statement :
 
 asm_ins :: { [AsmIn] }
 asm_ins :
-    {- empty -} { [] }
-  | asm_ins_    { rev $1 }
+    {- empty -}   { [] }
+  | asm_ins_rlist { rev $1 }
 
-asm_ins_ :: { RevList AsmIn }
-asm_ins_ :
-    asm_in              { rsingleton $1 }
-  | asm_ins_ ',' asm_in { rcons $3 $1 }
+asm_ins_rlist :: { RevList AsmIn }
+asm_ins_rlist :
+    asm_in                   { rsingleton $1 }
+  | asm_ins_rlist ',' asm_in { rcons $3 $1 }
 
 asm_in :: { AsmIn }
 asm_in :
@@ -2046,13 +2046,13 @@ asm_in :
 
 asm_outs :: { [AsmOut] }
 asm_outs :
-    {- empty -} { [] }
-  | asm_outs_ { rev $1 }
+    {- empty -}    { [] }
+  | asm_outs_rlist { rev $1 }
 
-asm_outs_ :: { RevList AsmOut }
-asm_outs_ :
-    asm_out               { rsingleton $1 }
-  | asm_outs_ ',' asm_out { rcons $3 $1 }
+asm_outs_rlist :: { RevList AsmOut }
+asm_outs_rlist :
+    asm_out                    { rsingleton $1 }
+  | asm_outs_rlist ',' asm_out { rcons $3 $1 }
 
 asm_out :: { AsmOut }
 asm_out :
@@ -2061,13 +2061,13 @@ asm_out :
 
 asm_clobbers :: { [String] }
 asm_clobbers :
-    {- empty -}    { [] }
-  | asm_clobbers_  { rev $1 }
+    {- empty -}         { [] }
+  | asm_clobbers_rlist  { rev $1 }
 
-asm_clobbers_ :: { RevList String }
-asm_clobbers_ :
-    asm_clobber                   { rsingleton $1 }
-  | asm_clobbers_ ',' asm_clobber { rcons $3 $1 }
+asm_clobbers_rlist :: { RevList String }
+asm_clobbers_rlist :
+    asm_clobber                        { rsingleton $1 }
+  | asm_clobbers_rlist ',' asm_clobber { rcons $3 $1 }
 
 asm_clobber :: { String }
 asm_clobber :
@@ -2080,12 +2080,12 @@ asm_symbolic_name_opt :
 
 asm_goto_labels :: { [Id] }
 asm_goto_labels :
-    asm_goto_labels_ { rev $1 }
+    asm_goto_labels_rlist { rev $1 }
 
-asm_goto_labels_ :: { RevList Id }
-asm_goto_labels_ :
-    identifier                      { rsingleton $1 }
-  | asm_goto_labels_ ',' identifier { rcons $3 $1 }
+asm_goto_labels_rlist :: { RevList Id }
+asm_goto_labels_rlist :
+    identifier                           { rsingleton $1 }
+  | asm_goto_labels_rlist ',' identifier { rcons $3 $1 }
 
 {------------------------------------------------------------------------------
  -
@@ -2109,10 +2109,10 @@ block_literal :
             ; return $ BlockLit (BlockVoid (srclocOf $1)) $2 items ($1 `srcspan` $3)
             }
       }
-  | '^' '(' parameter_list_ ')'                       attribute_specifiers_opt compound_statement
+  | '^' '(' parameter_list ')'                       attribute_specifiers_opt compound_statement
       {% do { assertBlocksEnabled ($1 <--> $6) "To use blocks, enable blocks language extension"
             ; let Block items _ = $6
-            ; return $ BlockLit (BlockParam (rev $3) ($2 `srcspan` $4)) $5 items ($1 `srcspan` $6)
+            ; return $ BlockLit (BlockParam $3 ($2 `srcspan` $4)) $5 items ($1 `srcspan` $6)
             }
       }
   | '^' specifier_qualifier_list abstract_declarator attribute_specifiers_opt compound_statement
@@ -2132,29 +2132,29 @@ block_literal :
  -
  ------------------------------------------------------------------------------}
 
-objc_key_value_list :: { RevList (Exp, Exp) }
-objc_key_value_list :
+objc_key_value_rlist :: { RevList (Exp, Exp) }
+objc_key_value_rlist :
     assignment_expression ':' assignment_expression
       { rsingleton ($1, $3) }
-  | objc_key_value_list ',' assignment_expression ':' assignment_expression
+  | objc_key_value_rlist ',' assignment_expression ':' assignment_expression
       { rcons ($3, $5) $1 }
 
-objc_string_literal_list :: { RevList Const }
-objc_string_literal_list :
+objc_string_literal_rlist :: { RevList Const }
+objc_string_literal_rlist :
     '@' string_literal
       { rsingleton (mkStringConst $2) }
-  | objc_string_literal_list '@' string_literal
+  | objc_string_literal_rlist '@' string_literal
       { rcons (mkStringConst $3) $1 }
 
-objc_selector_list :: { RevList Id }
-objc_selector_list :
+objc_selector_rlist :: { RevList Id }
+objc_selector_rlist :
     ':'
       { rsingleton (Id "" (srclocOf $1)) }
   | objc_selector ':'
       { rsingleton $1 }
-  | objc_selector_list ':'
+  | objc_selector_rlist ':'
       { rcons (Id "" (srclocOf $2)) $1 }
-  | objc_selector_list objc_selector ':'
+  | objc_selector_rlist objc_selector ':'
       { rcons $2 $1 }
 
 -- Objective-C extension: at statement
@@ -2176,14 +2176,14 @@ objc_selector_list :
 --
 objc_at_statement :: { Stm }
 objc_at_statement :
-    '@' 'try' compound_statement objc_catch_statement_list '@' 'finally' compound_statement
+    '@' 'try' compound_statement objc_catch_statement_rlist '@' 'finally' compound_statement
       { let { Block tryItems _     = $3
             ; Block finallyItems _ = $7
             }
         in
          ObjCTry tryItems (rev $4) (Just finallyItems) ($1 `srcspan` $7)
       }
-  | '@' 'try' compound_statement objc_catch_statement_list
+  | '@' 'try' compound_statement objc_catch_statement_rlist
       {% do { let { Block tryItems _ = $3
                   ; catchStmts       = rev $4
                   }
@@ -2192,7 +2192,7 @@ objc_at_statement :
                   text "@try statement without @finally needs at least one @catch statement"
             ; return $ ObjCTry tryItems catchStmts Nothing ($1 `srcspan` catchStmts)
             } }
-  | '@' 'try' compound_statement objc_catch_statement_list '@' error
+  | '@' 'try' compound_statement objc_catch_statement_rlist '@' error
       {% parserError ($1 <--> $5)
            (text $ "a @try-@catch statement without a @finally clause needs to be followed\n" ++
                    "by a semicolon if the next statement begins with a '@'")
@@ -2216,15 +2216,15 @@ objc_at_statement :
          ObjCAutoreleasepool items ($1 `srcspan` $3)
       }
 
-objc_catch_statement_list :: { RevList ObjCCatch }
-objc_catch_statement_list :
+objc_catch_statement_rlist :: { RevList ObjCCatch }
+objc_catch_statement_rlist :
     {- empty -}
       { rnil }
-  | objc_catch_statement_list '@' 'catch' '(' parameter_declaration ')' compound_statement
+  | objc_catch_statement_rlist '@' 'catch' '(' parameter_declaration ')' compound_statement
       { let Block items _ = $7
         in
         rcons (ObjCCatch (Just $5) items ($2 `srcspan` $7)) $1 }
-  | objc_catch_statement_list '@' 'catch' '(' '...' ')' compound_statement
+  | objc_catch_statement_rlist '@' 'catch' '(' '...' ')' compound_statement
       { let Block items _ = $7
         in
         rcons (ObjCCatch Nothing items ($2 `srcspan` $7)) $1 }
@@ -2272,7 +2272,7 @@ objc_message_args :: { ([ObjCArg], [Exp]) }
 objc_message_args :
     objc_selector
       { ([ObjCArg (Just $1) Nothing (srclocOf $1)], []) }
-  | objc_keywordarg_list objc_vararg_list
+  | objc_keywordarg_rlist objc_vararg_rlist
       { (rev $1, rev $2) }
 
 objc_selector :: { Id }
@@ -2329,11 +2329,11 @@ objc_selector :
     | '__unsafe_unretained' { Id "__unsafe_unretained" (srclocOf $1) }
 --    | '__alignof'           { Id "__alignof" (srclocOf $1) }
 
-objc_keywordarg_list :: { RevList ObjCArg }   -- will be non-empty
-objc_keywordarg_list :
+objc_keywordarg_rlist :: { RevList ObjCArg }   -- will be non-empty
+objc_keywordarg_rlist :
     objc_keywordarg
       { rsingleton $1 }
-  | objc_keywordarg_list objc_keywordarg
+  | objc_keywordarg_rlist objc_keywordarg
       { $2 `rcons` $1 }
 
 objc_keywordarg :: { ObjCArg }
@@ -2343,11 +2343,11 @@ objc_keywordarg :
   | objc_selector ':' assignment_expression
       { ObjCArg (Just $1) (Just $3) ($1 `srcspan` $3) }
 
-objc_vararg_list :: { RevList Exp }   -- might be empty
-objc_vararg_list :
+objc_vararg_rlist :: { RevList Exp }   -- might be empty
+objc_vararg_rlist :
     {- empty -}
       { rnil }
-  | objc_vararg_list ',' assignment_expression
+  | objc_vararg_rlist ',' assignment_expression
       { $3 `rcons` $1 }
 
 -- Objective-C extension: at expression
@@ -2378,7 +2378,7 @@ objc_at_expression :
       { ObjCLitConst (Just Positive) $3 ($1 `srcspan` $3) }
   | '@' '-' constant
       { ObjCLitConst (Just Negate) $3 ($1 `srcspan` $3) }
-  | objc_string_literal_list
+  | objc_string_literal_rlist
       { let lits = rev $1 in ObjCLitString lits (head lits `srcspan` last lits) }
   | '@' 'NO'
       { ObjCLitBool False ($1 `srcspan` $2) }
@@ -2386,15 +2386,15 @@ objc_at_expression :
       { ObjCLitBool True ($1 `srcspan` $2) }
   | '@' '[' ']'
       { ObjCLitArray [] ($1 `srcspan` $3) }
-  | '@' '[' assignment_expression_list ']'
+  | '@' '[' assignment_expression_rlist ']'
       { ObjCLitArray (rev $3) ($1 `srcspan` $4) }
-  | '@' '[' assignment_expression_list ',' ']'
+  | '@' '[' assignment_expression_rlist ',' ']'
       { ObjCLitArray (rev $3) ($1 `srcspan` $5) }
   | '@' lbrace '}'
       { ObjCLitDict [] ($1 `srcspan` $3) }
-  | '@' lbrace objc_key_value_list '}'
+  | '@' lbrace objc_key_value_rlist '}'
       { ObjCLitDict (rev $3) ($1 `srcspan` $4) }
-  | '@' lbrace objc_key_value_list ',' '}'
+  | '@' lbrace objc_key_value_rlist ',' '}'
       { ObjCLitDict (rev $3) ($1 `srcspan` $5) }
   | '@' '(' expression ')'
       { ObjCLitBoxed $3 ($1 `srcspan` $4) }
@@ -2407,7 +2407,7 @@ objc_at_expression :
         in
           ObjCSelector str ($1 `srcspan` $5)
       }
-  | '@' 'selector' '(' objc_selector_list ')'
+  | '@' 'selector' '(' objc_selector_rlist ')'
       { let str = concat [s ++ ":" | Id s _ <- rev $4]
         in
           ObjCSelector str ($1 `srcspan` $5)
@@ -2420,7 +2420,7 @@ objc_at_expression :
 --
 objc_class_declaration :: { Definition }
 objc_class_declaration :
-    '@' 'class' identifier_list semi
+    '@' 'class' identifier_rlist semi
       {% do { let idents = rev $3
             ; mapM addClassdefId idents
             ; return $ ObjCClassDec idents ($1 `srcspan` $4)
@@ -2540,38 +2540,38 @@ objc_interface :
 
 objc_interface_body :: { ([Id], [ObjCIvarDecl], [ObjCIfaceDecl], Loc) }
 objc_interface_body :
-   objc_protocol_refs_opt objc_class_instance_variables_opt objc_interface_decl_list  '@' 'end'
+   objc_protocol_refs_rlist objc_class_instance_variables_rlist objc_interface_decl_rlist  '@' 'end'
       { ( rev $1, rev $2, rev $3, $4 <--> $5) }
 
-objc_protocol_refs_opt :: { RevList Id }
-objc_protocol_refs_opt :
+objc_protocol_refs_rlist :: { RevList Id }
+objc_protocol_refs_rlist :
     {- empty -}
       { rnil }
-  | '<' identifier_list '>'
+  | '<' identifier_rlist '>'
       { $2 }
 
-objc_class_instance_variables_opt :: { RevList ObjCIvarDecl }
-objc_class_instance_variables_opt :
+objc_class_instance_variables_rlist :: { RevList ObjCIvarDecl }
+objc_class_instance_variables_rlist :
     {- empty -}
       { rnil }
   | lbrace '}'
       { rnil }
-  | lbrace objc_instance_variable_decl_list '}'
+  | lbrace objc_instance_variable_decl_rlist '}'
       { $2 }
 
-objc_instance_variable_decl_list :: { RevList ObjCIvarDecl }
-objc_instance_variable_decl_list :
+objc_instance_variable_decl_rlist :: { RevList ObjCIvarDecl }
+objc_instance_variable_decl_rlist :
     objc_visibility_spec
       { rsingleton (ObjCIvarVisi $1 (srclocOf $1)) }
   | semi
       { rnil }
   | struct_declaration semi
       { rsingleton (ObjCIvarDecl $1 (srclocOf $1)) }
-  | objc_instance_variable_decl_list objc_visibility_spec
+  | objc_instance_variable_decl_rlist objc_visibility_spec
       { rcons (ObjCIvarVisi $2 (srclocOf $2)) $1 }
-  | objc_instance_variable_decl_list semi
+  | objc_instance_variable_decl_rlist semi
       { $1 }
-  | objc_instance_variable_decl_list struct_declaration semi
+  | objc_instance_variable_decl_rlist struct_declaration semi
       { rcons (ObjCIvarDecl $2 (srclocOf $2)) $1 }
 
 objc_visibility_spec :: { ObjCVisibilitySpec }
@@ -2585,42 +2585,42 @@ objc_visibility_spec :
   | '@' 'package'
       { ObjCPackage ($1 `srcspan` $2) }
 
-objc_interface_decl_list_ext :: { [ObjCIfaceDecl] }
-objc_interface_decl_list_ext :
-    objc_interface_decl_list
+objc_interface_decl_list :: { [ObjCIfaceDecl] }
+objc_interface_decl_list :
+    objc_interface_decl_rlist
       { rev $1 }
 
-objc_interface_decl_list :: { RevList ObjCIfaceDecl }
-objc_interface_decl_list :
+objc_interface_decl_rlist :: { RevList ObjCIfaceDecl }
+objc_interface_decl_rlist :
     {- empty -}
       { rnil }
-  | objc_interface_decl_list semi
+  | objc_interface_decl_rlist semi
       { $1 }
-  | objc_interface_decl_list objc_property_decl
+  | objc_interface_decl_rlist objc_property_decl
       { rcons $2 $1 }
-  | objc_interface_decl_list objc_method_requirement
+  | objc_interface_decl_rlist objc_method_requirement
       { rcons (ObjCIfaceReq $2 (srclocOf $2)) $1 }
-  | objc_interface_decl_list objc_method_proto semi
+  | objc_interface_decl_rlist objc_method_proto semi
       { rcons (ObjCIfaceMeth $2 (srclocOf $2)) $1 }
-  | objc_interface_decl_list declaration
+  | objc_interface_decl_rlist declaration
       { rcons (ObjCIfaceDecl $2 (srclocOf $2)) $1 }
-  | objc_interface_decl_list ANTI_OBJC_IFDECL
+  | objc_interface_decl_rlist ANTI_OBJC_IFDECL
       { rcons (AntiObjCIfaceDecl (getANTI_OBJC_IFDECL $2) (srclocOf $2)) $1 }
-  | objc_interface_decl_list ANTI_OBJC_IFDECLS
+  | objc_interface_decl_rlist ANTI_OBJC_IFDECLS
       { rcons (AntiObjCIfaceDecls (getANTI_OBJC_IFDECLS $2) (srclocOf $2)) $1 }
 
 objc_property_decl :: { ObjCIfaceDecl }
 objc_property_decl :
     '@' 'property' struct_declaration
       { ObjCIfaceProp [] $3 ($1 `srcspan` $3) }
-  | '@' 'property' '(' objc_property_attr_list ')' struct_declaration
+  | '@' 'property' '(' objc_property_attr_rlist ')' struct_declaration
       { ObjCIfaceProp (rev $4) $6 ($1 `srcspan` $6) }
 
-objc_property_attr_list :: { RevList ObjCPropAttr }
-objc_property_attr_list :
+objc_property_attr_rlist :: { RevList ObjCPropAttr }
+objc_property_attr_rlist :
     objc_property_attr
       { rsingleton $1 }
-  | objc_property_attr_list ',' objc_property_attr
+  | objc_property_attr_rlist ',' objc_property_attr
       { rcons $3 $1 }
 
 objc_property_attr :: { ObjCPropAttr }
@@ -2688,14 +2688,14 @@ objc_method_args :: { [ObjCParam] }
 objc_method_args :
     objc_selector
       { [ObjCParam (Just $1) Nothing [] Nothing (srclocOf $1)] }
-  | objc_method_arg_list
+  | objc_method_arg_rlist
       { rev $1 }
 
-objc_method_arg_list :: { RevList ObjCParam }
-objc_method_arg_list :
+objc_method_arg_rlist :: { RevList ObjCParam }
+objc_method_arg_rlist :
     objc_method_arg
       { rsingleton $1 }
-  | objc_method_arg_list objc_method_arg
+  | objc_method_arg_rlist objc_method_arg
       { rcons $2 $1 }
 
 objc_method_arg :: { ObjCParam }
@@ -2732,12 +2732,12 @@ objc_method_arg :
 --
 objc_protocol_declaration :: { Definition }
 objc_protocol_declaration :
-    objc_protocol_prefix objc_protocol_refs_opt objc_interface_decl_list '@' 'end'
+    objc_protocol_prefix objc_protocol_refs_rlist objc_interface_decl_rlist '@' 'end'
       { ObjCProtDef (fst $1) (rev $2) (rev $3) (snd $1 `srcspan` $5) }
   -- This rule wins the shift-reduce conflict
   | objc_protocol_prefix semi
       { ObjCProtDec [fst $1] (snd $1 `srcspan` $2) }
-  | objc_protocol_prefix ',' identifier_list semi
+  | objc_protocol_prefix ',' identifier_rlist semi
       { ObjCProtDec (fst $1 : rev $3) (snd $1 `srcspan` $4) }
 
 objc_protocol_prefix :: { (Id, Loc) }
@@ -2793,61 +2793,61 @@ objc_implementation :
 
 objc_implementation_body_vars :: { ([ObjCIvarDecl], [Definition], Loc) }
 objc_implementation_body_vars :
-  objc_class_instance_variables_opt objc_implementation_body
+  objc_class_instance_variables_rlist objc_implementation_body
     { (rev $1, fst $2, snd $2) }
 
 objc_implementation_body :: { ([Definition], Loc) }
 objc_implementation_body :
-  objc_implementation_decl_list '@' 'end'
+  objc_implementation_decl_rlist '@' 'end'
     { (rev $1, locOf $3) }
 
-objc_implementation_decl_list_ext :: { [Definition] }
-objc_implementation_decl_list_ext :
-    objc_implementation_decl_list
+objc_implementation_decl_list :: { [Definition] }
+objc_implementation_decl_list :
+    objc_implementation_decl_rlist
       { rev $1 }
 
-objc_implementation_decl_list :: { RevList Definition }
-objc_implementation_decl_list :
+objc_implementation_decl_rlist :: { RevList Definition }
+objc_implementation_decl_rlist :
     {- empty -}
       { rnil }
-  | objc_implementation_decl_list function_definition
+  | objc_implementation_decl_rlist function_definition
       { rcons (FuncDef $2 (srclocOf $2)) $1 }
-  | objc_implementation_decl_list declaration
+  | objc_implementation_decl_rlist declaration
       { rcons (DecDef $2 (srclocOf $2)) $1 }
-  | objc_implementation_decl_list property_synthesize
+  | objc_implementation_decl_rlist property_synthesize
       { rcons $2 $1 }
-  | objc_implementation_decl_list property_dynamic
+  | objc_implementation_decl_rlist property_dynamic
       { rcons $2 $1 }
-  | objc_implementation_decl_list objc_method_definition
+  | objc_implementation_decl_rlist objc_method_definition
       { rcons $2 $1 }
-  | objc_implementation_decl_list ANTI_FUNC
+  | objc_implementation_decl_rlist ANTI_FUNC
       { rcons (AntiFunc (getANTI_FUNC $2) (srclocOf $2)) $1 }
-  | objc_implementation_decl_list ANTI_ESC
+  | objc_implementation_decl_rlist ANTI_ESC
       { rcons (AntiEsc (getANTI_ESC $2) (srclocOf $2)) $1 }
-  | objc_implementation_decl_list ANTI_EDECL
+  | objc_implementation_decl_rlist ANTI_EDECL
       { rcons (AntiEdecls (getANTI_EDECL $2) (srclocOf $2)) $1 }
-  | objc_implementation_decl_list ANTI_EDECLS
+  | objc_implementation_decl_rlist ANTI_EDECLS
       { rcons (AntiEdecls (getANTI_EDECLS $2) (srclocOf $2)) $1 }
 
 property_synthesize :: { Definition }
 property_synthesize :
-  '@' 'synthesize' property_ivar_list semi
+  '@' 'synthesize' property_ivar_rlist semi
     { ObjCSynDef (rev $3) ($1 `srcspan` $4) }
 
-property_ivar_list :: { RevList (Id, Maybe Id) }
-property_ivar_list :
+property_ivar_rlist :: { RevList (Id, Maybe Id) }
+property_ivar_rlist :
     identifier
       { rsingleton ($1, Nothing) }
   | identifier '=' identifier
       { rsingleton ($1, Just $3) }
-  | property_ivar_list identifier
+  | property_ivar_rlist identifier
       { rcons ($2, Nothing) $1 }
-  | property_ivar_list identifier '=' identifier
+  | property_ivar_rlist identifier '=' identifier
       { rcons ($2, Just $4) $1 }
 
 property_dynamic :: { Definition }
 property_dynamic :
-  '@' 'dynamic' identifier_list semi
+  '@' 'dynamic' identifier_rlist semi
     { ObjCDynDef (rev $3) ($1 `srcspan` $4) }
 
 objc_method_definition :: { Definition }
@@ -2884,7 +2884,7 @@ objc_compatibility_alias :
 
 execution_configuration :: { ExeConfig }
 execution_configuration :
-  argument_expression_list
+  argument_expression_rlist
     {%do {  let args = rev $1
          ;  when (length args < 2 || length args > 4) $ do
                 parserError (locOf (rev $1)) $
