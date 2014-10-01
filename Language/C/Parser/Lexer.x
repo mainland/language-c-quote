@@ -120,8 +120,11 @@ c :-
  "$inits:"   / { allowAnti } { lexAnti Tanti_inits }
  "$"         / { allowAnti } { lexAnti Tanti_exp }
 
- "$ifdecl:"  / { allowAnti } { lexAnti Tanti_ifdecl }
- "$ifdecls:" / { allowAnti } { lexAnti Tanti_ifdecls }
+ --
+ -- Objective-C
+ --
+ "$ifdecl:"  / { allowAnti } { lexAnti Tanti_objc_ifdecl }
+ "$ifdecls:" / { allowAnti } { lexAnti Tanti_objc_ifdecls }
 }
 
 <0> {
@@ -204,14 +207,20 @@ c :-
  ";" $whitechar* @ccomment   { commentTok Tsemi }
  ";" $whitechar* @cppcomment { commentTok Tsemi }
 
+ --
+ -- Objective-C
+ --
+ "@" / { ifExtension objcExts }
+       { token TObjCat }
+
+ --
+ -- CUDA
+ --
  "<<<" / { ifExtension cudaExts }
          { token TCUDA3lt }
 
  ">>>" / { ifExtension cudaExts }
          { token TCUDA3gt }
-
- "@" / { ifExtension objcExts }
-       { token TObjCat }
 }
 
 {

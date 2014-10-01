@@ -374,11 +374,12 @@ instance Pretty InitGroup where
 instance Pretty Field where
     ppr (Field maybe_ident maybe_decl maybe_e _) =
         case maybe_decl of
-          Nothing ->   empty
+          Nothing   -> empty
           Just decl -> pprDeclarator maybe_ident decl
-        <>  case maybe_e of
-              Nothing -> empty
-              Just e ->  space <> colon <+> ppr e
+        <>
+        case maybe_e of
+          Nothing -> empty
+          Just e  -> space <> colon <+> ppr e
 
 instance Pretty FieldGroup where
     ppr (FieldGroup spec fields _) =
@@ -438,57 +439,68 @@ instance Pretty Definition where
     ppr (DecDef initgroup loc)  = srcloc loc <> ppr initgroup <> semi
     ppr (EscDef s loc)          = srcloc loc <> text s
     ppr (ObjCClassDec clss loc) = srcloc loc <> text "@class" <+> commasep (map ppr clss) <> semi
-    ppr (ObjCClassIface cident sident refs ivars decls attrs loc)
-      = srcloc loc
-        <> case attrs of
-             [] -> empty
-             _  ->  ppr attrs <> softline
-        <> text "@interface" <+> ppr cident <+> maybe empty (\ident -> char ':' <+> ppr ident) sident
-        <+> pprIfaceBody refs ivars decls
-    ppr (ObjCCatIface cident catident refs ivars decls loc)
-      = srcloc loc
-        <> text "@interface" <+> ppr cident <+> parens (maybe empty ppr catident) <+> pprIfaceBody refs ivars decls
-    ppr (ObjCProtDec prots loc) = srcloc loc <> text "@protocol" <+> commasep (map ppr prots) <> semi
-    ppr (ObjCProtDef pident refs decls loc)
-      = srcloc loc
-        <> text "@protocol" <+> ppr pident <+> pprIfaceBody refs [] decls
-    ppr (ObjCClassImpl cident sident ivars defs loc)
-      = srcloc loc
-        <>   text "@implementation" <+> ppr cident <+> maybe empty (\ident -> char ':' <+> ppr ident) sident
-        </>  stack (map ppr ivars)
-        <//> stack (map ppr defs)
-        </>  text "@end"
-    ppr (ObjCCatImpl cident catident defs loc)
-      = srcloc loc
-        <>   text "@implementation" <+> ppr cident <+> parens (ppr catident)
-        <//> stack (map ppr defs)
-        </>  text "@end"
-    ppr (ObjCSynDef pivars loc)
-      = srcloc loc
-        <> text "@synthesize" <+> commasep (map pprPivar pivars) <> semi
-      where
-        pprPivar (ident,  Nothing)     = ppr ident
-        pprPivar (ident1, Just ident2) = ppr ident1 <> char '=' <> ppr ident2
-    ppr (ObjCDynDef pivars loc)
-      = srcloc loc
-        <> text "@dynamic" <+> commasep (map ppr pivars) <> semi
-    ppr (ObjCMethDef proto body loc)
-      = srcloc loc
-        <> ppr proto </> ppr body
-    ppr (ObjCCompAlias aident cident loc)
-      = srcloc loc
-        <> text "@compatibility_alias" <+> ppr aident <+> ppr cident
 
     ppr (AntiFunc v _)    = pprAnti "func" v
     ppr (AntiEsc v _)     = pprAnti "esc" v
     ppr (AntiEdecls v _)  = pprAnti "edecls" v
     ppr (AntiEdecl v _)   = pprAnti "edecl" v
 
+    ppr (ObjCClassIface cident sident refs ivars decls attrs loc) =
+        srcloc loc
+        <> case attrs of
+             [] -> empty
+             _  ->  ppr attrs <> softline
+        <> text "@interface" <+> ppr cident <+> maybe empty (\ident -> char ':' <+> ppr ident) sident
+        <+> pprIfaceBody refs ivars decls
+
+    ppr (ObjCCatIface cident catident refs ivars decls loc) =
+        srcloc loc
+        <> text "@interface" <+> ppr cident <+> parens (maybe empty ppr catident) <+> pprIfaceBody refs ivars decls
+
+    ppr (ObjCProtDec prots loc) =
+        srcloc loc <> text "@protocol" <+> commasep (map ppr prots) <> semi
+
+    ppr (ObjCProtDef pident refs decls loc) =
+        srcloc loc
+        <> text "@protocol" <+> ppr pident <+> pprIfaceBody refs [] decls
+
+    ppr (ObjCClassImpl cident sident ivars defs loc) =
+        srcloc loc
+        <>   text "@implementation" <+> ppr cident <+> maybe empty (\ident -> char ':' <+> ppr ident) sident
+        </>  stack (map ppr ivars)
+        <//> stack (map ppr defs)
+        </>  text "@end"
+
+    ppr (ObjCCatImpl cident catident defs loc) =
+        srcloc loc
+        <>   text "@implementation" <+> ppr cident <+> parens (ppr catident)
+        <//> stack (map ppr defs)
+        </>  text "@end"
+
+    ppr (ObjCSynDef pivars loc) =
+        srcloc loc
+        <> text "@synthesize" <+> commasep (map pprPivar pivars) <> semi
+      where
+        pprPivar (ident,  Nothing)     = ppr ident
+        pprPivar (ident1, Just ident2) = ppr ident1 <> char '=' <> ppr ident2
+
+    ppr (ObjCDynDef pivars loc) =
+        srcloc loc
+        <> text "@dynamic" <+> commasep (map ppr pivars) <> semi
+
+    ppr (ObjCMethDef proto body loc) =
+        srcloc loc
+        <> ppr proto </> ppr body
+
+    ppr (ObjCCompAlias aident cident loc) =
+        srcloc loc
+        <> text "@compatibility_alias" <+> ppr aident <+> ppr cident
+
     pprList ds = stack (map ppr ds) <> line
 
 pprIfaceBody :: [Id] -> [ObjCIvarDecl] -> [ObjCIfaceDecl] -> Doc
-pprIfaceBody refs ivars decls
-  = case refs of
+pprIfaceBody refs ivars decls =
+    case refs of
       [] -> empty
       _  -> angleList (map ppr refs)
     </>  stack (map ppr ivars)
@@ -573,6 +585,11 @@ instance Pretty Stm where
     ppr (Comment com stm sloc) =
         srcloc sloc <> text com </> ppr stm
 
+    ppr (AntiPragma v _)      = pprAnti "pragma" v
+    ppr (AntiComment v stm _) = pprAnti "pragma" v </> ppr stm
+    ppr (AntiStm v _)         = pprAnti "stm" v
+    ppr (AntiStms v _)        = pprAnti "stms" v
+
     ppr (Asm isVolatile _ template outs ins clobbered sloc) =
         srcloc sloc <>
         text "__asm__"
@@ -637,11 +654,6 @@ instance Pretty Stm where
         srcloc sloc
         <>  text "@autoreleasepool"
         </> ppr block
-
-    ppr (AntiPragma v _)      = pprAnti "pragma" v
-    ppr (AntiComment v stm _) = pprAnti "pragma" v </> ppr stm
-    ppr (AntiStm v _)         = pprAnti "stm" v
-    ppr (AntiStms v _)        = pprAnti "stms" v
 
 instance Pretty BlockItem where
     ppr (BlockDecl decl) = ppr decl <> semi
@@ -771,24 +783,6 @@ instance Pretty Exp where
         parensIf (p > 15) $
         pprPrec 15 f <> parensList (map ppr args)
 
-    pprPrec p (CudaCall f config args loc) =
-        pprLoc loc $
-        parensIf (p > 15) $
-        pprPrec 15 f <>
-        text "<<<" <> pprConfig config <> text ">>>" <>
-        parensList (map ppr args)
-      where
-        pprConfig :: ExeConfig -> Doc
-        pprConfig conf = commasep $
-            [ppr (exeGridDim conf), ppr (exeBlockDim conf)] ++
-            (case exeSharedSize conf of
-               Nothing -> []
-               Just e -> [ppr e])
-            ++
-            (case exeStream conf of
-               Nothing -> []
-               Just e -> [ppr e])
-
     pprPrec p (Seq e1 e2 loc) =
         pprLoc loc $
         parensIf (p > 1) $
@@ -817,6 +811,24 @@ instance Pretty Exp where
         char '^' <> ppr ty <>
         (if null attrs then empty else softline <> ppr attrs) <+>
         ppr block
+
+    pprPrec p (CudaCall f config args loc) =
+        pprLoc loc $
+        parensIf (p > 15) $
+        pprPrec 15 f <>
+        text "<<<" <> pprConfig config <> text ">>>" <>
+        parensList (map ppr args)
+      where
+        pprConfig :: ExeConfig -> Doc
+        pprConfig conf = commasep $
+            [ppr (exeGridDim conf), ppr (exeBlockDim conf)] ++
+            (case exeSharedSize conf of
+               Nothing -> []
+               Just e -> [ppr e])
+            ++
+            (case exeStream conf of
+               Nothing -> []
+               Just e -> [ppr e])
 
     pprPrec _ (ObjCMsg recv args varArgs loc1) =
         pprLoc loc1 $
@@ -960,25 +972,25 @@ instance Pretty ObjCVisibilitySpec where
     ppr (ObjCPackage _loc)   = text "@package"
 
 instance Pretty ObjCIfaceDecl where
-    ppr (ObjCIfaceProp attrs field loc)
-      = pprLoc loc $
+    ppr (ObjCIfaceProp attrs field loc) =
+        pprLoc loc $
         text "@property"
         <+> case attrs of
               [] -> empty
               _  -> parensList (map ppr attrs) <> space
         <> ppr field
         <> semi
-    ppr (ObjCIfaceReq req loc)
-      = pprLoc loc $ ppr req
-    ppr (ObjCIfaceMeth proto _loc)
-      = ppr proto
+    ppr (ObjCIfaceReq req loc) =
+        pprLoc loc $ ppr req
+    ppr (ObjCIfaceMeth proto _loc) =
+        ppr proto
         <> semi
-    ppr (ObjCIfaceDecl decl loc)
-      = pprLoc loc $ ppr decl
-    ppr (AntiObjCIfaceDecl v _loc)
-      = pprAnti "ifdecl" v
-    ppr (AntiObjCIfaceDecls v _loc)
-      = pprAnti "ifdecls" v
+    ppr (ObjCIfaceDecl decl loc) =
+        pprLoc loc $ ppr decl
+    ppr (AntiObjCIfaceDecl v _loc) =
+        pprAnti "ifdecl" v
+    ppr (AntiObjCIfaceDecls v _loc) =
+        pprAnti "ifdecls" v
 
 instance Pretty ObjCPropAttr where
     ppr (ObjCGetter ident loc)     = pprLoc loc $ text "getter=" <> ppr ident
@@ -999,8 +1011,8 @@ instance Pretty ObjCMethodReq where
     ppr (ObjCOptional _loc) = text "@optional"
 
 instance Pretty ObjCParam where
-    ppr (ObjCParam sel ty attrs arg loc)
-      = pprLoc loc $
+    ppr (ObjCParam sel ty attrs arg loc) =
+        pprLoc loc $
         case (sel, arg) of
          (Nothing , Nothing) -> error $ "pretty printing 'ObjCParam': empty " ++ show loc
          (Just sid, Nothing) -> ppr sid
@@ -1008,8 +1020,8 @@ instance Pretty ObjCParam where
            -> maybe empty ppr sel <> colon <> maybe empty (parens . ppr) ty <> ppr attrs <> ppr pid
 
 instance Pretty ObjCMethodProto where
-    ppr (ObjCMethodProto isClassMeth resTy attrs1 params vargs attrs2 loc)
-      = pprLoc loc $
+    ppr (ObjCMethodProto isClassMeth resTy attrs1 params vargs attrs2 loc) =
+        pprLoc loc $
         (if isClassMeth then char '+' else char '-')
         <+> maybe empty (parens . ppr) resTy
         <> case attrs1 of
@@ -1020,9 +1032,9 @@ instance Pretty ObjCMethodProto where
         <> ppr attrs2
 
 instance Pretty ObjCCatch where
-    ppr (ObjCCatch Nothing     block loc) = srcloc loc <> text "@catch (...)" <+> ppr block
+    ppr (ObjCCatch Nothing     block loc)  = srcloc loc <> text "@catch (...)" <+> ppr block
     ppr (ObjCCatch (Just param) block loc) = srcloc loc
-                                            <> text "@catch" <+> parens (ppr param) <+> ppr block
+                                             <> text "@catch" <+> parens (ppr param) <+> ppr block
 
     pprList = stack . map ppr
 

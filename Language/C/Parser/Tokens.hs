@@ -123,12 +123,50 @@ data Token = Teof
 
            | Ttypename
 
+           | Tanti_id String
+           | Tanti_const String
+           | Tanti_int String
+           | Tanti_uint String
+           | Tanti_lint String
+           | Tanti_ulint String
+           | Tanti_llint String
+           | Tanti_ullint String
+           | Tanti_float String
+           | Tanti_double String
+           | Tanti_long_double String
+           | Tanti_char String
+           | Tanti_string String
+           | Tanti_exp String
+           | Tanti_func String
+           | Tanti_args String
+           | Tanti_decl String
+           | Tanti_decls String
+           | Tanti_sdecl String
+           | Tanti_sdecls String
+           | Tanti_enum String
+           | Tanti_enums String
+           | Tanti_esc String
+           | Tanti_edecl String
+           | Tanti_edecls String
+           | Tanti_item String
+           | Tanti_items String
+           | Tanti_stm String
+           | Tanti_stms String
+           | Tanti_type String
+           | Tanti_spec String
+           | Tanti_param String
+           | Tanti_params String
+           | Tanti_pragma String
+           | Tanti_comment String
+           | Tanti_init String
+           | Tanti_inits String
+
            -- C99
-           | Tinline
-           | Trestrict
            | TBool
            | TComplex
            | TImaginary
+           | Tinline
+           | Trestrict
 
            -- GCC
            | Tasm
@@ -193,48 +231,8 @@ data Token = Teof
            | TObjC__strong
            | TObjC__unsafe_unretained
 
-           -- Antiquoting
-           | Tanti_id String
-           | Tanti_const String
-           | Tanti_int String
-           | Tanti_uint String
-           | Tanti_lint String
-           | Tanti_ulint String
-           | Tanti_llint String
-           | Tanti_ullint String
-           | Tanti_float String
-           | Tanti_double String
-           | Tanti_long_double String
-           | Tanti_char String
-           | Tanti_string String
-           | Tanti_exp String
-           | Tanti_func String
-           | Tanti_args String
-           | Tanti_decl String
-           | Tanti_decls String
-           | Tanti_sdecl String
-           | Tanti_sdecls String
-           | Tanti_enum String
-           | Tanti_enums String
-           | Tanti_esc String
-           | Tanti_edecl String
-           | Tanti_edecls String
-           | Tanti_item String
-           | Tanti_items String
-           | Tanti_stm String
-           | Tanti_stms String
-           | Tanti_type String
-           | Tanti_spec String
-           | Tanti_param String
-           | Tanti_params String
-           | Tanti_pragma String
-           | Tanti_comment String
-           | Tanti_init String
-           | Tanti_inits String
-
-             -- Objective-C antiquoting
-           | Tanti_ifdecl String
-           | Tanti_ifdecls String
+           | Tanti_objc_ifdecl String
+           | Tanti_objc_ifdecls String
     deriving (Ord, Eq)
 
 instance Pretty Token where
@@ -295,8 +293,8 @@ instance Show Token where
 
     show (TObjCnamed s)                 = s
 
-    show (Tanti_ifdecl s)               = "$ifdecl:" ++ s
-    show (Tanti_ifdecls s)              = "$ifdecls:" ++ s
+    show (Tanti_objc_ifdecl s)          = "$ifdecl:" ++ s
+    show (Tanti_objc_ifdecls s)         = "$ifdecls:" ++ s
 
     show t = fromMaybe (error "language-c-quote: internal error: unknown token")
                        (lookup t tokenStrings)
@@ -390,11 +388,11 @@ tokenStrings = [(Tlparen,     "("),
                 --
                 -- C99 extensions
                 --
-                (Tinline,    "inline"),
-                (Trestrict,  "restrict"),
                 (TBool,      "_Bool"),
                 (TComplex,   "_TComplex"),
                 (TImaginary, "_TImaginary"),
+                (Tinline,    "inline"),
+                (Trestrict,  "restrict"),
 
                 --
                 -- GCC extensions
@@ -484,11 +482,9 @@ keywords = [("auto",       Tauto,      Nothing),
             ("for",        Tfor,       Nothing),
             ("goto",       Tgoto,      Nothing),
             ("if",         Tif,        Nothing),
-            ("inline",     Tinline,    Nothing),
             ("int",        Tint,       Nothing),
             ("long",       Tlong,      Nothing),
             ("register",   Tregister,  Nothing),
-            ("restrict",   Trestrict,  Nothing),
             ("return",     Treturn,    Nothing),
             ("short",      Tshort,     Nothing),
             ("signed",     Tsigned,    Nothing),
@@ -502,10 +498,19 @@ keywords = [("auto",       Tauto,      Nothing),
             ("void",       Tvoid,      Nothing),
             ("volatile",   Tvolatile,  Nothing),
             ("while",      Twhile,     Nothing),
+
+            --
+            -- C99
+            --
             ("_Bool",      TBool,      Nothing),
             ("_Complex",   TComplex,   Nothing),
             ("_Imaginary", TImaginary, Nothing),
+            ("inline",     Tinline,    Nothing),
+            ("restrict",   Trestrict,  Nothing),
 
+            --
+            -- GCC
+            --
             ("asm",               Tasm,             Just [Gcc]),
             ("__asm",             Tasm,             Just [Gcc]),
             ("__asm__",           Tasm,             Just [Gcc]),
@@ -524,31 +529,14 @@ keywords = [("auto",       Tauto,      Nothing),
             ("__volatile",        Tvolatile,        Just [Gcc]),
             ("__volatile__",      Tvolatile,        Just [Gcc]),
 
-            ("__device__",   TCUDAdevice,   Just [CUDA]),
-            ("__global__",   TCUDAglobal,   Just [CUDA]),
-            ("__host__",     TCUDAhost,     Just [CUDA]),
-            ("__constant__", TCUDAconstant, Just [CUDA]),
-            ("__shared__",   TCUDAshared,   Just [CUDA]),
-            ("__restrict__", TCUDArestrict, Just [CUDA]),
-            ("__noinline__", TCUDAnoinline, Just [CUDA]),
+            --
+            -- Clang blocks
+            --
+            ("__block", T__block, Just [Blocks, ObjC]),
 
-            ("private",      TCLprivate,   Just [OpenCL, ObjC]),  -- see Lexer.identifier for 'TObjCprivate'
-            ("__private",    TCLprivate,   Just [OpenCL]),
-            ("local",        TCLlocal,     Just [OpenCL]),
-            ("__local",      TCLlocal,     Just [OpenCL]),
-            ("global",       TCLglobal,    Just [OpenCL]),
-            ("__global",     TCLglobal,    Just [OpenCL]),
-            ("constant",     TCLconstant,  Just [OpenCL]),
-            ("__constant",   TCLconstant,  Just [OpenCL]),
-            ("read_only",    TCLreadonly,  Just [OpenCL]),
-            ("__read_only",  TCLreadonly,  Just [OpenCL]),
-            ("write_only",   TCLwriteonly, Just [OpenCL]),
-            ("__write_only", TCLwriteonly, Just [OpenCL]),
-            ("kernel",       TCLkernel,    Just [OpenCL]),
-            ("__kernel",     TCLkernel,    Just [OpenCL]),
-
-            ("__block",             T__block,                 Just [Blocks, ObjC]),
-
+            --
+            -- Objective-C
+            --
             ("autoreleasepool",     TObjCautoreleasepool,     Just [ObjC]),
             ("catch",               TObjCcatch,               Just [ObjC]),
             ("class",               TObjCclass,               Just [ObjC]),
@@ -575,7 +563,36 @@ keywords = [("auto",       Tauto,      Nothing),
             ("YES",                 TObjCYES,                 Just [ObjC]),
             ("__weak",              TObjC__weak,              Just [ObjC]),
             ("__strong",            TObjC__strong,            Just [ObjC]),
-            ("__unsafe_unretained", TObjC__unsafe_unretained,   Just [ObjC])
+            ("__unsafe_unretained", TObjC__unsafe_unretained, Just [ObjC]),
+
+            --
+            -- CUDA
+            --
+            ("__device__",   TCUDAdevice,   Just [CUDA]),
+            ("__global__",   TCUDAglobal,   Just [CUDA]),
+            ("__host__",     TCUDAhost,     Just [CUDA]),
+            ("__constant__", TCUDAconstant, Just [CUDA]),
+            ("__shared__",   TCUDAshared,   Just [CUDA]),
+            ("__restrict__", TCUDArestrict, Just [CUDA]),
+            ("__noinline__", TCUDAnoinline, Just [CUDA]),
+
+            --
+            -- OpenCL
+            --
+            ("private",      TCLprivate,   Just [OpenCL, ObjC]),  -- see Lexer.identifier for 'TObjCprivate'
+            ("__private",    TCLprivate,   Just [OpenCL]),
+            ("local",        TCLlocal,     Just [OpenCL]),
+            ("__local",      TCLlocal,     Just [OpenCL]),
+            ("global",       TCLglobal,    Just [OpenCL]),
+            ("__global",     TCLglobal,    Just [OpenCL]),
+            ("constant",     TCLconstant,  Just [OpenCL]),
+            ("__constant",   TCLconstant,  Just [OpenCL]),
+            ("read_only",    TCLreadonly,  Just [OpenCL]),
+            ("__read_only",  TCLreadonly,  Just [OpenCL]),
+            ("write_only",   TCLwriteonly, Just [OpenCL]),
+            ("__write_only", TCLwriteonly, Just [OpenCL]),
+            ("kernel",       TCLkernel,    Just [OpenCL]),
+            ("__kernel",     TCLkernel,    Just [OpenCL])
            ]
 
 type ExtensionsInt = Word32

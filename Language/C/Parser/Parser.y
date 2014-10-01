@@ -174,14 +174,18 @@ import qualified Language.C.Syntax as C
  ANTI_INIT        { L _ (T.Tanti_init _) }
  ANTI_INITS       { L _ (T.Tanti_inits _) }
 
- {- C99 -}
+ --
+ -- C99
+ --
  'inline'     { L _ T.Tinline }
  'restrict'   { L _ T.Trestrict }
  '_Bool'      { L _ T.TBool }
  '_Complex'   { L _ T.TComplex }
  '_Imaginary' { L _ T.TImaginary }
 
- {- GCC -}
+ --
+ -- GCC
+ --
  '__asm__'           { L _ T.Tasm }
  '__attribute__'     { L _ T.Tattribute }
  '__extension__'     { L _ T.Textension }
@@ -189,37 +193,14 @@ import qualified Language.C.Syntax as C
  '__builtin_va_list' { L _ T.Tbuiltin_va_list }
  '__typeof__'        { L _ T.Ttypeof }
 
- {- Clang blocks -}
+ --
+ -- Clang blocks
+ --
  '__block'           { L _ T.T__block }
 
- {- CUDA -}
- '<<<'           { L _ T.TCUDA3lt }
- '>>>'           { L _ T.TCUDA3gt }
- '__device__'    { L _ T.TCUDAdevice }
- '__global__'    { L _ T.TCUDAglobal }
- '__host__'      { L _ T.TCUDAhost }
- '__constant__'  { L _ T.TCUDAconstant }
- '__shared__'    { L _ T.TCUDAshared }
- '__restrict__'  { L _ T.TCUDArestrict }
- '__noinline__'  { L _ T.TCUDAnoinline }
-
- {- OpenCL -}
- 'private'      { L _ T.TCLprivate }
- '__private'    { L _ T.TCLprivate }
- 'local'        { L _ T.TCLlocal }
- '__local'      { L _ T.TCLlocal }
- 'global'       { L _ T.TCLglobal }
- '__global'     { L _ T.TCLglobal }
- 'constant'     { L _ T.TCLconstant }
- '__constant'   { L _ T.TCLconstant }
- 'read_only'    { L _ T.TCLreadonly }
- '__read_only'  { L _ T.TCLreadonly }
- 'write_only'   { L _ T.TCLwriteonly }
- '__write_only' { L _ T.TCLwriteonly }
- 'kernel'       { L _ T.TCLkernel }
- '__kernel'     { L _ T.TCLkernel }
-
- {- Objective-C -}
+ --
+ -- Objective-C
+ --
  OBJCNAMED             { L _ (T.TObjCnamed _) }
  '@'                   { L _ T.TObjCat }
  'autoreleasepool'     { L _ T.TObjCautoreleasepool }
@@ -251,8 +232,39 @@ import qualified Language.C.Syntax as C
  '__strong'            { L _ T.TObjC__strong }
  '__unsafe_unretained' { L _ T.TObjC__unsafe_unretained }
 
- ANTI_IFDECL  { L _ (T.Tanti_ifdecl _) }
- ANTI_IFDECLS { L _ (T.Tanti_ifdecls _) }
+ ANTI_OBJC_IFDECL  { L _ (T.Tanti_objc_ifdecl _) }
+ ANTI_OBJC_IFDECLS { L _ (T.Tanti_objc_ifdecls _) }
+
+ --
+ -- CUDA
+ --
+ '<<<'           { L _ T.TCUDA3lt }
+ '>>>'           { L _ T.TCUDA3gt }
+ '__device__'    { L _ T.TCUDAdevice }
+ '__global__'    { L _ T.TCUDAglobal }
+ '__host__'      { L _ T.TCUDAhost }
+ '__constant__'  { L _ T.TCUDAconstant }
+ '__shared__'    { L _ T.TCUDAshared }
+ '__restrict__'  { L _ T.TCUDArestrict }
+ '__noinline__'  { L _ T.TCUDAnoinline }
+
+ --
+ -- OpenCL
+ --
+ 'private'      { L _ T.TCLprivate }
+ '__private'    { L _ T.TCLprivate }
+ 'local'        { L _ T.TCLlocal }
+ '__local'      { L _ T.TCLlocal }
+ 'global'       { L _ T.TCLglobal }
+ '__global'     { L _ T.TCLglobal }
+ 'constant'     { L _ T.TCLconstant }
+ '__constant'   { L _ T.TCLconstant }
+ 'read_only'    { L _ T.TCLreadonly }
+ '__read_only'  { L _ T.TCLreadonly }
+ 'write_only'   { L _ T.TCLwriteonly }
+ '__write_only' { L _ T.TCLwriteonly }
+ 'kernel'       { L _ T.TCLkernel }
+ '__kernel'     { L _ T.TCLkernel }
 
 -- Three shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
@@ -284,8 +296,9 @@ import qualified Language.C.Syntax as C
 %name parseUnit       translation_unit
 %name parseFunc       function_definition
 
+--
 -- Objective-C
-
+--
 %name parseObjCProp       objc_property_decl
 %name parseObjCIfaceDecls objc_interface_decl_list_ext
 %name parseObjCImplDecls  objc_implementation_decl_list_ext
@@ -1159,10 +1172,10 @@ enumerator:
 type_qualifier :: { TySpec }
 type_qualifier :
     'const'    { TSconst (srclocOf $1) }
-  | 'inline'   { TSinline (srclocOf $1) }
   | 'volatile' { TSvolatile (srclocOf $1) }
 
   -- C99
+  | 'inline'   { TSinline (srclocOf $1) }
   | 'restrict' { TSrestrict (srclocOf $1) }
 
   -- CUDA
@@ -1601,7 +1614,8 @@ typedef_name :
   | OBJCNAMED '<' identifier_list '>'
       {% do { assertObjCEnabled ($1 <--> $4) "To use protocol qualifiers, enable support for Objective-C"
             ; return $ TSnamed (Id (getOBJCNAMED $1) (srclocOf $1)) (rev $3) ($1 `srcspan` $4)
-            } }
+            }
+      }
 
 initializer :: { Initializer }
 initializer :
@@ -1746,21 +1760,6 @@ begin_scope : {% pushScope }
 end_scope :: { () }
 end_scope : {% popScope }
 
--- To prevent ambiguity, the first declaration in a list of old-style function
--- parameter declarations cannot start with an attribute.
-declaration_list :: { RevList InitGroup }
-declaration_list :
-    declaration_no_leading_attributes
-      { rsingleton $1 }
-  | ANTI_DECLS
-      { rsingleton (AntiDecls (getANTI_DECLS $1) (srclocOf $1)) }
-  | declaration_list declaration
-      { rcons $2 $1 }
-  | declaration_list declaration '//'
-      { rcons $2 $1 }
-  | declaration_list ANTI_DECLS
-      { rcons (AntiDecls (getANTI_DECLS $2) (srclocOf $2)) $1 }
-
 expression_statement :: { Stm }
 expression_statement:
     ';'               { Exp Nothing (srclocOf $1) }
@@ -1900,6 +1899,21 @@ function_definition :
                }
            }
       }
+
+-- To prevent ambiguity, the first declaration in a list of old-style function
+-- parameter declarations cannot start with an attribute.
+declaration_list :: { RevList InitGroup }
+declaration_list :
+    declaration_no_leading_attributes
+      { rsingleton $1 }
+  | ANTI_DECLS
+      { rsingleton (AntiDecls (getANTI_DECLS $1) (srclocOf $1)) }
+  | declaration_list declaration
+      { rcons $2 $1 }
+  | declaration_list declaration '//'
+      { rcons $2 $1 }
+  | declaration_list ANTI_DECLS
+      { rcons (AntiDecls (getANTI_DECLS $2) (srclocOf $2)) $1 }
 
 {------------------------------------------------------------------------------
  -
@@ -2239,7 +2253,8 @@ objc_receiver :
   | expression
       { case $1 of
           Var (Id "super" _) loc -> ObjCRecvSuper loc
-          _                      -> ObjCRecvExp $1 (srclocOf $1) }
+          _                      -> ObjCRecvExp $1 (srclocOf $1)
+      }
 
 objc_message_args :: { ([ObjCArg], [Exp]) }
 objc_message_args :
@@ -2378,11 +2393,13 @@ objc_at_expression :
   | '@' 'selector' '(' objc_selector ')'
       { let Id str _ = $4
         in
-        ObjCSelector str ($1 `srcspan` $5) }
+          ObjCSelector str ($1 `srcspan` $5)
+      }
   | '@' 'selector' '(' objc_selector_list ')'
       { let str = concat [s ++ ":" | Id s _ <- rev $4]
         in
-        ObjCSelector str ($1 `srcspan` $5) }
+          ObjCSelector str ($1 `srcspan` $5)
+      }
 
 -- Objective-C extension: class declaration
 --
@@ -2472,36 +2489,42 @@ objc_class_declaration :
 -- non-terminal and check it for non-attributes in the body of the production.
 objc_interface :: { Definition }
 objc_interface :
-               '@' 'interface' identifier objc_interface_body
+    '@' 'interface' identifier objc_interface_body
       {% do { let (prot, vars, decls, loc) = $4
             ; addClassdefId $3
             ; return $ ObjCClassIface $3 Nothing prot vars decls [] ($1 `srcspan` loc)
-            } }
+            }
+      }
   | storage_qualifier_specifiers '@' 'interface' identifier objc_interface_body
       {% do { let (prot, vars, decls, loc) = $5
             ; addClassdefId $4
             ; attrs <- checkOnlyAttributes $1
             ; return $ ObjCClassIface $4 Nothing prot vars decls attrs ($2 `srcspan` loc)
-            } }
-  |            '@' 'interface' identifier ':' identifier_or_typedef objc_interface_body
+            }
+      }
+  | '@' 'interface' identifier ':' identifier_or_typedef objc_interface_body
       {% do { let (prot, vars, decls, loc) = $6
             ; addClassdefId $3
             ; return $ ObjCClassIface $3 (Just $5) prot vars decls [] ($1 `srcspan` loc)
-            } }
+            }
+      }
   | storage_qualifier_specifiers '@' 'interface' identifier ':' identifier_or_typedef objc_interface_body
       {% do { let (prot, vars, decls, loc) = $7
             ; addClassdefId $4
             ; attrs <- checkOnlyAttributes $1
             ; return $ ObjCClassIface $4 (Just $6) prot vars decls attrs ($2 `srcspan` loc)
-            } }
+            }
+      }
   | '@' 'interface' identifier_or_typedef '(' ')' objc_interface_body
       { let (prot, vars, decls, loc) = $6
         in
-        ObjCCatIface $3 Nothing prot vars decls ($1 `srcspan` loc) }
+          ObjCCatIface $3 Nothing prot vars decls ($1 `srcspan` loc)
+      }
   | '@' 'interface' identifier_or_typedef '(' identifier ')' objc_interface_body
       { let (prot, vars, decls, loc) = $7
         in
-        ObjCCatIface $3 (Just $5) prot vars decls ($1 `srcspan` loc) }
+          ObjCCatIface $3 (Just $5) prot vars decls ($1 `srcspan` loc)
+      }
 
 objc_interface_body :: { ([Id], [ObjCIvarDecl], [ObjCIfaceDecl], Loc) }
 objc_interface_body :
@@ -2569,10 +2592,10 @@ objc_interface_decl_list :
       { rcons (ObjCIfaceMeth $2 (srclocOf $2)) $1 }
   | objc_interface_decl_list declaration
       { rcons (ObjCIfaceDecl $2 (srclocOf $2)) $1 }
-  | objc_interface_decl_list ANTI_IFDECL
-      { rcons (AntiObjCIfaceDecl (getANTI_IFDECL $2) (srclocOf $2)) $1 }
-  | objc_interface_decl_list ANTI_IFDECLS
-      { rcons (AntiObjCIfaceDecls (getANTI_IFDECLS $2) (srclocOf $2)) $1 }
+  | objc_interface_decl_list ANTI_OBJC_IFDECL
+      { rcons (AntiObjCIfaceDecl (getANTI_OBJC_IFDECL $2) (srclocOf $2)) $1 }
+  | objc_interface_decl_list ANTI_OBJC_IFDECLS
+      { rcons (AntiObjCIfaceDecls (getANTI_OBJC_IFDECLS $2) (srclocOf $2)) $1 }
 
 objc_property_decl :: { ObjCIfaceDecl }
 objc_property_decl :
@@ -2592,25 +2615,31 @@ objc_property_attr :: { ObjCPropAttr }
 objc_property_attr :
     identifier '=' objc_selector
       {% case $1 of
-           Id "getter" _ -> return $ ObjCGetter $3 ($1 `srcspan` $3)
-           _             -> expectedObjCPropertyAttr (locOf $1) }
+           { Id "getter" _ -> return $ ObjCGetter $3 ($1 `srcspan` $3)
+           ; _             -> expectedObjCPropertyAttr (locOf $1)
+           }
+      }
   | identifier '=' objc_selector ':'
       {% case $1 of
-           Id "setter" _ -> return $ ObjCSetter $3 ($1 `srcspan` $4)
-           _             -> expectedObjCPropertyAttr (locOf $1) }
+           { Id "setter" _ -> return $ ObjCSetter $3 ($1 `srcspan` $4)
+           ; _             -> expectedObjCPropertyAttr (locOf $1)
+           }
+      }
   | identifier
       {% case $1 of
-           Id "readonly" _          -> return $ ObjCReadonly (srclocOf $1)
-           Id "readwrite" _         -> return $ ObjCReadwrite (srclocOf $1)
-           Id "assign" _            -> return $ ObjCAssign (srclocOf $1)
-           Id "retain" _            -> return $ ObjCRetain (srclocOf $1)
-           Id "copy" _              -> return $ ObjCCopy (srclocOf $1)
-           Id "nonatomic" _         -> return $ ObjCNonatomic (srclocOf $1)
-           Id "atomic" _            -> return $ ObjCAtomic (srclocOf $1)
-           Id "strong" _            -> return $ ObjCStrong (srclocOf $1)
-           Id "weak" _              -> return $ ObjCWeak (srclocOf $1)
-           Id "unsafe_unretained" _ -> return $ ObjCUnsafeUnretained (srclocOf $1)
-           _                        -> expectedObjCPropertyAttr (locOf $1) }
+           { Id "readonly" _          -> return $ ObjCReadonly (srclocOf $1)
+           ; Id "readwrite" _         -> return $ ObjCReadwrite (srclocOf $1)
+           ; Id "assign" _            -> return $ ObjCAssign (srclocOf $1)
+           ; Id "retain" _            -> return $ ObjCRetain (srclocOf $1)
+           ; Id "copy" _              -> return $ ObjCCopy (srclocOf $1)
+           ; Id "nonatomic" _         -> return $ ObjCNonatomic (srclocOf $1)
+           ; Id "atomic" _            -> return $ ObjCAtomic (srclocOf $1)
+           ; Id "strong" _            -> return $ ObjCStrong (srclocOf $1)
+           ; Id "weak" _              -> return $ ObjCWeak (srclocOf $1)
+           ; Id "unsafe_unretained" _ -> return $ ObjCUnsafeUnretained (srclocOf $1)
+           ; _                        -> expectedObjCPropertyAttr (locOf $1)
+           }
+      }
 
 objc_method_requirement :: { ObjCMethodReq }
 objc_method_requirement :
@@ -2624,19 +2653,21 @@ objc_method_proto :
     '-' objc_method_decl attribute_specifiers_opt
       { let (res, attrs, params, hasVargs) = $2
         in
-        ObjCMethodProto False res attrs params hasVargs $3 ($1 `srcspan` $3) }
+          ObjCMethodProto False res attrs params hasVargs $3 ($1 `srcspan` $3)
+      }
   | '+' objc_method_decl attribute_specifiers_opt
       { let (res, attrs, params, hasVargs) = $2
         in
-        ObjCMethodProto True res attrs params hasVargs $3 ($1 `srcspan` $3) }
+          ObjCMethodProto True res attrs params hasVargs $3 ($1 `srcspan` $3)
+      }
 
 objc_method_decl :: { (Maybe Type, [Attr], [ObjCParam], Bool) }
 objc_method_decl :
-                 attribute_specifiers_opt objc_method_args
+    attribute_specifiers_opt objc_method_args
       { (Nothing, $1, $2, False) }
   | '(' type_name ')' attribute_specifiers_opt objc_method_args
       { (Just $2, $4, $5, False) }
-  |               attribute_specifiers_opt objc_method_args ',' '...'
+  | attribute_specifiers_opt objc_method_args ',' '...'
       { (Nothing, $1, $2, True) }
   | '(' type_name ')' attribute_specifiers_opt objc_method_args ',' '...'
       { (Just $2, $4, $5, True) }
@@ -2661,9 +2692,9 @@ objc_method_arg :
       { ObjCParam (Just $1) (Just $4) $6 (Just $7) ($1 `srcspan` $7) }
   |               ':' '(' type_name ')' attribute_specifiers_opt identifier
       { ObjCParam Nothing   (Just $3) $5 (Just $6) ($1 `srcspan` $6) }
-  | objc_selector ':'               attribute_specifiers_opt identifier
+  | objc_selector ':'                   attribute_specifiers_opt identifier
       { ObjCParam (Just $1) Nothing   $3 (Just $4) ($1 `srcspan` $4) }
-  |               ':'               attribute_specifiers_opt identifier
+  |               ':'                   attribute_specifiers_opt identifier
       { ObjCParam Nothing   Nothing   $2 (Just $3) ($1 `srcspan` $3) }
 
 -- Objective-C extension: protocol declaration
@@ -2691,7 +2722,8 @@ objc_protocol_declaration :: { Definition }
 objc_protocol_declaration :
     objc_protocol_prefix objc_protocol_refs_opt objc_interface_decl_list '@' 'end'
       { ObjCProtDef (fst $1) (rev $2) (rev $3) (snd $1 `srcspan` $5) }
-  | objc_protocol_prefix semi                                  -- this rule wins the shift-reduce conflict
+  -- This rule wins the shift-reduce conflict
+  | objc_protocol_prefix semi
       { ObjCProtDec [fst $1] (snd $1 `srcspan` $2) }
   | objc_protocol_prefix ',' identifier_list semi
       { ObjCProtDec (fst $1 : rev $3) (snd $1 `srcspan` $4) }
@@ -2737,11 +2769,13 @@ objc_implementation :
     '@' 'implementation' identifier_or_typedef ':' identifier_or_typedef objc_implementation_body_vars
       { let (ivars, defs, loc) = $6
         in
-        ObjCClassImpl $3 (Just $5) ivars defs ($1 `srcspan` loc) }
+          ObjCClassImpl $3 (Just $5) ivars defs ($1 `srcspan` loc)
+      }
   | '@' 'implementation' identifier_or_typedef                           objc_implementation_body_vars
       { let (ivars, defs, loc) = $4
         in
-        ObjCClassImpl $3 Nothing   ivars defs ($1 `srcspan` loc) }
+          ObjCClassImpl $3 Nothing   ivars defs ($1 `srcspan` loc)
+      }
   | '@' 'implementation' identifier_or_typedef '(' identifier ')'        objc_implementation_body
       { ObjCCatImpl $3 $5 (fst $7) ($1 `srcspan` snd $7) }
 
@@ -2809,12 +2843,12 @@ objc_method_definition :
     objc_method_proto semi compound_statement
       { let Block stmts loc = $3
         in
-        ObjCMethDef $1 stmts ($1 `srcspan` loc)
+          ObjCMethDef $1 stmts ($1 `srcspan` loc)
       }
   | objc_method_proto     compound_statement
       { let Block stmts loc = $2
         in
-        ObjCMethDef $1 stmts ($1 `srcspan` loc)
+          ObjCMethDef $1 stmts ($1 `srcspan` loc)
       }
 
 -- Objective-C extension: compatibility alias
@@ -2832,7 +2866,7 @@ objc_compatibility_alias :
 
 {------------------------------------------------------------------------------
  -
- - Objective-C
+ - CUDA
  -
  ------------------------------------------------------------------------------}
 
@@ -2846,18 +2880,19 @@ execution_configuration :
                   ppr (length args)
          ;  return $
             case args of
-              [gridDim, blockDim] ->
-                  ExeConfig  gridDim blockDim
-                             Nothing Nothing
+              { [gridDim, blockDim] ->
+                    ExeConfig  gridDim blockDim
+                               Nothing Nothing
                              (srclocOf args)
-              [gridDim, blockDim, sharedSize] ->
-                  ExeConfig  gridDim blockDim
-                             (Just sharedSize) Nothing
-                             (srclocOf args)
-              [gridDim, blockDim, sharedSize, exeStream] ->
-                  ExeConfig  gridDim blockDim
-                             (Just sharedSize) (Just exeStream)
-                             (srclocOf args)
+              ; [gridDim, blockDim, sharedSize] ->
+                    ExeConfig  gridDim blockDim
+                               (Just sharedSize) Nothing
+                               (srclocOf args)
+              ; [gridDim, blockDim, sharedSize, exeStream] ->
+                    ExeConfig  gridDim blockDim
+                               (Just sharedSize) (Just exeStream)
+                               (srclocOf args)
+              }
          }
     }
 
@@ -2919,8 +2954,12 @@ getANTI_PRAGMA      (L _ (T.Tanti_pragma v))      = v
 getANTI_COMMENT     (L _ (T.Tanti_comment v))     = v
 getANTI_INIT        (L _ (T.Tanti_init v))        = v
 getANTI_INITS       (L _ (T.Tanti_inits v))       = v
-getANTI_IFDECL      (L _ (T.Tanti_ifdecl v))      = v
-getANTI_IFDECLS     (L _ (T.Tanti_ifdecls v))     = v
+
+--
+-- Objective-C
+--
+getANTI_OBJC_IFDECL  (L _ (T.Tanti_objc_ifdecl v))  = v
+getANTI_OBJC_IFDECLS (L _ (T.Tanti_objc_ifdecls v)) = v
 
 lexer :: (L T.Token -> P a) -> P a
 lexer cont = do
@@ -2939,14 +2978,9 @@ data TySpec = TSauto !SrcLoc
             | TSstatic !SrcLoc
             | TSextern (Maybe Linkage) !SrcLoc
             | TStypedef !SrcLoc
-            | TS__block !SrcLoc
-            | TSObjC__weak !SrcLoc
-            | TSObjC__strong !SrcLoc
-            | TSObjC__unsafe_unretained !SrcLoc
 
             | TSconst !SrcLoc
             | TSvolatile !SrcLoc
-            | TSinline !SrcLoc
 
             | TSsigned !SrcLoc
             | TSunsigned !SrcLoc
@@ -2968,6 +3002,7 @@ data TySpec = TSauto !SrcLoc
             | TS_Bool !SrcLoc
             | TS_Complex !SrcLoc
             | TS_Imaginary !SrcLoc
+            | TSinline !SrcLoc
             | TSrestrict !SrcLoc
 
             -- GCC
@@ -2975,6 +3010,14 @@ data TySpec = TSauto !SrcLoc
             | TStypeofType Type !SrcLoc
             | TSva_list !SrcLoc
             | TSAttr Attr
+
+            -- Clang blocks
+            | TS__block !SrcLoc
+
+            -- Objective-C
+            | TSObjC__weak !SrcLoc
+            | TSObjC__strong !SrcLoc
+            | TSObjC__unsafe_unretained !SrcLoc
 
             -- CUDA
             | TSCUDAdevice !SrcLoc
@@ -3004,15 +3047,9 @@ instance Located TySpec where
     locOf (TSstatic loc)        = locOf loc
     locOf (TSextern _ loc)      = locOf loc
     locOf (TStypedef loc)       = locOf loc
-    locOf (TS__block loc)       = locOf loc
-    locOf (TSObjC__weak loc)    = locOf loc
-    locOf (TSObjC__strong loc)  = locOf loc
-    locOf (TSObjC__unsafe_unretained loc)
-                                = locOf loc
 
     locOf (TSconst loc)         = locOf loc
     locOf (TSvolatile loc)      = locOf loc
-    locOf (TSinline loc)        = locOf loc
 
     locOf (TSsigned loc)        = locOf loc
     locOf (TSunsigned loc)      = locOf loc
@@ -3033,12 +3070,20 @@ instance Located TySpec where
     locOf (TS_Bool loc)         = locOf loc
     locOf (TS_Complex loc)      = locOf loc
     locOf (TS_Imaginary loc)    = locOf loc
+    locOf (TSinline loc)        = locOf loc
     locOf (TSrestrict loc)      = locOf loc
 
     locOf (TStypeofExp _ loc)   = locOf loc
     locOf (TStypeofType _ loc)  = locOf loc
     locOf (TSva_list loc)       = locOf loc
     locOf (TSAttr attr)         = locOf attr
+
+    locOf (TS__block loc)       = locOf loc
+
+    locOf (TSObjC__weak loc)    = locOf loc
+    locOf (TSObjC__strong loc)  = locOf loc
+    locOf (TSObjC__unsafe_unretained loc)
+                                = locOf loc
 
     locOf (TSCUDAdevice loc)    = locOf loc
     locOf (TSCUDAglobal loc)    = locOf loc
@@ -3063,13 +3108,8 @@ instance Pretty TySpec where
     ppr (TSextern Nothing _)          = text "extern"
     ppr (TSextern (Just l) _)         = text "extern" <+> ppr l
     ppr (TStypedef _)                 = text "typedef"
-    ppr (TS__block _)                 = text "__block"
-    ppr (TSObjC__weak _)              = text "__weak"
-    ppr (TSObjC__strong _)            = text "__strong"
-    ppr (TSObjC__unsafe_unretained _) = text "__unsafe_unretained"
 
     ppr (TSconst _)    = text "const"
-    ppr (TSinline _)   = text "inline"
     ppr (TSvolatile _) = text "volatile"
 
     ppr (TSsigned _)   = text "signed"
@@ -3095,15 +3135,22 @@ instance Pretty TySpec where
     ppr (TSnamed ident ps _) =
         ppr ident <> if null ps then empty else angles (commasep (map ppr ps))
 
-    ppr (TSrestrict _)   = text "restrict"
     ppr (TS_Bool _)      = text "_Bool"
     ppr (TS_Complex _)   = text "_Complex"
     ppr (TS_Imaginary _) = text "_Imaginary"
+    ppr (TSinline _)     = text "inline"
+    ppr (TSrestrict _)   = text "restrict"
 
     ppr (TStypeofExp e _)   = text "__typeof__" <> parens (ppr e)
     ppr (TStypeofType ty _) = text "__typeof__" <> parens (ppr ty)
     ppr (TSva_list _)       = text "__builtin_va_list"
     ppr (TSAttr attr)       = ppr [attr]
+
+    ppr (TS__block _) = text "__block"
+
+    ppr (TSObjC__weak _)              = text "__weak"
+    ppr (TSObjC__strong _)            = text "__strong"
+    ppr (TSObjC__unsafe_unretained _) = text "__unsafe_unretained"
 
     ppr (TSCUDAdevice _)    = text "__device__"
     ppr (TSCUDAglobal _)    = text "__global__"
