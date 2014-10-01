@@ -309,6 +309,18 @@ import qualified Language.C.Syntax as C
 
 {------------------------------------------------------------------------------
  -
+ - Notes on the grammar
+ -
+
+ - A rule with a '_nla' suffix is a variant of the rule without the suffix such
+ - that it does not contain a leading '__attribute__' specifier. We need these
+ - rules to prevent an ambiguity in old-style function declarations. See the
+ - rule'declaration_list'.
+ -
+ ------------------------------------------------------------------------------}
+
+{------------------------------------------------------------------------------
+ -
  - Identifiers
  -
  ------------------------------------------------------------------------------}
@@ -699,9 +711,9 @@ declaration :: { InitGroup }
 declaration :
     declaration_ ';' { $1 }
 
-declaration_no_leading_attributes :: { InitGroup }
-declaration_no_leading_attributes :
-    declaration_no_leading_attributes_ ';' { $1 }
+declaration_nla :: { InitGroup }
+declaration_nla :
+    declaration_nla_ ';' { $1 }
 
 declaration_ :: { InitGroup }
 declaration_ :
@@ -724,20 +736,20 @@ declaration_ :
   | ANTI_DECL
       { AntiDecl (getANTI_DECL $1) (srclocOf $1) }
 
-declaration_no_leading_attributes_ :: { InitGroup }
-declaration_no_leading_attributes_ :
-    declaration_specifiers_no_leading_attributes
+declaration_nla_ :: { InitGroup }
+declaration_nla_ :
+    declaration_specifiers_nla
       {% do{ let (dspec, decl)  = $1
            ; checkInitGroup dspec decl [] []
            }
       }
-  | declaration_specifiers_no_leading_attributes init_declarator_list
+  | declaration_specifiers_nla init_declarator_list
       {% do{ let (dspec, decl)  = $1
            ; let inits          = rev $2
            ; checkInitGroup dspec decl [] (rev $2)
            }
       }
-  | declaration_specifiers_no_leading_attributes error
+  | declaration_specifiers_nla error
       {% do{ let (_, decl)  = $1
            ; expected ["';'"] (Just "declaration")
            }
@@ -768,8 +780,8 @@ declaration_specifiers :
   | typedef_declaration_specifiers
       { $1 }
 
-declaration_specifiers_no_leading_attributes :: { (DeclSpec, Decl) }
-declaration_specifiers_no_leading_attributes :
+declaration_specifiers_nla :: { (DeclSpec, Decl) }
+declaration_specifiers_nla :
     ANTI_TYPE
       { let  {  v  = getANTI_TYPE $1
              ;  l  = srclocOf $1
@@ -777,7 +789,7 @@ declaration_specifiers_no_leading_attributes :
         in
           (AntiTypeDeclSpec [] [] v l, AntiTypeDecl v l)
       }
-  | storage_qualifier_specifiers_no_leading_attributes ANTI_TYPE
+  | storage_qualifier_specifiers_nla ANTI_TYPE
       { let { storage   = mkStorage $1
             ; typeQuals = mkTypeQuals $1
             ; v         = getANTI_TYPE $2
@@ -786,9 +798,9 @@ declaration_specifiers_no_leading_attributes :
         in
           (AntiTypeDeclSpec storage typeQuals v l, AntiTypeDecl v l)
       }
-  | nontypedef_declaration_specifiers_no_leading_attributes
+  | nontypedef_declaration_specifiers_nla
       { $1 }
-  | typedef_declaration_specifiers_no_leading_attributes
+  | typedef_declaration_specifiers_nla
       { $1 }
 
 nontypedef_declaration_specifiers :: { (DeclSpec, Decl) }
@@ -824,14 +836,14 @@ nontypedef_declaration_specifiers :
            }
       }
 
-nontypedef_declaration_specifiers_no_leading_attributes :: { (DeclSpec, Decl) }
-nontypedef_declaration_specifiers_no_leading_attributes :
+nontypedef_declaration_specifiers_nla :: { (DeclSpec, Decl) }
+nontypedef_declaration_specifiers_nla :
     ANTI_SPEC
       { let dspec = AntiDeclSpec (getANTI_SPEC $1) (srclocOf $1)
         in
           (dspec, DeclRoot (srclocOf $1))
       }
-  | storage_qualifier_specifiers_no_leading_attributes %prec NAMED
+  | storage_qualifier_specifiers_nla %prec NAMED
       {% do{ dspec <- mkDeclSpec $1
            ; return (dspec, DeclRoot (srclocOf $1))
            }
@@ -846,12 +858,12 @@ nontypedef_declaration_specifiers_no_leading_attributes :
            ; return (dspec, DeclRoot ($1 `srcspan` $2))
            }
       }
-  | storage_qualifier_specifiers_no_leading_attributes type_specifier
+  | storage_qualifier_specifiers_nla type_specifier
       {% do{ dspec <- mkDeclSpec ($1 ++ [$2])
            ; return $(dspec, DeclRoot ($1 `srcspan` $2))
            }
       }
-  | storage_qualifier_specifiers_no_leading_attributes type_specifier declaration_specifiers_
+  | storage_qualifier_specifiers_nla type_specifier declaration_specifiers_
       {% do{ dspec <- mkDeclSpec ($1 ++ $2 : rev $3)
            ; return (dspec, DeclRoot ($1 `srcspan` $3))
            }
@@ -880,8 +892,8 @@ typedef_declaration_specifiers :
            }
       }
 
-typedef_declaration_specifiers_no_leading_attributes :: { (DeclSpec, Decl) }
-typedef_declaration_specifiers_no_leading_attributes :
+typedef_declaration_specifiers_nla :: { (DeclSpec, Decl) }
+typedef_declaration_specifiers_nla :
     typedef_name
       {% do{ dspec <- mkDeclSpec [$1]
            ; return (dspec, DeclRoot (srclocOf $1))
@@ -892,12 +904,12 @@ typedef_declaration_specifiers_no_leading_attributes :
            ; return (dspec, DeclRoot ($1 `srcspan` $2))
            }
       }
-  | storage_qualifier_specifiers_no_leading_attributes typedef_name
+  | storage_qualifier_specifiers_nla typedef_name
       {% do{ dspec <- mkDeclSpec ($1 ++ [$2])
            ; return (dspec, DeclRoot ($1 `srcspan` $2))
            }
       }
-  | storage_qualifier_specifiers_no_leading_attributes typedef_name storage_qualifier_specifiers
+  | storage_qualifier_specifiers_nla typedef_name storage_qualifier_specifiers
       {% do{ dspec <- mkDeclSpec ($1 ++ $2 : $3)
            ; return (dspec, DeclRoot ($1 `srcspan` $3))
            }
@@ -930,17 +942,17 @@ storage_qualifier_specifiers_ :
   | attribute_specifier                                   { rapp (map TSAttr $1) rnil }
   | storage_qualifier_specifiers_ attribute_specifier     { rapp (map TSAttr $2) $1 }
 
-storage_qualifier_specifiers_no_leading_attributes :: { [TySpec]}
-storage_qualifier_specifiers_no_leading_attributes :
-    storage_qualifier_specifiers_no_leading_attributes_ { rev $1 }
+storage_qualifier_specifiers_nla :: { [TySpec]}
+storage_qualifier_specifiers_nla :
+    storage_qualifier_specifiers_nla_ { rev $1 }
 
-storage_qualifier_specifiers_no_leading_attributes_ :: { RevList TySpec }
-storage_qualifier_specifiers_no_leading_attributes_ :
-    storage_class_specifier                                                     { rsingleton $1 }
-  | storage_qualifier_specifiers_no_leading_attributes_ storage_class_specifier { rcons $2 $1 }
-  | type_qualifier                                                              { rsingleton $1 }
-  | storage_qualifier_specifiers_no_leading_attributes_ type_qualifier          { rcons $2 $1 }
-  | storage_qualifier_specifiers_no_leading_attributes_ attribute_specifier     { rapp (map TSAttr $2) $1 }
+storage_qualifier_specifiers_nla_ :: { RevList TySpec }
+storage_qualifier_specifiers_nla_ :
+    storage_class_specifier                                   { rsingleton $1 }
+  | storage_qualifier_specifiers_nla_ storage_class_specifier { rcons $2 $1 }
+  | type_qualifier                                            { rsingleton $1 }
+  | storage_qualifier_specifiers_nla_ type_qualifier          { rcons $2 $1 }
+  | storage_qualifier_specifiers_nla_ attribute_specifier     { rapp (map TSAttr $2) $1 }
 
 init_declarator_list :: { RevList Init }
 init_declarator_list :
@@ -1904,7 +1916,7 @@ function_definition :
 -- parameter declarations cannot start with an attribute.
 declaration_list :: { RevList InitGroup }
 declaration_list :
-    declaration_no_leading_attributes
+    declaration_nla
       { rsingleton $1 }
   | ANTI_DECLS
       { rsingleton (AntiDecls (getANTI_DECLS $1) (srclocOf $1)) }
