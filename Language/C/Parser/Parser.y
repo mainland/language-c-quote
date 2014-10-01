@@ -1840,15 +1840,12 @@ jump_statement :
 
 translation_unit :: { [Definition] }
 translation_unit :
-    {- empty -}            { [] }
-  | translation_unit_rlist { rev $1 }
+    translation_unit_rlist { rev $1 }
 
 translation_unit_rlist :: { RevList Definition }
 translation_unit_rlist :
-    external_declaration
-      { rsingleton $1 }
-  | ANTI_EDECLS
-      { rsingleton (AntiEdecls (getANTI_EDECLS $1) (srclocOf $1)) }
+    {- empty -}
+      { rnil }
   | translation_unit_rlist external_declaration
       { rcons $2 $1 }
   | translation_unit_rlist ANTI_EDECLS
