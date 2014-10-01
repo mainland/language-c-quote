@@ -96,8 +96,8 @@ data TypeSpec = Tvoid                   !SrcLoc
               | Tstruct (Maybe Id) (Maybe [FieldGroup]) [Attr] !SrcLoc
               | Tunion  (Maybe Id) (Maybe [FieldGroup]) [Attr] !SrcLoc
               | Tenum   (Maybe Id) [CEnum]              [Attr] !SrcLoc
-              | Tnamed Id       -- ^ A typedef name
-                       [Id]     -- ^ Objective-C protocol references
+              | Tnamed Id       -- A typedef name
+                       [Id]     -- Objective-C protocol references
                        !SrcLoc
 
               -- C99
@@ -243,19 +243,19 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
           | AntiStms String !SrcLoc
 
           -- GCC
-          | Asm Bool         -- ^ @True@ if volatile, @False@ otherwise
-                [Attr]       -- ^ Attributes
-                AsmTemplate  -- ^ Assembly template
-                [AsmOut]     -- ^ Output operands
-                [AsmIn]      -- ^ Input operands
-                [AsmClobber] -- ^ Clobbered registers
+          | Asm Bool         -- @True@ if volatile, @False@ otherwise
+                [Attr]       -- Attributes
+                AsmTemplate  -- Assembly template
+                [AsmOut]     -- Output operands
+                [AsmIn]      -- Input operands
+                [AsmClobber] -- Clobbered registers
                 !SrcLoc
-          | AsmGoto Bool         -- ^ @True@ if volatile, @False@ otherwise
-                    [Attr]       -- ^ Attributes
-                    AsmTemplate  -- ^ Assembly template
-                    [AsmIn]      -- ^ Input operands
-                    [AsmClobber] -- ^ Clobbered registers
-                    [Id]         -- ^ Labels
+          | AsmGoto Bool         -- @True@ if volatile, @False@ otherwise
+                    [Attr]       -- Attributes
+                    AsmTemplate  -- Assembly template
+                    [AsmIn]      -- Input operands
+                    [AsmClobber] -- Clobbered registers
+                    [Id]         -- Labels
                     !SrcLoc
 
           -- Objective-C
@@ -336,9 +336,9 @@ data Exp = Var Id !SrcLoc
            -- ^Invariant: First argument must at least have either a selector or an expression;
            --  all other arguments must have an expression.
          | ObjCLitConst (Maybe UnOp)
-                        Const        -- ^ Anything except 'StringConst'
+                        Const        -- Anything except 'StringConst'
                         !SrcLoc
-         | ObjCLitString [Const] -- ^ Must all be 'StringConst'
+         | ObjCLitString [Const] -- Must all be 'StringConst'
                          !SrcLoc
          | ObjCLitBool Bool !SrcLoc
          | ObjCLitArray [Exp] !SrcLoc
