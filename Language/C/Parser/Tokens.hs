@@ -15,6 +15,8 @@ module Language.C.Parser.Tokens (
   ) where
 
 import Data.Bits
+import Data.Char (isAlphaNum,
+                  isLower)
 import Data.List (foldl')
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
@@ -266,67 +268,81 @@ instance Show Token where
     show (Tidentifier s)                = s
     show (Tnamed s)                     = s
 
-    show (Tanti_id s)                   = "$id:" ++ s
-    show (Tanti_const s)                = "$const:" ++ s
-    show (Tanti_int s)                  = "$int:" ++ s
-    show (Tanti_uint s)                 = "$uint:" ++ s
-    show (Tanti_lint s)                 = "$lint:" ++ s
-    show (Tanti_ulint s)                = "$ulint:" ++ s
-    show (Tanti_llint s)                = "$llint:" ++ s
-    show (Tanti_ullint s)               = "$ullint:" ++ s
-    show (Tanti_float s)                = "$float:" ++ s
-    show (Tanti_double s)               = "$double:" ++ s
-    show (Tanti_long_double s)          = "$longdouble:" ++ s
-    show (Tanti_char s)                 = "$char:" ++ s
-    show (Tanti_string s)               = "$string:" ++ s
-    show (Tanti_exp s)                  = "$exp:" ++ s
-    show (Tanti_func s)                 = "$func:" ++ s
-    show (Tanti_args s)                 = "$args:" ++ s
-    show (Tanti_decl s)                 = "$decl:" ++ s
-    show (Tanti_decls s)                = "$decls:" ++ s
-    show (Tanti_sdecl s)                = "$sdecl:" ++ s
-    show (Tanti_sdecls s)               = "$sdecls:" ++ s
-    show (Tanti_enum s)                 = "$enum:" ++ s
-    show (Tanti_enums s)                = "$enums:" ++ s
-    show (Tanti_esc s)                  = "$esc:" ++ s
-    show (Tanti_edecl s)                = "$edecl:" ++ s
-    show (Tanti_edecls s)               = "$edecls:" ++ s
-    show (Tanti_item s)                 = "$item:" ++ s
-    show (Tanti_items s)                = "$items:" ++ s
-    show (Tanti_stm s)                  = "$stm:" ++ s
-    show (Tanti_stms s)                 = "$stms:" ++ s
-    show (Tanti_type s)                 = "$ty:" ++ s
-    show (Tanti_spec s)                 = "$spec:" ++ s
-    show (Tanti_param s)                = "$param:" ++ s
-    show (Tanti_params s)               = "$params:" ++ s
-    show (Tanti_pragma s)               = "$pragma:" ++ s
-    show (Tanti_comment s)              = "$comment:" ++ s
-    show (Tanti_init s)                 = "$init:" ++ s
-    show (Tanti_inits s)                = "$inits:" ++ s
+    show (Tanti_id s)                   = showAnti "id"  s
+    show (Tanti_const s)                = showAnti "const"  s
+    show (Tanti_int s)                  = showAnti "int"  s
+    show (Tanti_uint s)                 = showAnti "uint"  s
+    show (Tanti_lint s)                 = showAnti "lint"  s
+    show (Tanti_ulint s)                = showAnti "ulint"  s
+    show (Tanti_llint s)                = showAnti "llint"  s
+    show (Tanti_ullint s)               = showAnti "ullint"  s
+    show (Tanti_float s)                = showAnti "float"  s
+    show (Tanti_double s)               = showAnti "double"  s
+    show (Tanti_long_double s)          = showAnti "longdouble"  s
+    show (Tanti_char s)                 = showAnti "char"  s
+    show (Tanti_string s)               = showAnti "string"  s
+    show (Tanti_exp s)                  = showAnti "exp"  s
+    show (Tanti_func s)                 = showAnti "func"  s
+    show (Tanti_args s)                 = showAnti "args"  s
+    show (Tanti_decl s)                 = showAnti "decl"  s
+    show (Tanti_decls s)                = showAnti "decls"  s
+    show (Tanti_sdecl s)                = showAnti "sdecl"  s
+    show (Tanti_sdecls s)               = showAnti "sdecls"  s
+    show (Tanti_enum s)                 = showAnti "enum"  s
+    show (Tanti_enums s)                = showAnti "enums"  s
+    show (Tanti_esc s)                  = showAnti "esc"  s
+    show (Tanti_edecl s)                = showAnti "edecl"  s
+    show (Tanti_edecls s)               = showAnti "edecls"  s
+    show (Tanti_item s)                 = showAnti "item"  s
+    show (Tanti_items s)                = showAnti "items"  s
+    show (Tanti_stm s)                  = showAnti "stm"  s
+    show (Tanti_stms s)                 = showAnti "stms"  s
+    show (Tanti_type s)                 = showAnti "ty"  s
+    show (Tanti_spec s)                 = showAnti "spec"  s
+    show (Tanti_param s)                = showAnti "param"  s
+    show (Tanti_params s)               = showAnti "params"  s
+    show (Tanti_pragma s)               = showAnti "pragma"  s
+    show (Tanti_comment s)              = showAnti "comment"  s
+    show (Tanti_init s)                 = showAnti "init"  s
+    show (Tanti_inits s)                = showAnti "inits"  s
 
     --
     -- Objective C
     --
     show (TObjCnamed s)              = s
 
-    show (Tanti_objc_ifdecl s)       = "$ifdecl:" ++ s
-    show (Tanti_objc_ifdecls s)      = "$ifdecls:" ++ s
-    show (Tanti_objc_prop s)         = "$prop:" ++ s
-    show (Tanti_objc_props s)        = "$props:" ++ s
-    show (Tanti_objc_prop_attr s)    = "$propattr:" ++ s
-    show (Tanti_objc_prop_attrs s)   = "$propattrs:" ++ s
-    show (Tanti_objc_dicts s)        = "$dictelems:" ++ s
-    show (Tanti_objc_param s)        = "$methparam:" ++ s
-    show (Tanti_objc_params s)       = "$methparams:" ++ s
-    show (Tanti_objc_method_proto s) = "$methproto:" ++ s
-    show (Tanti_objc_method_def s)   = "$methdef:" ++ s
-    show (Tanti_objc_method_defs s)  = "$methdefs:" ++ s
-    show (Tanti_objc_recv s)         = "$recv:" ++ s
-    show (Tanti_objc_arg s)          = "$kwarg:" ++ s
-    show (Tanti_objc_args s)         = "$kwargs:" ++ s
+    show (Tanti_objc_ifdecl s)       = showAnti "ifdecl" s
+    show (Tanti_objc_ifdecls s)      = showAnti "ifdecls" s
+    show (Tanti_objc_prop s)         = showAnti "prop" s
+    show (Tanti_objc_props s)        = showAnti "props" s
+    show (Tanti_objc_prop_attr s)    = showAnti "propattr" s
+    show (Tanti_objc_prop_attrs s)   = showAnti "propattrs" s
+    show (Tanti_objc_dicts s)        = showAnti "dictelems" s
+    show (Tanti_objc_param s)        = showAnti "methparam" s
+    show (Tanti_objc_params s)       = showAnti "methparams" s
+    show (Tanti_objc_method_proto s) = showAnti "methproto" s
+    show (Tanti_objc_method_def s)   = showAnti "methdef" s
+    show (Tanti_objc_method_defs s)  = showAnti "methdefs" s
+    show (Tanti_objc_recv s)         = showAnti "recv" s
+    show (Tanti_objc_arg s)          = showAnti "kwarg" s
+    show (Tanti_objc_args s)         = showAnti "kwargs" s
 
     show t = fromMaybe (error "language-c-quote: internal error: unknown token")
                        (lookup t tokenStrings)
+
+showAnti :: String -> String -> String
+showAnti anti s =
+    "$" ++ anti ++ ":" ++
+    if isIdentifier s then s else "(" ++ s ++ ")"
+  where
+    isIdentifier :: String -> Bool
+    isIdentifier []       = False
+    isIdentifier ('_':cs) = all isIdChar cs
+    isIdentifier (c:cs)   = isLower c && all isIdChar cs
+
+    isIdChar :: Char -> Bool
+    isIdChar '_' = True
+    isIdChar c   = isAlphaNum c
 
 tokenStrings :: [(Token, String)]
 tokenStrings = [(Tlparen,     "("),
