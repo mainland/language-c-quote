@@ -1774,17 +1774,22 @@ compound_statement:
 
 block_item_rlist :: { RevList BlockItem }
 block_item_rlist :
-     block_item                  { rsingleton $1 }
+     '//' block_item_no_stm      { rsingleton $2 }
+  |  block_item                  { rsingleton $1 }
   |  block_item_rlist block_item { rcons $2 $1 }
 
-block_item  :: { BlockItem }
-block_item :
+block_item_no_stm  :: { BlockItem }
+block_item_no_stm :
      declaration { BlockDecl $1 }
-  |  statement   { BlockStm $1 }
   |  ANTI_DECLS  { BlockDecl (AntiDecls (getANTI_DECLS $1) (srclocOf $1)) }
   |  ANTI_STMS   { BlockStm (AntiStms (getANTI_STMS $1) (srclocOf $1)) }
   |  ANTI_ITEM   { AntiBlockItem (getANTI_ITEM $1) (srclocOf $1) }
   |  ANTI_ITEMS  { AntiBlockItems (getANTI_ITEMS $1)  (srclocOf $1) }
+
+block_item  :: { BlockItem }
+block_item :
+     statement         { BlockStm $1 }
+  |  block_item_no_stm { $1 }
 
 begin_scope :: { () }
 begin_scope : {% pushScope }
