@@ -32,7 +32,9 @@ import Data.Char (isAlphaNum,
                   isSpace,
                   chr,
                   toLower)
-import Data.List (foldl', intersperse)
+import Data.List (foldl',
+                  intersperse,
+                  isPrefixOf)
 import Data.Loc
 import qualified Data.Map as Map
 import Data.Ratio ((%))
@@ -144,7 +146,7 @@ c :-
  ^ $whitechar* "#line" $whitechar+ $digit+ $whitechar+ \" [^\"]* \" .* { setLineFromPragma }
  ^ $whitechar* "#" $whitechar+ $digit+ $whitechar+ \" [^\"]* \" .*     { setLineFromPragma }
 
- ^ $whitechar* "#" $whitechar* "pragma" $whitechar+ { lexPragmaTok }
+ $whitechar* "#" $whitechar* "pragma" $whitechar+ .* { pragmaTok }
 
  @ccomment ;
  @cppcomment ;
@@ -343,18 +345,21 @@ lexAnti antiTok beg end = do
     isIdChar '\'' = True
     isIdChar c    = isAlphaNum c
 
-lexPragmaTok :: Action
-lexPragmaTok beg _ = do
-    s    <- lexPragma ""
-    end  <- getInput
-    return $ locateTok beg end (Tpragma (inputString beg end))
+pragmaTok :: Action
+pragmaTok beg end =
+    return $ locateTok beg end (Tpragma (findPragma (inputString beg end)))
   where
-    lexPragma :: String -> P String
-    lexPragma s = do
-        c <- nextChar
-        case c of
-          '\n' -> return (reverse s)
-          _    -> lexPragma (c : s)
+    findPragma :: String -> String
+    findPragma s | pragma `isPrefixOf` s =
+        (trim . drop (length pragma)) s
+      where
+        trim = f . f
+        f = reverse . dropWhile isSpace
+    findPragma s =
+        findPragma (tail s)
+
+    pragma :: String
+    pragma = "pragma"
 
 -- XXX: Gross hack. We assume the first character of our input is the textual
 -- representation of tok, e.g., '{' or ';'. We then scan to the first '/', which

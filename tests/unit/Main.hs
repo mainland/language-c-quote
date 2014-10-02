@@ -22,6 +22,7 @@ tests = [ constantTests
         , cQuotationTests
         , cPatternAntiquotationTests
         , statementCommentTests
+        , regressionTests
         , objcTests
         ]
 
@@ -305,3 +306,28 @@ statementCommentTests = testGroup "Statement comments"
     test_semi_comment =
         [cstms|x = 1; $comment:("/* Test 1 */") return x + y;|]
           @?= [cstms|x = 1; /* Test 1 */ return x + y;|]
+
+regressionTests :: Test
+regressionTests = testGroup "Regressions"
+    [ testCase "pragmas" test_pragmas ]
+  where
+    test_pragmas :: Assertion
+    test_pragmas =
+        [cstms|
+        #pragma omp sections
+        {
+            #pragma omp section
+            a = 1;
+        }
+        |]
+
+        @?= [ C.Pragma "omp sections" noLoc
+            , C.Block [ C.BlockStm (C.Pragma "omp section" noLoc)
+                      , C.BlockStm (C.Exp (Just $ C.Assign (C.Var (C.Id "a" noLoc) noLoc)
+                                                           C.JustAssign
+                                                           (C.Const (C.IntConst "1" C.Signed 1 noLoc) noLoc)
+                                                           noLoc)
+                                          noLoc)
+                      ]
+                      noLoc
+            ]
