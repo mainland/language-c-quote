@@ -298,6 +298,8 @@ statementCommentTests = testGroup "Statement comments"
     , testCase "c comment" test_c_comment
     , testCase "c++ comment" test_cxx_comment
     , testCase "antiquote comment" test_antiquote_comment
+    , testCase "comment at end of statements quote" test_stms_end_comment
+    , testCase "comment before antiquoted statements" test_block_stms_comment
     ]
   where
     test_lbrace_comment :: Assertion
@@ -344,6 +346,21 @@ statementCommentTests = testGroup "Statement comments"
 
         @?= [ C.Comment "/* antiquote comment */" (C.Exp Nothing noLoc) noLoc
             ]
+
+    test_stms_end_comment :: Assertion
+    test_stms_end_comment =
+        [cstms|x = 1; return x + y; $comment:("// Test")|]
+          @?= [cstms|x = 1; return x + y; // Test|]
+
+    test_block_stms_comment :: Assertion
+    test_block_stms_comment =
+        [cstm|{ int a; $decl:decl; /* Test */ $stms:stms }|]
+          @?= [cstm|{ int a; int b; a = 1; b = 2;}|]
+      where
+        decl = [cdecl|int b;|]
+        stm1 = [cstm|a = 1;|]
+        stm2 = [cstm|b = 2;|]
+        stms = [stm1, stm2]
 
 regressionTests :: Test
 regressionTests = testGroup "Regressions"

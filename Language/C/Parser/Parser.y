@@ -442,13 +442,13 @@ constant :
 
 lbrace :: { L T.Token }
 lbrace :
-    '{'      { L (locOf $1) T.Tlbrace }
-  | '{' '//' { L (locOf $1) T.Tlbrace }
+    '{'         { L (locOf $1) T.Tlbrace }
+  | '{' comment { L (locOf $1) T.Tlbrace }
 
 semi :: { L T.Token }
 semi :
-    ';'      { L (locOf $1) T.Tsemi }
-  | ';' '//' { L (locOf $1) T.Tsemi }
+    ';'         { L (locOf $1) T.Tsemi }
+  | ';' comment { L (locOf $1) T.Tsemi }
 
 primary_expression :: { Exp }
 primary_expression :
@@ -1717,6 +1717,7 @@ statement :
   | '#pragma'              { Pragma (getPRAGMA $1) (srclocOf $1) }
   | '//' statement         { mkCommentStm $1 $2 }
   | ANTI_COMMENT statement { AntiComment (getANTI_COMMENT $1) $2 ($1 `srcspan` $2) }
+  | ANTI_COMMENT error     {% expected ["statement"] Nothing }
   | ANTI_PRAGMA            { AntiPragma (getANTI_PRAGMA $1) (srclocOf $1) }
   | ANTI_STM               { AntiStm (getANTI_STM $1) (srclocOf $1) }
 
@@ -1726,16 +1727,31 @@ statement :
   -- Objective-C
   | objc_at_statement    { $1 }
 
+comment :: { Stm }
+comment :
+     '//'         { mkEmptyCommentStm $1 }
+  |  ANTI_COMMENT { AntiComment (getANTI_COMMENT $1) (Exp Nothing noLoc) (srclocOf $1) }
+
 statement_list :: { [Stm] }
 statement_list :
-    statement_rlist { rev $1 }
+    comment                 { [$1] }
+  | statement_rlist         { rev $1 }
+  | statement_rlist comment { rev (rcons $2 $1) }
 
 statement_rlist :: { RevList Stm }
 statement_rlist :
-     statement                 { rsingleton $1 }
-  |  ANTI_STMS                 { rsingleton (AntiStms (getANTI_STMS $1) (srclocOf $1)) }
-  |  statement_rlist statement { rcons $2 $1 }
-  |  statement_rlist ANTI_STMS { rcons (AntiStms (getANTI_STMS $2) (srclocOf $2)) $1 }
+     statement
+       { rsingleton $1 }
+  |  ANTI_STMS
+       { rsingleton (AntiStms (getANTI_STMS $1) (srclocOf $1)) }
+  |  comment ANTI_STMS
+       { AntiStms (getANTI_STMS $2) (srclocOf $2) `rcons` $1 `rcons` rnil }
+  |  statement_rlist statement
+       { $2 `rcons` $1 }
+  |  statement_rlist ANTI_STMS
+       { AntiStms (getANTI_STMS $2) (srclocOf $2) `rcons` $1 }
+  |  statement_rlist comment ANTI_STMS
+       { AntiStms (getANTI_STMS $3) (srclocOf $3) `rcons` $2 `rcons` $1 }
 
 labeled_statement :: { Stm }
 labeled_statement :
@@ -1755,28 +1771,24 @@ compound_statement :: { Stm }
 compound_statement:
     '{' begin_scope end_scope '}'
       { Block [] ($1 `srcspan` $4) }
-  | '{' begin_scope '//' end_scope '}'
-      { Block [] ($1 `srcspan` $5) }
+  | '{' begin_scope block_item_list end_scope '}'
+      { Block $3 ($1 `srcspan` $5) }
   | '{' begin_scope error
       {% unclosed (locOf $3) "{" }
-  | '{' begin_scope block_item_rlist end_scope '}'
-      { Block (rev $3) ($1 `srcspan` $5) }
-  | '{' begin_scope block_item_rlist '//' end_scope '}'
-      { let commentStm = BlockStm (mkEmptyCommentStm $4)
-        in
-         Block (rev (rcons commentStm $3)) ($1 `srcspan` $6)
-      }
-  | '{' begin_scope block_item_rlist ANTI_COMMENT end_scope '}'
-      { let commentStm = BlockStm (AntiComment (getANTI_COMMENT $4) (mkEmptyCommentStm $4) (srclocOf $4))
-        in
-         Block (rev (rcons commentStm $3)) ($1 `srcspan` $6)
-      }
+
+block_item_list :: { [BlockItem] }
+block_item_list :
+     block_item_rlist         { rev $1 }
+  |  block_item_rlist comment { rev (rcons (BlockStm $2) $1) }
 
 block_item_rlist :: { RevList BlockItem }
 block_item_rlist :
-     '//' block_item_no_stm      { rsingleton $2 }
-  |  block_item                  { rsingleton $1 }
-  |  block_item_rlist block_item { rcons $2 $1 }
+     block_item_no_stm                          { rsingleton $1 }
+  |  comment block_item_no_stm                  { rsingleton $2 }
+  |  statement                                  { rsingleton (BlockStm $1) }
+  |  block_item_rlist block_item_no_stm         { rcons $2 $1 }
+  |  block_item_rlist comment block_item_no_stm { rcons $3 $1 }
+  |  block_item_rlist statement                 { rcons (BlockStm $2) $1 }
 
 block_item_no_stm  :: { BlockItem }
 block_item_no_stm :
@@ -1788,8 +1800,11 @@ block_item_no_stm :
 
 block_item  :: { BlockItem }
 block_item :
-     statement         { BlockStm $1 }
-  |  block_item_no_stm { $1 }
+     statement                 { BlockStm $1 }
+  |  statement comment         { BlockStm $1 }
+  |  block_item_no_stm         { $1 }
+  |  comment block_item_no_stm { $2 }
+  |  block_item_no_stm comment { $1 }
 
 begin_scope :: { () }
 begin_scope : {% pushScope }
@@ -1940,11 +1955,13 @@ declaration_rlist :: { RevList InitGroup }
 declaration_rlist :
     declaration_nla
       { rsingleton $1 }
+  | declaration_nla comment
+      { rsingleton $1 }
   | ANTI_DECLS
       { rsingleton (AntiDecls (getANTI_DECLS $1) (srclocOf $1)) }
   | declaration_rlist declaration
       { rcons $2 $1 }
-  | declaration_rlist declaration '//'
+  | declaration_rlist declaration comment
       { rcons $2 $1 }
   | declaration_rlist ANTI_DECLS
       { rcons (AntiDecls (getANTI_DECLS $2) (srclocOf $2)) $1 }
@@ -3652,11 +3669,19 @@ rnil = RNil
 rsingleton :: a -> RevList a
 rsingleton x = RCons x RNil
 
+infixr 5 `rcons`
+
 rcons :: a -> RevList a -> RevList a
 rcons x xs  = RCons x xs
 
 rapp :: [a] -> RevList a -> RevList a
 rapp xs ys  = RApp xs ys
+
+rlist :: [a] -> RevList a
+rlist xs = rlist' xs rnil
+  where
+    rlist' []     acc = acc
+    rlist' (x:xs) acc = rlist' xs (rcons x acc)
 
 rev :: RevList a -> [a]
 rev xs = go [] xs
