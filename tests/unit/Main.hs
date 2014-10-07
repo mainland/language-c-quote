@@ -295,6 +295,9 @@ statementCommentTests :: Test
 statementCommentTests = testGroup "Statement comments"
     [ testCase "lbrace comment" test_lbrace_comment
     , testCase "semi comment" test_semi_comment
+    , testCase "c comment" test_c_comment
+    , testCase "c++ comment" test_cxx_comment
+    , testCase "antiquote comment" test_antiquote_comment
     ]
   where
     test_lbrace_comment :: Assertion
@@ -306,6 +309,41 @@ statementCommentTests = testGroup "Statement comments"
     test_semi_comment =
         [cstms|x = 1; $comment:("/* Test 1 */") return x + y;|]
           @?= [cstms|x = 1; /* Test 1 */ return x + y;|]
+
+    assign_a_equals_one =
+      C.Exp (Just $ C.Assign (C.Var (C.Id "a" noLoc) noLoc)
+                              C.JustAssign
+                              (C.Const (C.IntConst "1" C.Signed 1 noLoc) noLoc)
+                              noLoc)
+            noLoc
+
+    test_c_comment =
+        [cstms|
+        a = 1;
+        /* c style comment */
+        |]
+
+        @?= [ assign_a_equals_one
+            , C.Comment "/* c style comment */" (C.Exp Nothing noLoc) noLoc
+            ]
+
+    test_cxx_comment =
+        [cstms|
+        a = 1;
+        // c++ style comment
+        |]
+
+        @?= [ assign_a_equals_one
+            , C.Comment "// c++ style comment" (C.Exp Nothing noLoc) noLoc
+            ]
+
+    test_antiquote_comment =
+        [cstms|
+        $comment:("/* antiquote comment */")
+        |]
+
+        @?= [ C.Comment "/* antiquote comment */" (C.Exp Nothing noLoc) noLoc
+            ]
 
 regressionTests :: Test
 regressionTests = testGroup "Regressions"
