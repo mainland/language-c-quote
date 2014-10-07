@@ -321,7 +321,6 @@ statementCommentTests = testGroup "Statement comments"
         [cstms|
         a = 1;
         /* c style comment */
-        ;
         |]
 
         @?= [ assign_a_equals_one
@@ -332,7 +331,6 @@ statementCommentTests = testGroup "Statement comments"
         [cstms|
         a = 1;
         // c++ style comment
-        ;
         |]
 
         @?= [ assign_a_equals_one
@@ -342,7 +340,6 @@ statementCommentTests = testGroup "Statement comments"
     test_antiquote_comment =
         [cstms|
         $comment:("/* antiquote comment */")
-        ;
         |]
 
         @?= [ C.Comment "/* antiquote comment */" (C.Exp Nothing noLoc) noLoc
