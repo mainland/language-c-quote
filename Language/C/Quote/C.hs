@@ -22,6 +22,7 @@ module Language.C.Quote.C (
     cstm,
     cstms,
     citem,
+    citems,
     cunit,
     cfun
   ) where
@@ -38,7 +39,7 @@ typenames :: [String]
 typenames = []
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, cparams, csdecl, cstm, cstms :: QuasiQuoter
-citem, cty, cunit :: QuasiQuoter
+citem, citems, cty, cunit :: QuasiQuoter
 cdecl   = quasiquote exts typenames P.parseDecl
 cedecl  = quasiquote exts typenames P.parseEdecl
 cenum   = quasiquote exts typenames P.parseEnum
@@ -51,5 +52,6 @@ csdecl  = quasiquote exts typenames P.parseStructDecl
 cstm    = quasiquote exts typenames P.parseStm
 cstms   = quasiquote exts typenames P.parseStms
 citem   = quasiquote exts typenames P.parseBlockItem
+citems  = quasiquote exts typenames P.parseBlockItems
 cty     = quasiquote exts typenames P.parseType
 cunit   = quasiquote exts typenames P.parseUnit
