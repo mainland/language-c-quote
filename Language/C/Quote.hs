@@ -44,6 +44,8 @@
 -- [@citem@] Block item, of type @'BlockItem'@. A block item is either a
 -- declaration or a statement.
 --
+-- [@citems@] A list of block items, of type @['BlockItem'].
+--
 -- [@cfun@] Function definition, of type @'Func'@.
 --
 -- [@cinit@] Initializer, of type @'Initializer'@.
