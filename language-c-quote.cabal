@@ -1,5 +1,5 @@
 name:          language-c-quote
-version:       0.10.2.2
+version:       0.10.2.3
 cabal-version: >= 1.10
 license:       BSD3
 license-file:  LICENSE
@@ -37,10 +37,10 @@ library
     exception-transformers >= 0.3   && < 0.5,
     filepath               >= 1.2   && < 1.5,
     haskell-src-meta       >= 0.4   && < 0.7,
-    mainland-pretty        >= 0.2.5 && < 0.3,
+    mainland-pretty        >= 0.2.5 && < 0.4,
     mtl                    >= 2.0   && < 3,
     srcloc                 >= 0.4   && < 0.6,
-    syb                    >= 0.3   && < 0.5,
+    syb                    >= 0.3   && < 0.6,
     symbol                 >= 0.1   && < 0.3,
     template-haskell
 
