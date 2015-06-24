@@ -5,6 +5,7 @@
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
 
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -82,7 +83,9 @@ module Language.C.Parser.Monad (
     ifExtension
   ) where
 
+#if !MIN_VERSION_base(4,8,0)
 import Control.Applicative (Applicative(..))
+#endif /* !MIN_VERSION_base(4,8,0) */
 import Control.Monad.Exception
 import Control.Monad.Identity
 import Control.Monad.State
