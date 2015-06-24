@@ -37,6 +37,7 @@ infixl_ = Fixity LeftAssoc
 infixr_ :: Int -> Fixity
 infixr_ = Fixity RightAssoc
 
+-- | Pretty print infix binary operators
 infixop :: (Pretty a, Pretty b, Pretty op, CFixity op)
         => Int -- ^ precedence of context
         -> op  -- ^ operator
@@ -50,6 +51,21 @@ infixop prec op l r =
     leftPrec | opAssoc == RightAssoc = opPrec + 1
              | otherwise             = opPrec
 
+    rightPrec | opAssoc == LeftAssoc = opPrec + 1
+              | otherwise            = opPrec
+
+    Fixity opAssoc opPrec = fixity op
+
+-- | Pretty print prefix unary operators
+prefixop :: (Pretty a, Pretty op, CFixity op)
+         => Int -- ^ precedence of context
+         -> op  -- ^ operator
+         -> a   -- ^ argument
+         -> Doc
+prefixop prec op arg =
+    parensIf (prec > opPrec) $
+    ppr op <> pprPrec rightPrec arg
+  where
     rightPrec | opAssoc == LeftAssoc = opPrec + 1
               | otherwise            = opPrec
 
@@ -83,7 +99,32 @@ pprAnti anti s = char '$' <> text anti <> colon <>
 class CFixity a where
     fixity :: a -> Fixity
 
+--
 -- Fixities are taken from Table 2-1 in Section 2.12 of K&R (2nd ed.)
+--
+commaPrec :: Int
+commaPrec = 1
+
+commaPrec1 :: Int
+commaPrec1 = commaPrec + 1
+
+condPrec :: Int
+condPrec = 3
+
+condPrec1 :: Int
+condPrec1 = condPrec + 1
+
+unopPrec :: Int
+unopPrec = 14
+
+unopPrec1 :: Int
+unopPrec1 = unopPrec + 1
+
+memberPrec :: Int
+memberPrec = 15
+
+memberPrec1 :: Int
+memberPrec1 = memberPrec + 1
 
 instance CFixity BinOp where
     fixity Add  = infixl_ 12
@@ -109,7 +150,7 @@ instance CFixity AssignOp where
     fixity _ = infixr_ 2
 
 instance CFixity UnOp where
-    fixity _ = infixr_ 14
+    fixity _ = infixr_ unopPrec
 
 instance Pretty Id where
     ppr (Id ident _)  = text ident
@@ -722,78 +763,91 @@ instance Pretty Exp where
 
     pprPrec p (PreInc e loc) =
         pprLoc loc $
-        parensIf (p > 14) $
-        text "++" <> pprPrec 14 e
+        parensIf (p > unopPrec) $
+        text "++" <> pprPrec unopPrec1 e
 
     pprPrec p (PostInc e loc) =
         pprLoc loc $
-        parensIf (p > 15) $
-        pprPrec 15 e <> text "++"
+        parensIf (p > unopPrec) $
+        pprPrec unopPrec1 e <> text "++"
 
     pprPrec p (PreDec e loc) =
         pprLoc loc $
-        parensIf (p > 14) $
-        text "--" <> pprPrec 14 e
+        parensIf (p > unopPrec) $
+        text "--" <> pprPrec unopPrec1 e
 
     pprPrec p (PostDec e loc) =
         pprLoc loc $
-        parensIf (p > 15) $
-        pprPrec 15 e <> text "--"
+        parensIf (p > unopPrec) $
+        pprPrec unopPrec1 e <> text "--"
+
+    -- When printing leading + and - operators, we print the argument at
+    -- precedence 'unopPrec1' to ensure we get parentheses in cases like
+    -- @-(-42)@. The same holds for @++@ and @--@ above.
+    pprPrec p (UnOp op@Positive e loc) =
+        pprLoc loc $
+        parensIf (p > unopPrec) $
+        ppr op <> pprPrec unopPrec1 e
+
+    pprPrec p (UnOp op@Negate e loc) =
+        pprLoc loc $
+        parensIf (p > unopPrec) $
+        ppr op <> pprPrec unopPrec1 e
 
     pprPrec p (UnOp op e loc) =
         pprLoc loc $
-        parensIf (p > 14) $
-        ppr op <> pprPrec 14 e
+        prefixop p op e
 
     pprPrec p (SizeofExp e loc) =
         pprLoc loc $
-        parensIf (p > 14) $
-        text "sizeof" <> parens (pprPrec 14 e)
+        parensIf (p > unopPrec) $
+        text "sizeof" <> parens (ppr e)
 
     pprPrec p (SizeofType tipe loc) =
         pprLoc loc $
-        parensIf (p > 14) $
+        parensIf (p > unopPrec) $
         text "sizeof" <> parens (ppr tipe)
 
     pprPrec p (Cast tipe e loc) =
         pprLoc loc $
-        parensIf (p > 14) $
-        parens (ppr tipe) <+> pprPrec 14 e
+        parensIf (p > unopPrec) $
+        parens (ppr tipe) <+> pprPrec unopPrec e
 
     pprPrec p (Cond test then' else' loc) =
         pprLoc loc $
-        parensIf (p > 3) $
-        pprPrec 3 test <+> text "?" <+>
-        pprPrec 3 then' <+> colon <+> pprPrec 3 else'
+        parensIf (p > condPrec) $
+        pprPrec condPrec1 test <+> text "?" <+>
+        pprPrec condPrec1 then' <+> colon <+>
+        pprPrec condPrec else'
 
     pprPrec p (Member e ident loc) =
         pprLoc loc $
-        parensIf (p > 15) $
-        pprPrec 15 e <> dot <> ppr ident
+        parensIf (p > memberPrec) $
+        pprPrec memberPrec e <> dot <> ppr ident
 
     pprPrec p (PtrMember e ident loc) =
         pprLoc loc $
-        parensIf (p > 15) $
-        pprPrec 15 e <> text "->" <> ppr ident
+        parensIf (p > memberPrec) $
+        pprPrec memberPrec e <> text "->" <> ppr ident
 
     pprPrec p (Index e1 e2 loc) =
         pprLoc loc $
-        parensIf (p > 15) $
-        pprPrec 15 e1 <> brackets (ppr e2)
+        parensIf (p > memberPrec) $
+        pprPrec memberPrec e1 <> brackets (ppr e2)
 
     pprPrec p (FnCall f args loc) =
         pprLoc loc $
-        parensIf (p > 15) $
-        pprPrec 15 f <> parensList (map ppr args)
+        parensIf (p > memberPrec) $
+        pprPrec memberPrec f <> parensList (map ppr args)
 
     pprPrec p (Seq e1 e2 loc) =
         pprLoc loc $
-        parensIf (p > 1) $
-        pprPrec 1 e1 <> comma <+/> pprPrec 1 e2
+        parensIf (p > commaPrec) $
+        pprPrec commaPrec e1 <> comma <+/> pprPrec commaPrec1 e2
 
     pprPrec p (CompoundLit ty inits loc) =
         pprLoc loc $
-        parensIf (p > 15) $
+        parensIf (p > memberPrec) $
         parens (ppr ty) <+>
         braces (commasep (map pprInit inits))
       where
@@ -817,8 +871,8 @@ instance Pretty Exp where
 
     pprPrec p (CudaCall f config args loc) =
         pprLoc loc $
-        parensIf (p > 15) $
-        pprPrec 15 f <>
+        parensIf (p > memberPrec) $
+        pprPrec memberPrec f <>
         text "<<<" <> pprConfig config <> text ">>>" <>
         parensList (map ppr args)
       where
