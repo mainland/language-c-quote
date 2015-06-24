@@ -10,6 +10,9 @@ APACHE_VERSION=2.2.22
 
 GHCFLAGS = -Wall
 
+# So we can use MIN_VERSION macros
+GHCFLAGS += -optP-include -optP../../dist/build/autogen/cabal_macros.h
+
 #
 # To support cabal sandbox
 #
