@@ -6,9 +6,12 @@ import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.HUnit (Assertion, (@?=))
 
-import Data.Loc (SrcLoc, noLoc)
+import qualified Data.ByteString.Char8 as B
+import Data.Loc (SrcLoc, noLoc, startPos)
+import Control.Exception (SomeException)
 import Language.C.Quote.C
 import qualified Language.C.Syntax as C
+import qualified Language.C.Parser as P
 import Numeric (showHex)
 import Objc (objcTests)
 import System.Exit (exitFailure, exitSuccess)
@@ -367,6 +370,7 @@ regressionTests :: Test
 regressionTests = testGroup "Regressions"
     [ testCase "pragmas" test_pragmas
     , issue48
+    , testCase "Issue #44" issue44
     ]
   where
     test_pragmas :: Assertion
@@ -417,3 +421,12 @@ regressionTests = testGroup "Regressions"
 
         test_issue48_6 :: Assertion
         test_issue48_6 = pretty 80 (ppr [cexp|+(++42)|]) @?= "+(++42)"
+
+    issue44 :: Assertion
+    issue44 =
+        case parseDecl "$ty:something c;" of
+          Left err  -> fail (show err)
+          Right grp -> (pretty 80 . ppr) grp @?= " $ty:something c"
+      where
+        parseDecl :: String -> Either SomeException C.InitGroup
+        parseDecl s = P.parse [C.Antiquotation] [] P.parseDecl (B.pack s) (startPos "<inline>")

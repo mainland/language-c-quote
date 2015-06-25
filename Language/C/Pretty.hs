@@ -344,8 +344,9 @@ pprDeclarator maybe_ident declarator =
       pprDecl :: Decl -> Doc -> Doc
       pprDecl decl mid =
           case decl' of
-            DeclRoot _  -> declDoc
-            _           -> pprDecl decl' (parens declDoc)
+            DeclRoot {}     -> declDoc
+            AntiTypeDecl {} -> declDoc
+            _               -> pprDecl decl' (parens declDoc)
         where
           (decl', declDoc) = uncurry pprPtr (pprDirDecl decl mid)
 
