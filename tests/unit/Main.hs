@@ -12,6 +12,7 @@ import qualified Language.C.Syntax as C
 import Numeric (showHex)
 import Objc (objcTests)
 import System.Exit (exitFailure, exitSuccess)
+import Text.PrettyPrint.Mainland
 
 main :: IO ()
 main = defaultMain tests
@@ -364,7 +365,9 @@ statementCommentTests = testGroup "Statement comments"
 
 regressionTests :: Test
 regressionTests = testGroup "Regressions"
-    [ testCase "pragmas" test_pragmas ]
+    [ testCase "pragmas" test_pragmas
+    , issue48
+    ]
   where
     test_pragmas :: Assertion
     test_pragmas =
@@ -386,3 +389,31 @@ regressionTests = testGroup "Regressions"
                       ]
                       noLoc
             ]
+
+    issue48 :: Test
+    issue48 = testGroup "Issue #48"
+              [ testCase "test 1" test_issue48_1
+              , testCase "test 2" test_issue48_2
+              , testCase "test 3" test_issue48_3
+              , testCase "test 4" test_issue48_4
+              , testCase "test 5" test_issue48_5
+              , testCase "test 6" test_issue48_6
+              ]
+      where
+        test_issue48_1 :: Assertion
+        test_issue48_1 = pretty 80 (ppr [cexp|-(-42)|]) @?= "-(-42)"
+
+        test_issue48_2 :: Assertion
+        test_issue48_2 = pretty 80 (ppr [cexp|--(-42)|]) @?= "--(-42)"
+
+        test_issue48_3 :: Assertion
+        test_issue48_3 = pretty 80 (ppr [cexp|-(--42)|]) @?= "-(--42)"
+
+        test_issue48_4 :: Assertion
+        test_issue48_4 = pretty 80 (ppr [cexp|+(+42)|]) @?= "+(+42)"
+
+        test_issue48_5 :: Assertion
+        test_issue48_5 = pretty 80 (ppr [cexp|++(+42)|]) @?= "++(+42)"
+
+        test_issue48_6 :: Assertion
+        test_issue48_6 = pretty 80 (ppr [cexp|+(++42)|]) @?= "+(++42)"
