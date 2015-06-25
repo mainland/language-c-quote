@@ -19,7 +19,7 @@ import Control.Monad (forM_,
                       unless,
                       liftM)
 import Control.Monad.Exception
-import Data.List (intersperse)
+import Data.List (intersperse, sort)
 import Data.Loc
 import Data.Maybe (fromMaybe, catMaybes)
 import Data.Monoid
@@ -3082,18 +3082,18 @@ data TySpec = TSauto !SrcLoc
             | TSextern (Maybe Linkage) !SrcLoc
             | TStypedef !SrcLoc
 
-            | TSconst !SrcLoc
+            | TSconst    !SrcLoc
             | TSvolatile !SrcLoc
 
-            | TSsigned !SrcLoc
+            | TSsigned   !SrcLoc
             | TSunsigned !SrcLoc
 
-            | TSvoid !SrcLoc
-            | TSchar !SrcLoc
-            | TSshort !SrcLoc
-            | TSint !SrcLoc
-            | TSlong !SrcLoc
-            | TSfloat !SrcLoc
+            | TSvoid   !SrcLoc
+            | TSchar   !SrcLoc
+            | TSshort  !SrcLoc
+            | TSlong   !SrcLoc
+            | TSint    !SrcLoc
+            | TSfloat  !SrcLoc
             | TSdouble !SrcLoc
 
             | TSstruct (Maybe Id) (Maybe [FieldGroup]) [Attr] !SrcLoc
@@ -3102,11 +3102,11 @@ data TySpec = TSauto !SrcLoc
             | TSnamed Id [Id] !SrcLoc           -- the '[Id]' are Objective-C protocol references
 
             -- C99
-            | TS_Bool !SrcLoc
-            | TS_Complex !SrcLoc
+            | TS_Bool      !SrcLoc
+            | TS_Complex   !SrcLoc
             | TS_Imaginary !SrcLoc
-            | TSinline !SrcLoc
-            | TSrestrict !SrcLoc
+            | TSinline     !SrcLoc
+            | TSrestrict   !SrcLoc
 
             -- GCC
             | TStypeofExp Exp !SrcLoc
@@ -3139,6 +3139,7 @@ data TySpec = TSauto !SrcLoc
             | TSCLreadonly !SrcLoc
             | TSCLwriteonly !SrcLoc
             | TSCLkernel !SrcLoc
+  deriving (Eq, Ord, Show)
 
 instance Located DeclTySpec where
     locOf (DeclTySpec _ loc)      = locOf loc
@@ -3270,9 +3271,6 @@ instance Pretty TySpec where
     ppr (TSCLreadonly _)    = text "read_only"
     ppr (TSCLwriteonly _)   = text "write_only"
     ppr (TSCLkernel _)      = text "__kernel"
-
-instance Show TySpec where
-    showsPrec p = shows . pprPrec p
 
 isStorage :: TySpec -> Bool
 isStorage (TSauto _)                    = True
@@ -3407,7 +3405,7 @@ composeDecls (OldProto decl args loc) root =
 
 mkDeclSpec :: [TySpec] -> P DeclSpec
 mkDeclSpec specs =
-    go rest
+    go (sort rest)
   where
     storage ::[Storage]
     storage = mkStorage specs
@@ -3444,10 +3442,6 @@ mkDeclSpec specs =
         sign <- mkSign specs
         return $ cdeclSpec storage quals (Tshort sign (srclocOf rest))
 
-    go [TSint _, TSshort _] = do
-        sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tshort sign (srclocOf rest))
-
     go [TSint l] = do
         sign <- mkSign specs
         return $ cdeclSpec storage quals (Tint sign l)
@@ -3460,23 +3454,11 @@ mkDeclSpec specs =
         sign <- mkSign specs
         return $ cdeclSpec storage quals (Tlong sign (srclocOf rest))
 
-    go [TSint _, TSlong _] = do
-        sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tlong sign (srclocOf rest))
-
     go [TSlong _, TSlong _] = do
         sign <- mkSign specs
         return $ cdeclSpec storage quals (Tlong_long sign (srclocOf rest))
 
     go [TSlong _, TSlong _, TSint _] = do
-        sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tlong_long sign (srclocOf rest))
-
-    go [TSlong _, TSint _, TSlong _] = do
-        sign <- mkSign specs
-        return $ cdeclSpec storage quals (Tlong_long sign (srclocOf rest))
-
-    go [TSint _, TSlong _, TSlong _] = do
         sign <- mkSign specs
         return $ cdeclSpec storage quals (Tlong_long sign (srclocOf rest))
 
@@ -3492,9 +3474,29 @@ mkDeclSpec specs =
         checkNoSign specs "sign specified for long double type"
         return $ cdeclSpec storage quals (Tlong_double (srclocOf rest))
 
-    go [TSdouble _, TSlong _] = do
-        checkNoSign specs "sign specified for long double type"
-        return $ cdeclSpec storage quals (Tlong_double (srclocOf rest))
+    go [TSfloat _, TS_Complex _] = do
+        checkNoSign specs "sign specified for float _Complex type"
+        return $ cdeclSpec storage quals (Tfloat_Complex (srclocOf rest))
+
+    go [TSdouble _, TS_Complex _] = do
+        checkNoSign specs "sign specified for double _Complex type"
+        return $ cdeclSpec storage quals (Tdouble_Complex (srclocOf rest))
+
+    go [TSlong _, TSdouble _, TS_Complex _] = do
+        checkNoSign specs "sign specified for long double _Complex type"
+        return $ cdeclSpec storage quals (Tlong_double_Complex (srclocOf rest))
+
+    go [TSfloat _, TS_Imaginary _] = do
+        checkNoSign specs "sign specified for float _Imaginary type"
+        return $ cdeclSpec storage quals (Tfloat_Imaginary (srclocOf rest))
+
+    go [TSdouble _, TS_Imaginary _] = do
+        checkNoSign specs "sign specified for double _Imaginary type"
+        return $ cdeclSpec storage quals (Tdouble_Imaginary (srclocOf rest))
+
+    go [TSlong _, TSdouble _, TS_Imaginary _] = do
+        checkNoSign specs "sign specified for long double _Imaginary type"
+        return $ cdeclSpec storage quals (Tlong_double_Imaginary (srclocOf rest))
 
     -- Attributes for structs, unions, and enums may appear after the closing
     -- brace. If this happens, they end up in the list of TypeQuals. We pull
@@ -3529,14 +3531,6 @@ mkDeclSpec specs =
     go [TS_Bool l] = do
         checkNoSign specs "sign specified for _Bool"
         return $ cdeclSpec storage quals (T_Bool l)
-
-    go [TS_Complex l] = do
-        checkNoSign specs "sign specified for _Complex"
-        return $ cdeclSpec storage quals (T_Complex l)
-
-    go [TS_Imaginary l] = do
-        checkNoSign specs "sign specified for _Imaginary"
-        return $ cdeclSpec storage quals (T_Imaginary l)
 
     go [TSva_list l] = do
         checkNoSign specs "sign specified for __builtin_va_list"

@@ -371,6 +371,7 @@ regressionTests = testGroup "Regressions"
     [ testCase "pragmas" test_pragmas
     , issue48
     , testCase "Issue #44" issue44
+    , issue43
     ]
   where
     test_pragmas :: Assertion
@@ -430,3 +431,35 @@ regressionTests = testGroup "Regressions"
       where
         parseDecl :: String -> Either SomeException C.InitGroup
         parseDecl s = P.parse [C.Antiquotation] [] P.parseDecl (B.pack s) (startPos "<inline>")
+
+    issue43 :: Test
+    issue43 = testGroup "Issue #43"
+              [ testCase "float _Complex" test_issue43_1
+              , testCase "long double _Complex" test_issue43_2
+              , testCase "long _Complex double" test_issue43_3
+              , testCase "_Imaginary long double" test_issue43_4
+              ]
+      where
+        test_issue43_1 :: Assertion
+        test_issue43_1 = [cty|float _Complex|] @?=
+                         C.Type (C.DeclSpec [] [] (C.Tfloat_Complex noLoc) noLoc)
+                                (C.DeclRoot noLoc)
+                                noLoc
+
+        test_issue43_2 :: Assertion
+        test_issue43_2 = [cty|long double _Complex|] @?=
+                         C.Type (C.DeclSpec [] [] (C.Tlong_double_Complex noLoc) noLoc)
+                                (C.DeclRoot noLoc)
+                                noLoc
+
+        test_issue43_3 :: Assertion
+        test_issue43_3 = [cty|long  _Complex double|] @?=
+                         C.Type (C.DeclSpec [] [] (C.Tlong_double_Complex noLoc) noLoc)
+                                (C.DeclRoot noLoc)
+                                noLoc
+
+        test_issue43_4 :: Assertion
+        test_issue43_4 = [cty|_Imaginary long double|] @?=
+                         C.Type (C.DeclSpec [] [] (C.Tlong_double_Imaginary noLoc) noLoc)
+                                (C.DeclRoot noLoc)
+                                noLoc

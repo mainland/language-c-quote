@@ -230,11 +230,23 @@ instance Pretty TypeSpec where
     ppr (T_Bool _) =
         text "_Bool"
 
-    ppr (T_Complex _) =
-        text "_Complex"
+    ppr (Tfloat_Complex _) =
+        text "float" <+> text "_Complex"
 
-    ppr (T_Imaginary _) =
-        text "_Imaginary"
+    ppr (Tdouble_Complex _) =
+        text "double" <+> text "_Complex"
+
+    ppr (Tlong_double_Complex _) =
+        text "long" <+> text "double" <+> text "_Complex"
+
+    ppr (Tfloat_Imaginary _) =
+        text "float" <+> text "_Imaginary"
+
+    ppr (Tdouble_Imaginary _) =
+        text "double" <+> text "_Imaginary"
+
+    ppr (Tlong_double_Imaginary _) =
+        text "long" <+> text "double" <+> text "_Imaginary"
 
     ppr (TtypeofExp e _) =
         text "__typeof__" <> parens (pprPrec 14 e)

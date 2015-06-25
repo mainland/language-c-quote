@@ -101,9 +101,13 @@ data TypeSpec = Tvoid                   !SrcLoc
                        !SrcLoc
 
               -- C99
-              | T_Bool      !SrcLoc
-              | T_Complex   !SrcLoc
-              | T_Imaginary !SrcLoc
+              | T_Bool                 !SrcLoc
+              | Tfloat_Complex         !SrcLoc
+              | Tdouble_Complex        !SrcLoc
+              | Tlong_double_Complex   !SrcLoc
+              | Tfloat_Imaginary       !SrcLoc
+              | Tdouble_Imaginary      !SrcLoc
+              | Tlong_double_Imaginary !SrcLoc
 
               -- Gcc
               | TtypeofExp  Exp  !SrcLoc
@@ -568,25 +572,29 @@ instance Located Sign where
     locOf (Tunsigned loc)  = locOf loc
 
 instance Located TypeSpec where
-    locOf (Tvoid loc)          = locOf loc
-    locOf (Tchar _ loc)        = locOf loc
-    locOf (Tshort _ loc)       = locOf loc
-    locOf (Tint _ loc)         = locOf loc
-    locOf (Tlong _ loc)        = locOf loc
-    locOf (Tlong_long _ loc)   = locOf loc
-    locOf (Tfloat loc)         = locOf loc
-    locOf (Tdouble loc)        = locOf loc
-    locOf (Tlong_double loc)   = locOf loc
-    locOf (Tstruct _ _ _ loc)  = locOf loc
-    locOf (Tunion _ _ _ loc)   = locOf loc
-    locOf (Tenum _ _ _ loc)    = locOf loc
-    locOf (Tnamed _ _ loc)     = locOf loc
-    locOf (TtypeofExp _ loc)   = locOf loc
-    locOf (TtypeofType _ loc)  = locOf loc
-    locOf (T_Bool loc)         = locOf loc
-    locOf (T_Complex loc)      = locOf loc
-    locOf (T_Imaginary loc)    = locOf loc
-    locOf (Tva_list loc)       = locOf loc
+    locOf (Tvoid loc)                  = locOf loc
+    locOf (Tchar _ loc)                = locOf loc
+    locOf (Tshort _ loc)               = locOf loc
+    locOf (Tint _ loc)                 = locOf loc
+    locOf (Tlong _ loc)                = locOf loc
+    locOf (Tlong_long _ loc)           = locOf loc
+    locOf (Tfloat loc)                 = locOf loc
+    locOf (Tdouble loc)                = locOf loc
+    locOf (Tlong_double loc)           = locOf loc
+    locOf (Tstruct _ _ _ loc)          = locOf loc
+    locOf (Tunion _ _ _ loc)           = locOf loc
+    locOf (Tenum _ _ _ loc)            = locOf loc
+    locOf (Tnamed _ _ loc)             = locOf loc
+    locOf (TtypeofExp _ loc)           = locOf loc
+    locOf (TtypeofType _ loc)          = locOf loc
+    locOf (T_Bool loc)                 = locOf loc
+    locOf (Tfloat_Complex loc)         = locOf loc
+    locOf (Tdouble_Complex loc)        = locOf loc
+    locOf (Tlong_double_Complex loc)   = locOf loc
+    locOf (Tfloat_Imaginary loc)       = locOf loc
+    locOf (Tdouble_Imaginary loc)      = locOf loc
+    locOf (Tlong_double_Imaginary loc) = locOf loc
+    locOf (Tva_list loc)               = locOf loc
 
 instance Located DeclSpec where
     locOf (DeclSpec _ _ _ loc)          = locOf loc
