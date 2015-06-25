@@ -397,12 +397,12 @@ regressionTests = testGroup "Regressions"
 
     issue48 :: Test
     issue48 = testGroup "Issue #48"
-              [ testCase "test 1" test_issue48_1
-              , testCase "test 2" test_issue48_2
-              , testCase "test 3" test_issue48_3
-              , testCase "test 4" test_issue48_4
-              , testCase "test 5" test_issue48_5
-              , testCase "test 6" test_issue48_6
+              [ testCase "-(-42)"  test_issue48_1
+              , testCase "--(-42)" test_issue48_2
+              , testCase "-(--42)" test_issue48_3
+              , testCase "+(+42)"  test_issue48_4
+              , testCase "++(+42)" test_issue48_5
+              , testCase "+(++42)" test_issue48_6
               ]
       where
         test_issue48_1 :: Assertion
