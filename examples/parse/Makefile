@@ -8,7 +8,7 @@ ALEX_ARGS=-gi
 
 APACHE_VERSION=2.2.22
 
-GHCFLAGS = -Wall
+GHCFLAGS = -Wall -O
 
 # So we can use MIN_VERSION macros
 GHCFLAGS += -optP-include -optP../../dist/build/autogen/cabal_macros.h
