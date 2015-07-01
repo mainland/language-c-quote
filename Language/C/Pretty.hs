@@ -200,17 +200,13 @@ instance Pretty Sign where
     ppr (Tsigned _)    = text "signed"
     ppr (Tunsigned _)  = text "unsigned"
 
-pprSign :: Maybe Sign -> Doc
-pprSign Nothing     = empty
-pprSign (Just sign) = ppr sign <> space
-
 instance Pretty TypeSpec where
     ppr (Tvoid _)            = text "void"
-    ppr (Tchar sign _)       = pprSign sign <> text "char"
-    ppr (Tshort sign _)      = pprSign sign <> text "short"
-    ppr (Tint sign _)        = pprSign sign <> text "int"
-    ppr (Tlong sign _)       = pprSign sign <> text "long"
-    ppr (Tlong_long sign _)  = pprSign sign <> text "long long"
+    ppr (Tchar sign _)       = ppr sign <+> text "char"
+    ppr (Tshort sign _)      = ppr sign <+> text "short"
+    ppr (Tint sign _)        = ppr sign <+> text "int"
+    ppr (Tlong sign _)       = ppr sign <+> text "long"
+    ppr (Tlong_long sign _)  = ppr sign <+> text "long long"
     ppr (Tfloat _)           = text "float"
     ppr (Tdouble _)          = text "double"
     ppr (Tlong_double _)     = text "long double"
@@ -263,41 +259,19 @@ pprStructOrUnion :: String
                  -> [Attr]
                  -> Doc
 pprStructOrUnion ty maybe_ident maybe_fields attrs =
-    text ty
-    <> case maybe_ident of
-         Nothing ->    empty
-         Just ident -> space <> ppr ident
-    <> case maybe_fields of
-           Nothing ->     empty
-           Just fields -> space <> lbrace
-                          <> nest 4 (line <> stack (zipWith (<>) (map ppr fields) (repeat semi)))
-                          </> rbrace
-    <> case attrs of
-         [] -> empty
-         _ ->  softline <> ppr attrs
+    text ty <+> ppr maybe_ident <+> ppr maybe_fields <+/> ppr attrs
 
 pprEnum :: Maybe Id
         -> [CEnum]
         -> [Attr]
         -> Doc
 pprEnum maybe_ident cenums attrs =
-    text "enum"
-    <> case maybe_ident of
-         Nothing ->    empty
-         Just ident -> space <> ppr ident
-    <> case cenums of
-         [] -> empty
-         _  -> space <> lbrace <>
-               nest 4 (line <> stack (punctuate comma (map ppr cenums))) </>
-               rbrace
-    <> case attrs of
-         [] -> empty
-         _ ->  softline <> ppr attrs
+    text "enum" <+> ppr maybe_ident <+> ppr cenums <+/> ppr attrs
 
 instance Pretty DeclSpec where
     ppr (DeclSpec storage quals spec _) =
         case map ppr storage ++ map ppr quals of
-          [] ->   ppr spec
+          []   -> ppr spec
           docs -> spread docs <+/> ppr spec
 
     ppr (AntiDeclSpec v _) =
@@ -317,39 +291,39 @@ pprDeclarator :: Maybe Id -> Decl -> Doc
 pprDeclarator maybe_ident declarator =
     case maybe_ident of
       Nothing ->    pprDecl declarator empty
-      Just ident -> pprDecl declarator (space <> ppr ident)
+      Just ident -> pprDecl declarator (ppr ident)
     where
       pprPtr :: Decl -> Doc -> (Decl, Doc)
       pprPtr (Ptr [] decl _) post =
           pprPtr decl $
-          text "*" <> post
+          text "*" <+> post
       pprPtr (Ptr quals decl _) post =
           pprPtr decl $
-          text "*" <+> spread (map ppr quals) <> post
+          text "*" <+> spread (map ppr quals) <+> post
       pprPtr (BlockPtr [] decl _) post =
           pprPtr decl $
-          text "^" <> post
+          text "^" <+> post
       pprPtr (BlockPtr quals decl _) post =
           pprPtr decl $
-          text "^" <+> spread (map ppr quals) <> post
+          text "^" <+> spread (map ppr quals) <+> post
       pprPtr decl post = (decl, post)
 
       pprDirDecl :: Decl -> Doc -> (Decl, Doc)
       pprDirDecl (Array [] size decl _) pre =
           pprDirDecl decl $
-          pre <> brackets (align (ppr size))
+          pre <+> brackets (align (ppr size))
 
       pprDirDecl (Array quals size decl _) pre =
           pprDirDecl decl $
-          pre <> brackets (align (spread (map ppr quals) <> ppr size))
+          pre <+> brackets (align (spread (map ppr quals) <> ppr size))
 
       pprDirDecl (Proto decl args _) pre =
           pprDirDecl decl $
-          pre <> parens (ppr args)
+          pre <+> parens (ppr args)
 
       pprDirDecl (OldProto decl args _) pre =
           pprDirDecl decl $
-          pre <> parensList (map ppr args)
+          pre <+> parensList (map ppr args)
 
       pprDirDecl decl pre = (decl, pre)
 
@@ -363,7 +337,7 @@ pprDeclarator maybe_ident declarator =
           (decl', declDoc) = uncurry pprPtr (pprDirDecl decl mid)
 
 instance Pretty Type where
-    ppr (Type spec decl _)  = ppr spec <> pprDeclarator Nothing decl
+    ppr (Type spec decl _)  = ppr spec <+> pprDeclarator Nothing decl
     ppr (AntiType v _)      = pprAnti "ty" v
 
 instance Pretty Designator where
@@ -388,16 +362,13 @@ instance Pretty Initializer where
 
 instance Pretty Init where
     ppr (Init ident decl maybe_asmlabel maybe_e attrs _) =
-        pprDeclarator (Just ident) decl
-        <> case attrs of
-             [] -> empty
-             _ ->  softline <> ppr attrs
-        <> case maybe_asmlabel of
-             Nothing -> empty
-             Just l ->  space <> text "asm" <+> parens (ppr l)
-        <> case maybe_e of
-             Nothing -> empty
-             Just e ->  space <> text "=" <+/> ppr e
+        pprDeclarator (Just ident) decl <+/> ppr attrs
+        <+> case maybe_asmlabel of
+              Nothing -> empty
+              Just l ->  text "asm" <+> parens (ppr l)
+        <+> case maybe_e of
+              Nothing -> empty
+              Just e ->  text "=" <+/> ppr e
 
 instance Pretty Typedef where
     ppr (Typedef ident decl attrs loc) =
@@ -405,52 +376,52 @@ instance Pretty Typedef where
 
 instance Pretty InitGroup where
     ppr (InitGroup spec attrs inits _) =
-        ppr spec
-        <> case attrs of
-             [] -> empty
-             _ ->  softline <> ppr attrs
-        <> case inits of
-             [] -> empty
-             _ ->  commasep (map ppr inits)
+        ppr spec <+/> ppr attrs <+> commasep (map ppr inits)
 
     ppr (TypedefGroup spec attrs typedefs _) =
-        text "typedef" <+> ppr spec
-        <> case attrs of
-             [] -> empty
-             _ ->  softline <> ppr attrs
-        <> case typedefs of
-             [] -> empty
-             _ ->  commasep (map ppr typedefs)
+        text "typedef" <+> ppr spec <+/> ppr attrs <+> commasep (map ppr typedefs)
 
     ppr (AntiDecls v _)  = pprAnti "decls" v
     ppr (AntiDecl v _)   = pprAnti "decl" v
+
+    pprList initgroups =
+        stack (zipWith (<>) (map ppr initgroups) (repeat semi))
 
 instance Pretty Field where
     ppr (Field maybe_ident maybe_decl maybe_e _) =
         case maybe_decl of
           Nothing   -> empty
           Just decl -> pprDeclarator maybe_ident decl
-        <>
+        <+>
         case maybe_e of
           Nothing -> empty
-          Just e  -> space <> colon <+> ppr e
+          Just e  -> colon <+> ppr e
 
 instance Pretty FieldGroup where
     ppr (FieldGroup spec fields _) =
-        ppr spec <> commasep (map ppr fields)
+        ppr spec <+> commasep (map ppr fields)
 
     ppr (AntiSdecls v _)  = pprAnti "sdecls" v
     ppr (AntiSdecl v _)   = pprAnti "sdecl" v
 
+    pprList fields =
+        lbrace <+> align (stack (zipWith (<>) (map ppr fields) (repeat semi))) </> rbrace
+
 instance Pretty CEnum where
     ppr (CEnum ident maybe_e _) =
-        ppr ident
-        <> case maybe_e of
-             Nothing -> empty
-             Just e ->  space <> text "=" <+/> ppr e
+        ppr ident <+>
+        case maybe_e of
+          Nothing -> empty
+          Just e ->  text "=" <+/> ppr e
 
     ppr (AntiEnums v _)  = pprAnti "enums" v
     ppr (AntiEnum v _)   = pprAnti "enum" v
+
+    pprList [] =
+        empty
+
+    pprList cenums =
+        lbrace <+> align (stack (zipWith (<>) (map ppr cenums) (repeat comma))) </> rbrace
 
 instance Pretty Attr where
     ppr (Attr ident [] _) = ppr ident
@@ -463,7 +434,7 @@ instance Pretty Attr where
 
 instance Pretty Param where
     ppr (Param maybe_ident spec decl _) =
-        ppr spec <> pprDeclarator maybe_ident decl
+        ppr spec <+> pprDeclarator maybe_ident decl
 
     ppr (AntiParams v _)  = pprAnti "params" v
     ppr (AntiParam v _)   = pprAnti "param" v
@@ -477,16 +448,12 @@ instance Pretty Params where
 
 instance Pretty Func where
     ppr (Func spec ident decl args body loc) =
-        ppr spec <> pprDeclarator (Just ident) (Proto decl args loc)
-        </> ppr body
+        ppr spec <+> pprDeclarator (Just ident) (Proto decl args loc) </> ppr body
 
     ppr (OldFunc spec ident decl args maybe_initgroups body loc) =
-        ppr spec <> pprDeclarator (Just ident) (OldProto decl args loc)
-        </> case maybe_initgroups of
-              Nothing -> empty
-              Just initgroups ->
-                  stack (zipWith (<>) (map ppr initgroups) (repeat semi))
-        </> ppr body
+        ppr spec <+> pprDeclarator (Just ident) (OldProto decl args loc) </>
+        ppr maybe_initgroups </>
+        ppr body
 
 instance Pretty Definition where
     ppr (FuncDef func loc)      = srcloc loc <> ppr func
@@ -500,55 +467,52 @@ instance Pretty Definition where
     ppr (AntiEdecl v _)   = pprAnti "edecl" v
 
     ppr (ObjCClassIface cident sident refs ivars decls attrs loc) =
-        srcloc loc
-        <> case attrs of
-             [] -> empty
-             _  ->  ppr attrs <> softline
-        <> text "@interface" <+> ppr cident <+> maybe empty (\ident -> char ':' <+> ppr ident) sident
-        <+> pprIfaceBody refs ivars decls
+        srcloc loc <+> ppr attrs <+/>
+        text "@interface" <+> ppr cident <+> maybe empty (\ident -> char ':' <+> ppr ident) sident <+>
+        pprIfaceBody refs ivars decls
 
     ppr (ObjCCatIface cident catident refs ivars decls loc) =
-        srcloc loc
-        <> text "@interface" <+> ppr cident <+> parens (maybe empty ppr catident) <+> pprIfaceBody refs ivars decls
+        srcloc loc <>
+        text "@interface" <+> ppr cident <+> parens (maybe empty ppr catident) <+> pprIfaceBody refs ivars decls
 
     ppr (ObjCProtDec prots loc) =
         srcloc loc <> text "@protocol" <+> commasep (map ppr prots) <> semi
 
     ppr (ObjCProtDef pident refs decls loc) =
-        srcloc loc
-        <> text "@protocol" <+> ppr pident <+> pprIfaceBody refs [] decls
+        srcloc loc <>
+        text "@protocol" <+> ppr pident <+> pprIfaceBody refs [] decls
 
     ppr (ObjCClassImpl cident sident ivars defs loc) =
-        srcloc loc
-        <>   text "@implementation" <+> ppr cident <+> maybe empty (\ident -> char ':' <+> ppr ident) sident
-        </>  stack (map ppr ivars)
-        <//> stack (map ppr defs)
-        </>  text "@end"
+        srcloc loc <>
+        text "@implementation" <+> ppr cident <+> maybe empty (\ident -> char ':' <+> ppr ident) sident </>
+        stack (map ppr ivars) <//>
+        stack (map ppr defs) </>
+        text "@end"
 
     ppr (ObjCCatImpl cident catident defs loc) =
-        srcloc loc
-        <>   text "@implementation" <+> ppr cident <+> parens (ppr catident)
-        <//> stack (map ppr defs)
-        </>  text "@end"
+        srcloc loc <>
+        text "@implementation" <+> ppr cident <+> parens (ppr catident) <//>
+        stack (map ppr defs) </>
+        text "@end"
 
     ppr (ObjCSynDef pivars loc) =
-        srcloc loc
-        <> text "@synthesize" <+> commasep (map pprPivar pivars) <> semi
+        srcloc loc <>
+        text "@synthesize" <+> commasep (map pprPivar pivars) <> semi
       where
         pprPivar (ident,  Nothing)     = ppr ident
         pprPivar (ident1, Just ident2) = ppr ident1 <> char '=' <> ppr ident2
 
     ppr (ObjCDynDef pivars loc) =
-        srcloc loc
-        <> text "@dynamic" <+> commasep (map ppr pivars) <> semi
+        srcloc loc <>
+        text "@dynamic" <+> commasep (map ppr pivars) <> semi
 
     ppr (ObjCMethDef proto body loc) =
-        srcloc loc
-        <> ppr proto </> ppr body
+        srcloc loc <>
+        ppr proto </> ppr body
 
     ppr (ObjCCompAlias aident cident loc) =
-        srcloc loc
-        <> text "@compatibility_alias" <+> ppr aident <+> ppr cident
+        srcloc loc <>
+        text "@compatibility_alias" <+> ppr aident <+> ppr cident
 
     ppr (AntiObjCMeth v _)  = pprAnti "methdef" v
     ppr (AntiObjCMeths v _) = pprAnti "methdefs" v
@@ -589,11 +553,11 @@ instance Pretty Stm where
 
     ppr (If test then' maybe_else sloc) =
         srcloc sloc <>
-        text "if" <+> parens (ppr test)
-        <> pprStm then'
-        <> case maybe_else of
-             Nothing     -> empty
-             Just else'  -> space <> text "else" <> pprStm else'
+        text "if" <+> parens (ppr test) <>
+        pprStm then' <+>
+        case maybe_else of
+          Nothing     -> empty
+          Just else'  -> text "else" <> pprStm else'
       where
         pprStm :: Stm -> Doc
         pprStm stm@(Block _ _)   = space <> ppr stm
@@ -610,15 +574,15 @@ instance Pretty Stm where
 
     ppr (DoWhile stm e sloc) =
         srcloc sloc <>
-        text "do" <+/> ppr stm <+/> text "while" <> parens(ppr e) <> semi
+        text "do" <+/> ppr stm <+/> text "while" <> parens (ppr e) <> semi
 
     ppr (For ini test post stm sloc) =
         srcloc sloc <>
-        text "for"
-        <+> (parens . semisep) [either ppr ppr ini, ppr test, ppr post]
-        <> case stm of
-             Block {} -> space <> ppr stm
-             _ -> nest 4 $ line <> ppr stm
+        text "for" <+>
+        (parens . semisep) [either ppr ppr ini, ppr test, ppr post] <>
+        case stm of
+          Block {} -> space <> ppr stm
+          _ -> nest 4 $ line <> ppr stm
 
     ppr (Goto ident sloc) =
         srcloc sloc <>
@@ -1059,8 +1023,7 @@ instance Pretty ObjCIfaceDecl where
     ppr (ObjCIfaceReq req loc) =
         pprLoc loc $ ppr req
     ppr (ObjCIfaceMeth proto _loc) =
-        ppr proto
-        <> semi
+        ppr proto <> semi
     ppr (ObjCIfaceDecl decl loc) =
         pprLoc loc $ ppr decl
     ppr (AntiObjCIfaceDecl v _loc) =
@@ -1105,20 +1068,22 @@ instance Pretty ObjCParam where
 instance Pretty ObjCMethodProto where
     ppr (ObjCMethodProto isClassMeth resTy attrs1 params vargs attrs2 loc) =
         pprLoc loc $
-        (if isClassMeth then char '+' else char '-')
-        <+> maybe empty (parens . ppr) resTy
-        <> case attrs1 of
-             [] -> empty
-             _  -> space <> ppr attrs1 <> space
-        <> spread (map ppr params)
-        <> if vargs then text ", ..." else empty
-        <> ppr attrs2
+        (if isClassMeth then char '+' else char '-') <+>
+        maybe empty (parens . ppr) resTy <+>
+        ppr attrs1 <+>
+        spread (map ppr params) <>
+        (if vargs then text ", ..." else empty) <+>
+        ppr attrs2
     ppr (AntiObjCMethodProto p _) = pprAnti "methproto" p
 
 instance Pretty ObjCCatch where
-    ppr (ObjCCatch Nothing     block loc)  = srcloc loc <> text "@catch (...)" <+> ppr block
-    ppr (ObjCCatch (Just param) block loc) = srcloc loc
-                                             <> text "@catch" <+> parens (ppr param) <+> ppr block
+    ppr (ObjCCatch Nothing     block loc)  =
+        srcloc loc <>
+        text "@catch (...)" <+> ppr block
+
+    ppr (ObjCCatch (Just param) block loc) =
+        srcloc loc <>
+        text "@catch" <+> parens (ppr param) <+> ppr block
 
     pprList = stack . map ppr
 
