@@ -72,16 +72,16 @@ prefixop prec op arg =
     Fixity opAssoc opPrec = fixity op
 
 parensList :: [Doc] -> Doc
-parensList = encloseSep lparen rparen comma
+parensList = enclosesep lparen rparen comma
 
 bracesList :: [Doc] -> Doc
-bracesList = encloseSep lbrace rbrace comma
+bracesList = enclosesep lbrace rbrace comma
 
 bracesSemiList :: [Doc] -> Doc
-bracesSemiList = encloseSep lbrace rbrace semi
+bracesSemiList = enclosesep lbrace rbrace semi
 
 angleList :: [Doc] -> Doc
-angleList = encloseSep langle rangle comma
+angleList = enclosesep langle rangle comma
 
 pprAnti :: String -> String -> Doc
 pprAnti anti s = char '$' <> text anti <> colon <>

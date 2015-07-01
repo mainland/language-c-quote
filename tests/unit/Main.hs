@@ -427,7 +427,7 @@ regressionTests = testGroup "Regressions"
     issue44 =
         case parseDecl "$ty:something c;" of
           Left err  -> fail (show err)
-          Right grp -> (pretty 80 . ppr) grp @?= " $ty:something c"
+          Right grp -> (pretty 80 . ppr) grp @?= "$ty:something c"
       where
         parseDecl :: String -> Either SomeException C.InitGroup
         parseDecl s = P.parse [C.Antiquotation] [] P.parseDecl (B.pack s) (startPos "<inline>")

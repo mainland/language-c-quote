@@ -314,7 +314,7 @@ instance Exception LexerException where
 
 instance Show LexerException where
     show (LexerException pos msg) =
-        show $ nest 4 $ ppr pos <> text ":" </> msg
+        pretty 80 $ nest 4 $ ppr pos <> text ":" </> msg
 
 data ParserException = ParserException Loc Doc
   deriving (Typeable)
@@ -323,7 +323,7 @@ instance Exception ParserException where
 
 instance Show ParserException where
     show (ParserException loc msg) =
-        show $ nest 4 $ ppr loc <> text ":" </> msg
+        pretty 80 $ nest 4 $ ppr loc <> text ":" </> msg
 
 quoteTok :: Doc -> Doc
 quoteTok = enclose (char '`') (char '\'')
