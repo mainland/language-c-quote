@@ -3322,9 +3322,6 @@ lexer cont = do
 locate :: Loc -> (SrcLoc -> a) -> L a
 locate loc f = L loc (f (SrcLoc loc))
 
-data DeclTySpec = DeclTySpec DeclSpec !SrcLoc
-                | AntiDeclTySpec String !SrcLoc
-
 data TySpec = TSauto !SrcLoc
             | TSregister !SrcLoc
             | TSstatic !SrcLoc
@@ -3389,10 +3386,6 @@ data TySpec = TSauto !SrcLoc
             | TSCLwriteonly !SrcLoc
             | TSCLkernel !SrcLoc
   deriving (Eq, Ord, Show)
-
-instance Located DeclTySpec where
-    locOf (DeclTySpec _ loc)      = locOf loc
-    locOf (AntiDeclTySpec _ loc)  = locOf loc
 
 instance Located TySpec where
     locOf (TSauto loc)          = locOf loc
