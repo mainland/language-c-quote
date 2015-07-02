@@ -5,9 +5,9 @@
 
 -- |
 -- Module      :  Language.C.Pretty
--- Copyright   :  (c) Harvard University 2006-2011
---                (c) Geoffrey Mainland 2011-2013
---             :  (c) Drexel University 2013
+-- Copyright   :  (c) 2006-2011 Harvard University
+--                (c) 2011-2013 Geoffrey Mainland
+--             :  (c) 2013-2015 Drexel University
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
 

@@ -1,6 +1,6 @@
 -- |
 -- Module      :  Language.C.Parser
--- Copyright   :  (c) Harvard University 2006-2010
+-- Copyright   :  (c)  2006-2010 Harvard University
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
 

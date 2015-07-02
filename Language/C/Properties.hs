@@ -1,7 +1,7 @@
 -- |
 -- Module      :  Language.C.Properties
--- Copyright   :  (c) Harvard University 2006-2008
---             :  (c) Drexel University 2013-2014
+-- Copyright   :  (c) 2006-2008 Harvard University
+--             :  (c) 2013-2015 Drexel University
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
 

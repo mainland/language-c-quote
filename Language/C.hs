@@ -1,6 +1,6 @@
 -- |
 -- Module      :  Language.C
--- Copyright   :  (c) Harvard University 2009
+-- Copyright   :  (c) 2009 Harvard University
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
 

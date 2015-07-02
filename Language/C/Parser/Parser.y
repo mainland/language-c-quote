@@ -5,10 +5,10 @@
 
 -- |
 -- Module      :  Language.C.Parser.Parser
--- Copyright   :  (c) Harvard University 2006-2011
---                (c) Geoffrey Mainland 2011-2012
---                (c) Manuel M T Chakravarty 2013-2014
---                (c) Drexel University 2013-2014
+-- Copyright   :  (c) 2006-2011 Harvard University
+--                (c) 2011-2012 Geoffrey Mainland
+--                (c) 2013-2014 Manuel M T Chakravarty
+--                (c) 2013-2015 Drexel University
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
 

@@ -1,7 +1,7 @@
 -- |
 -- Module      :  Language.C.Parser.Monad
--- Copyright   :  (c) Harvard University 2006-2011
---                (c) Geoffrey Mainland 2011-2013
+-- Copyright   :  (c) 2006-2011 Harvard University
+--                (c) 2011-2013 Geoffrey Mainland
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
 
