@@ -1088,8 +1088,6 @@ instance Pretty ObjCCatch where
     pprList = stack . map ppr
 
 instance Pretty ObjCRecv where
-    ppr (ObjCRecvSuper loc)               = pprLoc loc $ text "super"
-    ppr (ObjCRecvExp e loc)               = pprLoc loc $ ppr e
-    ppr (ObjCRecvClassName className loc) = pprLoc loc $ ppr className
-    ppr (ObjCRecvTypeName typeName loc)   = pprLoc loc $ ppr typeName
-    ppr (AntiObjCRecv v _)                = pprAnti "recv" v
+    ppr (ObjCRecvSuper loc) = pprLoc loc $ text "super"
+    ppr (ObjCRecvExp e loc) = pprLoc loc $ ppr e
+    ppr (AntiObjCRecv v _)  = pprAnti "recv" v

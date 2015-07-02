@@ -493,8 +493,6 @@ data ObjCDictElem = ObjCDictElem Exp Exp !SrcLoc
 
 data ObjCRecv = ObjCRecvSuper !SrcLoc
               | ObjCRecvExp Exp !SrcLoc
-              | ObjCRecvClassName Id !SrcLoc
-              | ObjCRecvTypeName Id !SrcLoc
               | AntiObjCRecv String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
@@ -848,11 +846,9 @@ instance Located ObjCCatch where
     locOf (ObjCCatch _ _ loc) = locOf loc
 
 instance Located ObjCRecv where
-    locOf (ObjCRecvSuper loc)       = locOf loc
-    locOf (ObjCRecvExp _ loc)       = locOf loc
-    locOf (ObjCRecvClassName _ loc) = locOf loc
-    locOf (ObjCRecvTypeName _ loc)  = locOf loc
-    locOf (AntiObjCRecv _ loc)  = locOf loc
+    locOf (ObjCRecvSuper loc)  = locOf loc
+    locOf (ObjCRecvExp _ loc)  = locOf loc
+    locOf (AntiObjCRecv _ loc) = locOf loc
 
 instance Located ObjCArg where
     locOf (ObjCArg _ _ loc)    = locOf loc

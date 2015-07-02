@@ -6,9 +6,14 @@ HAPPY_ARGS=-agci
 ALEX=alex 
 ALEX_ARGS=-gi
 
-APACHE_VERSION=2.2.22
+APACHE_VERSION=2.4.12
+APR_VERSION=1.5.2
+APRUTIL_VERSION=1.5.4
 
 GHCFLAGS = -Wall -O
+
+# So we can use MIN_VERSION macros
+GHCFLAGS += -optP-include -optP../../dist/build/autogen/cabal_macros.h
 
 # So we can use MIN_VERSION macros
 GHCFLAGS += -optP-include -optP../../dist/build/autogen/cabal_macros.h
@@ -49,11 +54,21 @@ parse : $(SOURCE)
 		-o $@
 
 .PHONY : apache-code
-apache-code : httpd-$(APACHE_VERSION).tar.gz
-	tar zxf httpd-$(APACHE_VERSION).tar.gz
+apache-code : httpd-$(APACHE_VERSION).tar.bz2 apr-$(APR_VERSION).tar.bz2 apr-util-$(APRUTIL_VERSION).tar.bz2
+	tar -xf httpd-$(APACHE_VERSION).tar.bz2
+	mkdir -p httpd-$(APACHE_VERSION)/srclib/apr
+	tar -C httpd-$(APACHE_VERSION)/srclib/apr --strip-components=1 -xf apr-$(APR_VERSION).tar.bz2
+	mkdir -p httpd-$(APACHE_VERSION)/srclib/apr-util
+	tar -C httpd-$(APACHE_VERSION)/srclib/apr-util --strip-components=1 -xf apr-util-$(APRUTIL_VERSION).tar.bz2
 	(cd httpd-$(APACHE_VERSION); \
-	 CFLAGS="-save-temps" ./configure; \
+	 CFLAGS="-save-temps" ./configure --with-included-apr; \
 	 $(MAKE))
 
-httpd-$(APACHE_VERSION).tar.gz:
-	wget http://archive.apache.org/dist/httpd/httpd-$(APACHE_VERSION).tar.gz
+httpd-$(APACHE_VERSION).tar.bz2 :
+	wget http://mirror.nexcess.net/apache/httpd/httpd-$(APACHE_VERSION).tar.bz2
+
+apr-$(APR_VERSION).tar.bz2 :
+	wget http://mirror.nexcess.net/apache/apr/apr-$(APR_VERSION).tar.bz2
+
+apr-util-$(APRUTIL_VERSION).tar.bz2 :
+	wget http://mirror.nexcess.net/apache/apr/apr-util-$(APRUTIL_VERSION).tar.bz2

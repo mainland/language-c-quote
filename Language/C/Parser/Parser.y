@@ -336,7 +336,11 @@ import qualified Language.C.Syntax as C
  - A rule with a '_nla' suffix is a variant of the rule without the suffix such
  - that it does not contain a leading '__attribute__' specifier. We need these
  - rules to prevent an ambiguity in old-style function declarations. See the
- - rule'declaration_list'.
+ - rule 'declaration_list'.
+ -
+ - A rule with a '_nlt' suffix is a variant of the rule without the suffix such
+ - that it does not contain a leading typedef name. We need these rules to
+ - prevent ambiguity in expressions that re-use a typedef name as an identifier.
  -
  ------------------------------------------------------------------------------}
 
@@ -451,33 +455,6 @@ semi :
     ';'         { L (locOf $1) T.Tsemi }
   | ';' comment { L (locOf $1) T.Tsemi }
 
-primary_expression :: { Exp }
-primary_expression :
-    identifier
-      { Var $1 (srclocOf $1) }
-  | constant
-      { Const $1 (srclocOf $1) }
-  | string_literal
-      { Const (mkStringConst $1) (srclocOf $1) }
-  | '(' expression ')'
-      { $2 }
-  | '(' expression error
-      {% unclosed ($1 <--> $2) "(" }
-  | '(' compound_statement ')'
-      { let Block items _ = $2
-        in
-          StmExpr items ($1 `srcspan` $3)
-      }
-  | ANTI_EXP
-      { AntiExp (getANTI_EXP $1) (srclocOf $1) }
-
-  -- Clang blocks
-  | block_literal { $1 }
-
-  -- Objective-C
-  | objc_message_expression { $1 }
-  | objc_at_expression      { $1 }
-
 string_literal :: { StringLit }
 string_literal :
     string_literal_rlist
@@ -494,12 +471,32 @@ string_literal_rlist :
     STRING                      { rsingleton (L (locOf $1) (getSTRING $1)) }
   | string_literal_rlist STRING { rcons (L (locOf $2) (getSTRING $2)) $1 }
 
-assignment_expression_rlist :: { RevList Exp }
-assignment_expression_rlist :
-    assignment_expression
-      { rsingleton $1 }
-  | assignment_expression_rlist ',' assignment_expression
-      { rcons $3 $1 }
+primary_expression :: { Exp }
+primary_expression :
+    identifier_or_typedef
+      { Var $1 (srclocOf $1) }
+  | constant
+      { Const $1 (srclocOf $1) }
+  | string_literal
+      { Const (mkStringConst $1) (srclocOf $1) }
+  | '(' expression_nlt ')'
+      { $2 }
+  | '(' expression_nlt error
+      {% unclosed ($1 <--> $2) "(" }
+  | '(' compound_statement ')'
+      { let Block items _ = $2
+        in
+          StmExpr items ($1 `srcspan` $3)
+      }
+  | ANTI_EXP
+      { AntiExp (getANTI_EXP $1) (srclocOf $1) }
+
+  -- Clang blocks
+  | block_literal { $1 }
+
+  -- Objective-C
+  | objc_message_expression { $1 }
+  | objc_at_expression      { $1 }
 
 postfix_expression :: { Exp }
 postfix_expression :
@@ -514,21 +511,21 @@ postfix_expression :
       {% unclosed (locOf $2) "(" }
   | postfix_expression '(' ')'
       { FnCall $1 [] ($1 `srcspan` $3) }
-  | postfix_expression '(' argument_expression_rlist error
-      {% unclosed ($2 <--> rev $3) "(" }
-  | postfix_expression '(' argument_expression_rlist ')'
-      { FnCall $1 (rev $3) ($1 `srcspan` $4) }
+  | postfix_expression '(' argument_expression_list error
+      {% unclosed ($2 <--> $3) "(" }
+  | postfix_expression '(' argument_expression_list ')'
+      { FnCall $1 $3 ($1 `srcspan` $4) }
 
   | postfix_expression '<<<' execution_configuration error
       {% unclosed ($2 <--> $3) "<<<" }
   | postfix_expression '<<<' execution_configuration '>>>' '(' ')'
       { CudaCall $1 $3 [] ($1 `srcspan` $6) }
   | postfix_expression '<<<' execution_configuration '>>>'
-                       '(' argument_expression_rlist error
-      {% unclosed ($5 <--> rev $6) "(" }
+                       '(' argument_expression_list error
+      {% unclosed ($5 <--> $6) "(" }
   | postfix_expression '<<<' execution_configuration '>>>'
-                       '(' argument_expression_rlist ')'
-      { CudaCall $1 $3 (rev $6) ($1 `srcspan` $7) }
+                       '(' argument_expression_list ')'
+      { CudaCall $1 $3 $6 ($1 `srcspan` $7) }
 
   | postfix_expression '.' identifier_or_typedef
       { Member $1 $3 ($1 `srcspan` $3) }
@@ -546,17 +543,6 @@ postfix_expression :
   -- GCC
   | '__builtin_va_arg' '(' assignment_expression ',' type_declaration ')'
       { BuiltinVaArg $3 $5 ($1 `srcspan` $6) }
-
-argument_expression_rlist :: { RevList Exp }
-argument_expression_rlist :
-    assignment_expression
-      { rsingleton $1 }
-  | ANTI_ARGS
-      { rsingleton (AntiArgs (getANTI_ARGS $1) (srclocOf $1)) }
-  | argument_expression_rlist ',' assignment_expression
-      { rcons $3 $1}
-  | argument_expression_rlist ',' ANTI_ARGS
-      { rcons (AntiArgs (getANTI_ARGS $3) (srclocOf $3)) $1 }
 
 unary_expression :: { Exp }
 unary_expression :
@@ -712,6 +698,275 @@ maybe_expression:
 constant_expression :: { Exp }
 constant_expression :
   conditional_expression { $1 }
+
+argument_expression_list :: { [Exp] }
+argument_expression_list :
+    argument_expression_rlist { rev $1 }
+
+argument_expression_rlist :: { RevList Exp }
+argument_expression_rlist :
+    assignment_expression
+      { rsingleton $1 }
+  | ANTI_ARGS
+      { rsingleton (AntiArgs (getANTI_ARGS $1) (srclocOf $1)) }
+  | argument_expression_rlist ',' assignment_expression
+      { rcons $3 $1}
+  | argument_expression_rlist ',' ANTI_ARGS
+      { rcons (AntiArgs (getANTI_ARGS $3) (srclocOf $3)) $1 }
+
+assignment_expression_list :: { [Exp] }
+assignment_expression_list :
+    assignment_expression_rlist { rev $1 }
+
+assignment_expression_rlist :: { RevList Exp }
+assignment_expression_rlist :
+    assignment_expression
+      { rsingleton $1 }
+  | assignment_expression_rlist ',' assignment_expression
+      { rcons $3 $1 }
+  | assignment_expression_rlist ','
+      { $1 }
+
+{------------------------------------------------------------------------------
+ -
+ - _nlt expression variants
+ -
+ ------------------------------------------------------------------------------}
+
+primary_expression_nlt :: { Exp }
+primary_expression_nlt :
+    identifier
+      { Var $1 (srclocOf $1) }
+  | constant
+      { Const $1 (srclocOf $1) }
+  | string_literal
+      { Const (mkStringConst $1) (srclocOf $1) }
+  | '(' expression_nlt ')'
+      { $2 }
+  | '(' expression_nlt error
+      {% unclosed ($1 <--> $2) "(" }
+  | '(' compound_statement ')'
+      { let Block items _ = $2
+        in
+          StmExpr items ($1 `srcspan` $3)
+      }
+  | ANTI_EXP
+      { AntiExp (getANTI_EXP $1) (srclocOf $1) }
+
+  -- Clang blocks
+  | block_literal { $1 }
+
+  -- Objective-C
+  | objc_message_expression { $1 }
+  | objc_at_expression      { $1 }
+
+postfix_expression_nlt :: { Exp }
+postfix_expression_nlt :
+    primary_expression_nlt
+      { $1 }
+  | postfix_expression_nlt '[' error
+      {% unclosed (locOf $1) "[" }
+  | postfix_expression_nlt '[' expression ']'
+      { Index $1 $3 ($1 `srcspan` $4) }
+
+  | postfix_expression_nlt '(' error
+      {% unclosed (locOf $2) "(" }
+  | postfix_expression_nlt '(' ')'
+      { FnCall $1 [] ($1 `srcspan` $3) }
+  | postfix_expression_nlt '(' argument_expression_nlt_list error
+      {% unclosed ($2 <--> $3) "(" }
+  | postfix_expression_nlt '(' argument_expression_nlt_list ')'
+      { FnCall $1 $3 ($1 `srcspan` $4) }
+
+  | postfix_expression_nlt '<<<' execution_configuration error
+      {% unclosed ($2 <--> $3) "<<<" }
+  | postfix_expression_nlt '<<<' execution_configuration '>>>' '(' ')'
+      { CudaCall $1 $3 [] ($1 `srcspan` $6) }
+  | postfix_expression_nlt '<<<' execution_configuration '>>>'
+                       '(' argument_expression_nlt_list error
+      {% unclosed ($5 <--> $6) "(" }
+  | postfix_expression_nlt '<<<' execution_configuration '>>>'
+                       '(' argument_expression_nlt_list ')'
+      { CudaCall $1 $3 $6 ($1 `srcspan` $7) }
+
+  | postfix_expression_nlt '.' identifier_or_typedef
+      { Member $1 $3 ($1 `srcspan` $3) }
+  | postfix_expression_nlt '->' identifier_or_typedef
+      { PtrMember $1 $3 ($1 `srcspan` $3) }
+  | postfix_expression_nlt '++'
+      { PostInc $1 ($1 `srcspan` $2) }
+  | postfix_expression_nlt '--'
+      { PostDec $1 ($1 `srcspan` $2) }
+  | '(' type_name ')' lbrace initializer_rlist '}'
+      { CompoundLit ($2 :: Type) (rev $5) ($1 `srcspan` $6) }
+  | '(' type_name ')' lbrace initializer_rlist ',' '}'
+      { CompoundLit $2 (rev $5) ($1 `srcspan` $7) }
+
+  -- GCC
+  | '__builtin_va_arg' '(' assignment_expression_nlt ',' type_declaration ')'
+      { BuiltinVaArg $3 $5 ($1 `srcspan` $6) }
+
+unary_expression_nlt :: { Exp }
+unary_expression_nlt :
+    postfix_expression_nlt        { $1 }
+  | '++' unary_expression         { PreInc $2 ($1 `srcspan` $2) }
+  | '--' unary_expression         { PreDec $2 ($1 `srcspan` $2) }
+  | '&' cast_expression           { UnOp AddrOf $2 ($1 `srcspan` $2) }
+  | '*' cast_expression           { UnOp Deref $2 ($1 `srcspan` $2) }
+  | '+' cast_expression           { UnOp Positive $2 ($1 `srcspan` $2) }
+  | '-' cast_expression           { UnOp Negate $2 ($1 `srcspan` $2) }
+  | '~' cast_expression           { UnOp Not $2 ($1 `srcspan` $2) }
+  | '!' cast_expression           { UnOp Lnot $2 ($1 `srcspan` $2) }
+  | 'sizeof' unary_expression     { SizeofExp $2 ($1 `srcspan` $2) }
+  | 'sizeof' '(' type_name ')'    { SizeofType $3 ($1 `srcspan` $4) }
+  | 'sizeof' '(' type_name error  {% unclosed ($2 <--> $3) "(" }
+
+cast_expression_nlt :: { Exp }
+cast_expression_nlt :
+    unary_expression_nlt               { $1 }
+  | '(' type_name ')' cast_expression  { Cast $2 $4 ($1 `srcspan` $4) }
+  | '(' type_name error                {% unclosed ($1 <--> $2) "(" }
+
+multiplicative_expression_nlt :: { Exp }
+multiplicative_expression_nlt :
+    cast_expression_nlt
+      { $1 }
+  | multiplicative_expression_nlt '*' cast_expression
+      { BinOp Mul $1 $3 ($1 `srcspan` $3) }
+  | multiplicative_expression_nlt '/' cast_expression
+      { BinOp Div $1 $3 ($1 `srcspan` $3) }
+  | multiplicative_expression_nlt '%' cast_expression
+      { BinOp Mod $1 $3 ($1 `srcspan` $3) }
+
+additive_expression_nlt :: { Exp }
+additive_expression_nlt :
+    multiplicative_expression_nlt
+      { $1 }
+  | additive_expression_nlt '+' multiplicative_expression
+      { BinOp Add $1 $3 ($1 `srcspan` $3) }
+  | additive_expression_nlt '-' multiplicative_expression
+      { BinOp Sub $1 $3 ($1 `srcspan` $3) }
+
+shift_expression_nlt :: { Exp }
+shift_expression_nlt :
+    additive_expression_nlt
+      { $1 }
+  | shift_expression_nlt '<<' additive_expression
+      { BinOp Lsh $1 $3 ($1 `srcspan` $3) }
+  | shift_expression_nlt '>>' additive_expression
+      { BinOp Rsh $1 $3 ($1 `srcspan` $3) }
+
+relational_expression_nlt :: { Exp }
+relational_expression_nlt :
+    shift_expression_nlt
+      { $1 }
+  | relational_expression_nlt '<' shift_expression
+      { BinOp Lt $1 $3 ($1 `srcspan` $3) }
+  | relational_expression_nlt '>' shift_expression
+      { BinOp Gt $1 $3 ($1 `srcspan` $3) }
+  | relational_expression_nlt '<=' shift_expression
+      { BinOp Le $1 $3 ($1 `srcspan` $3) }
+  | relational_expression_nlt '>=' shift_expression
+      { BinOp Ge $1 $3 ($1 `srcspan` $3) }
+
+equality_expression_nlt :: { Exp }
+equality_expression_nlt :
+    relational_expression_nlt
+      { $1 }
+  | equality_expression_nlt '==' relational_expression
+      { BinOp Eq $1 $3 ($1 `srcspan` $3) }
+  | equality_expression_nlt '!=' relational_expression
+      { BinOp Ne $1 $3 ($1 `srcspan` $3) }
+
+and_expression_nlt :: { Exp }
+and_expression_nlt :
+    equality_expression_nlt
+      { $1 }
+  | and_expression_nlt '&' equality_expression
+      { BinOp And $1 $3 ($1 `srcspan` $3) }
+
+exclusive_or_expression_nlt :: { Exp }
+exclusive_or_expression_nlt :
+    and_expression_nlt
+      { $1 }
+  | exclusive_or_expression_nlt '^' and_expression_nlt
+      { BinOp Xor $1 $3 ($1 `srcspan` $3) }
+
+inclusive_or_expression_nlt :: { Exp }
+inclusive_or_expression_nlt :
+    exclusive_or_expression_nlt
+      { $1 }
+  | inclusive_or_expression_nlt '|' exclusive_or_expression
+      { BinOp Or $1 $3 ($1 `srcspan` $3) }
+
+logical_and_expression_nlt :: { Exp }
+logical_and_expression_nlt :
+    inclusive_or_expression_nlt
+      { $1 }
+  | logical_and_expression_nlt '&&' inclusive_or_expression
+      { BinOp Land $1 $3 ($1 `srcspan` $3) }
+
+logical_or_expression_nlt :: { Exp }
+logical_or_expression_nlt :
+    logical_and_expression_nlt
+      { $1 }
+  | logical_or_expression_nlt '||' logical_and_expression
+      { BinOp Lor $1 $3 ($1 `srcspan` $3) }
+
+conditional_expression_nlt :: { Exp }
+conditional_expression_nlt :
+    logical_or_expression_nlt
+      { $1 }
+  | logical_or_expression_nlt '?' expression ':' conditional_expression
+      { Cond $1 $3 $5 ($1 `srcspan` $5) }
+
+assignment_expression_nlt :: { Exp }
+assignment_expression_nlt :
+    conditional_expression_nlt
+      { $1 }
+  | unary_expression_nlt '=' assignment_expression
+      { Assign $1 JustAssign $3 ($1 `srcspan` $3) }
+  | unary_expression_nlt '*=' assignment_expression
+      { Assign $1 MulAssign $3 ($1 `srcspan` $3) }
+  | unary_expression_nlt '/=' assignment_expression
+      { Assign $1 DivAssign $3 ($1 `srcspan` $3) }
+  | unary_expression_nlt '%=' assignment_expression
+      { Assign $1 ModAssign $3 ($1 `srcspan` $3) }
+  | unary_expression_nlt '+=' assignment_expression
+      { Assign $1 AddAssign $3 ($1 `srcspan` $3) }
+  | unary_expression_nlt '-=' assignment_expression
+      { Assign $1 SubAssign $3 ($1 `srcspan` $3) }
+  | unary_expression_nlt '<<=' assignment_expression
+      { Assign $1 LshAssign $3 ($1 `srcspan` $3) }
+  | unary_expression_nlt '>>=' assignment_expression
+      { Assign $1 RshAssign $3 ($1 `srcspan` $3) }
+  | unary_expression_nlt '&=' assignment_expression
+      { Assign $1 AndAssign $3 ($1 `srcspan` $3) }
+  | unary_expression_nlt '^=' assignment_expression
+      { Assign $1 XorAssign $3 ($1 `srcspan` $3) }
+  | unary_expression_nlt '|=' assignment_expression
+      { Assign $1 OrAssign $3 ($1 `srcspan` $3) }
+
+expression_nlt :: { Exp }
+expression_nlt :
+    assignment_expression_nlt                 { $1 }
+  | expression_nlt ',' assignment_expression  { Seq $1 $3 ($1 `srcspan` $3) }
+
+maybe_expression_nlt :: { Maybe Exp  }
+maybe_expression_nlt:
+    {- empty -}  { Nothing }
+  | expression_nlt   { Just $1 }
+
+argument_expression_nlt_list :: { [Exp] }
+argument_expression_nlt_list :
+    assignment_expression_nlt
+      { [$1] }
+  | ANTI_ARGS
+      { [AntiArgs (getANTI_ARGS $1) (srclocOf $1)] }
+  | assignment_expression_nlt ',' argument_expression_rlist
+      { $1 : rev $3 }
+  | ANTI_ARGS ',' argument_expression_rlist
+      { AntiArgs (getANTI_ARGS $1) (srclocOf $1) : rev $3 }
 
 {------------------------------------------------------------------------------
  -
@@ -1634,7 +1889,7 @@ typedef_name :
       {% expected ["identifier"] (Just "'typename'")}
 
   -- GCC
-  | '__typeof__' '(' unary_expression ')'
+  | '__typeof__' '(' unary_expression_nlt ')'
       { TStypeofExp $3 ($1 `srcspan` $4) }
   | '__typeof__' '(' type_name ')'
       { TStypeofType $3 ($1 `srcspan` $4) }
@@ -1815,9 +2070,9 @@ end_scope : {% popScope }
 
 expression_statement :: { Stm }
 expression_statement:
-    ';'               { Exp Nothing (srclocOf $1) }
-  | expression ';'    { Exp (Just $1) ($1 `srcspan` $2) }
-  | expression error  {% expected ["';'"] Nothing }
+    ';'                  { Exp Nothing (srclocOf $1) }
+  | expression_nlt ';'   { Exp (Just $1) ($1 `srcspan` $2) }
+  | expression_nlt error {% expected ["';'"] Nothing }
 
 selection_statement :: { Stm }
 selection_statement :
@@ -1848,15 +2103,15 @@ iteration_statement :
       {% expected ["expression", "declaration"] Nothing }
   | 'for' '(' declaration maybe_expression semi ')' statement
       { For (Left $3) $4 Nothing $7 ($1 `srcspan` $7) }
-  | 'for' '(' maybe_expression semi maybe_expression semi ')' statement
+  | 'for' '(' maybe_expression_nlt semi maybe_expression semi ')' statement
       { For (Right $3) $5 Nothing $8 ($1 `srcspan` $8) }
-  | 'for' '(' maybe_expression semi maybe_expression semi error
+  | 'for' '(' maybe_expression_nlt semi maybe_expression semi error
       {% unclosed ($2 <--> $6) "(" }
   | 'for' '(' declaration maybe_expression semi expression ')' statement
       { For (Left $3) $4 (Just $6) $8 ($1 `srcspan` $8) }
-  | 'for' '(' maybe_expression semi maybe_expression semi expression ')' statement
+  | 'for' '(' maybe_expression_nlt semi maybe_expression semi expression ')' statement
       { For (Right $3) $5 (Just $7) $9 ($1 `srcspan` $9) }
-  | 'for' '(' maybe_expression semi maybe_expression semi expression error
+  | 'for' '(' maybe_expression_nlt semi maybe_expression semi expression error
       {% unclosed ($2 <--> $7) "(" }
 
 jump_statement :: { Stm }
@@ -2020,8 +2275,8 @@ attrib :: { Attr }
 attrib :
     attrib_name
       { Attr $1 [] (srclocOf $1)}
-  | attrib_name '(' argument_expression_rlist ')'
-      { Attr $1 (rev $3) ($1 `srcspan` $4) }
+  | attrib_name '(' argument_expression_list ')'
+      { Attr $1 $3 ($1 `srcspan` $4) }
 
 attrib_name :: { Id }
 attrib_name :
@@ -2305,11 +2560,7 @@ objc_message_expression :
 
 objc_receiver :: { ObjCRecv }
 objc_receiver :
-    NAMED
-      { ObjCRecvTypeName (Id (getNAMED $1) (srclocOf $1)) (srclocOf $1) }
-  | OBJCNAMED
-      { ObjCRecvClassName (Id (getOBJCNAMED $1) (srclocOf $1)) (srclocOf $1) }
-  | expression
+    expression
       { case $1 of
           Var (Id "super" _) loc -> ObjCRecvSuper loc
           _                      -> ObjCRecvExp $1 (srclocOf $1)
@@ -2441,10 +2692,8 @@ objc_at_expression :
       { ObjCLitBool True ($1 `srcspan` $2) }
   | '@' '[' ']'
       { ObjCLitArray [] ($1 `srcspan` $3) }
-  | '@' '[' assignment_expression_rlist ']'
-      { ObjCLitArray (rev $3) ($1 `srcspan` $4) }
-  | '@' '[' assignment_expression_rlist ',' ']'
-      { ObjCLitArray (rev $3) ($1 `srcspan` $5) }
+  | '@' '[' assignment_expression_list ']'
+      { ObjCLitArray $3 ($1 `srcspan` $4) }
   | '@' lbrace '}'
       { ObjCLitDict [] ($1 `srcspan` $3) }
   | '@' lbrace objc_key_value_rlist '}'
@@ -2962,10 +3211,10 @@ objc_compatibility_alias :
 
 execution_configuration :: { ExeConfig }
 execution_configuration :
-  argument_expression_rlist
-    {%do {  let args = rev $1
+  argument_expression_list
+    {%do {  let args = $1
          ;  when (length args < 2 || length args > 4) $ do
-                parserError (locOf (rev $1)) $
+                parserError (locOf args) $
                   text "execution context should have 2-4 arguments, but saw" <+>
                   ppr (length args)
          ;  return $
