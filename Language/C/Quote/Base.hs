@@ -139,6 +139,17 @@ qqDeclE (C.AntiTypeDecl v _) =
     Just [|let C.Type _ decl _ = $(antiVarE v) in decl|]
 qqDeclE _ = Nothing
 
+qqTypeQualE :: C.TypeQual -> Maybe (Q Exp)
+qqTypeQualE (C.AntiTypeQual v _)  = Just $ antiVarE v
+qqTypeQualE _                     = Nothing
+
+qqTypeQualListE :: [C.TypeQual] -> Maybe (Q Exp)
+qqTypeQualListE [] = Just [|[]|]
+qqTypeQualListE (C.AntiTypeQuals v _ : stms) =
+    Just [|$(antiVarE v) ++ $(dataToExpQ qqExp stms)|]
+qqTypeQualListE (stm : stms) =
+    Just [|$(dataToExpQ qqExp stm) : $(dataToExpQ qqExp stms)|]
+
 qqTypeE :: C.Type -> Maybe (Q Exp)
 qqTypeE (C.AntiType v _)  = Just $ antiVarE v
 qqTypeE _                 = Nothing
@@ -396,6 +407,8 @@ qqExp = const Nothing  `extQ` qqStringE
                        `extQ` qqIdE
                        `extQ` qqDeclSpecE
                        `extQ` qqDeclE
+                       `extQ` qqTypeQualE
+                       `extQ` qqTypeQualListE
                        `extQ` qqTypeE
                        `extQ` qqInitializerE
                        `extQ` qqInitializerListE
@@ -452,6 +465,18 @@ qqDeclP :: C.Decl -> Maybe (Q Pat)
 qqDeclP (C.AntiTypeDecl {}) =
     error "Illegal antiquoted type in pattern"
 qqDeclP _ = Nothing
+
+qqTypeQualP :: C.TypeQual -> Maybe (Q Pat)
+qqTypeQualP (C.AntiTypeQual v _) = Just $ antiVarP v
+qqTypeQualP _                    = Nothing
+
+qqTypeQualListP :: [C.TypeQual] -> Maybe (Q Pat)
+qqTypeQualListP [] = Just $ listP []
+qqTypeQualListP [C.AntiTypeQuals v _] = Just $ antiVarP v
+qqTypeQualListP (C.AntiTypeQuals {} : _ : _) =
+    error "Antiquoted list of type qualifiers must be last item in quoted list"
+qqTypeQualListP (arg : args) =
+    Just $ conP (mkName ":") [dataToPatQ qqPat arg, dataToPatQ qqPat args]
 
 qqTypeP :: C.Type -> Maybe (Q Pat)
 qqTypeP (C.AntiType v _)  = Just $ antiVarP v
@@ -606,6 +631,8 @@ qqPat = const Nothing `extQ` qqStringP
                       `extQ` qqIdP
                       `extQ` qqDeclSpecP
                       `extQ` qqDeclP
+                      `extQ` qqTypeQualP
+                      `extQ` qqTypeQualListP
                       `extQ` qqTypeP
                       `extQ` qqInitializerP
                       `extQ` qqInitializerListP

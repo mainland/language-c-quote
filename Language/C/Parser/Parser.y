@@ -166,6 +166,8 @@ import qualified Language.C.Syntax as C
  ANTI_STM         { L _ (T.Tanti_stm _) }
  ANTI_STMS        { L _ (T.Tanti_stms _) }
  ANTI_SPEC        { L _ (T.Tanti_spec _) }
+ ANTI_TYPE_QUAL   { L _ (T.Tanti_type_qual _) }
+ ANTI_TYPE_QUALS  { L _ (T.Tanti_type_quals _) }
  ANTI_TYPE        { L _ (T.Tanti_type _) }
  ANTI_PARAM       { L _ (T.Tanti_param _) }
  ANTI_PARAMS      { L _ (T.Tanti_params _) }
@@ -297,10 +299,11 @@ import qualified Language.C.Syntax as C
 %name parseStructDecl struct_declaration
 %name parseEnum       enumerator
 
-%name parseType       type_declaration
-%name parseParam      parameter_declaration
-%name parseParams     parameter_list
-%name parseInit       initializer
+%name parseTypeQuals type_qualifier_list
+%name parseType      type_declaration
+%name parseParam     parameter_declaration
+%name parseParams    parameter_list
+%name parseInit      initializer
 
 %name parseStm        statement
 %name parseStms       statement_list
@@ -1462,6 +1465,9 @@ type_qualifier :
     'const'    { TSconst (srclocOf $1) }
   | 'volatile' { TSvolatile (srclocOf $1) }
 
+  | ANTI_TYPE_QUAL  { TSAntiTypeQual (getANTI_TYPE_QUAL $1) (srclocOf $1) }
+  | ANTI_TYPE_QUALS { TSAntiTypeQuals (getANTI_TYPE_QUALS $1) (srclocOf $1) }
+
   -- C99
   | 'inline'   { TSinline (srclocOf $1) }
   | 'restrict' { TSrestrict (srclocOf $1) }
@@ -1717,6 +1723,10 @@ pointer :
   | '^' type_qualifier_rlist         {% mkBlockPtr (locOf $1) (rev $2) }
   | '^' pointer                      {% ($2 .) `liftM` mkBlockPtr (locOf $1) [] }
   | '^' type_qualifier_rlist pointer {% ($3 .) `liftM` mkBlockPtr (locOf $1) (rev $2) }
+
+type_qualifier_list :: { [TypeQual] }
+type_qualifier_list :
+    type_qualifier_rlist { mkTypeQuals (rev $1) }
 
 type_qualifier_rlist :: { RevList TySpec }
 type_qualifier_rlist :
@@ -3285,6 +3295,8 @@ getANTI_ITEM        (L _ (T.Tanti_item v))        = v
 getANTI_ITEMS       (L _ (T.Tanti_items v))       = v
 getANTI_STM         (L _ (T.Tanti_stm v))         = v
 getANTI_STMS        (L _ (T.Tanti_stms v))        = v
+getANTI_TYPE_QUAL   (L _ (T.Tanti_type_qual v))   = v
+getANTI_TYPE_QUALS  (L _ (T.Tanti_type_quals v))  = v
 getANTI_TYPE        (L _ (T.Tanti_type v))        = v
 getANTI_SPEC        (L _ (T.Tanti_spec v))        = v
 getANTI_PARAM       (L _ (T.Tanti_param v))       = v
@@ -3347,6 +3359,9 @@ data TySpec = TSauto !SrcLoc
             | TSenum (Maybe Id) [CEnum] [Attr] !SrcLoc
             | TSnamed Id [Id] !SrcLoc           -- the '[Id]' are Objective-C protocol references
 
+            | TSAntiTypeQual String !SrcLoc
+            | TSAntiTypeQuals String !SrcLoc
+
             -- C99
             | TS_Bool      !SrcLoc
             | TS_Complex   !SrcLoc
@@ -3388,64 +3403,67 @@ data TySpec = TSauto !SrcLoc
   deriving (Eq, Ord, Show)
 
 instance Located TySpec where
-    locOf (TSauto loc)          = locOf loc
-    locOf (TSregister loc)      = locOf loc
-    locOf (TSstatic loc)        = locOf loc
-    locOf (TSextern _ loc)      = locOf loc
-    locOf (TStypedef loc)       = locOf loc
+    locOf (TSauto loc)            = locOf loc
+    locOf (TSregister loc)        = locOf loc
+    locOf (TSstatic loc)          = locOf loc
+    locOf (TSextern _ loc)        = locOf loc
+    locOf (TStypedef loc)         = locOf loc
 
-    locOf (TSconst loc)         = locOf loc
-    locOf (TSvolatile loc)      = locOf loc
+    locOf (TSconst loc)           = locOf loc
+    locOf (TSvolatile loc)        = locOf loc
 
-    locOf (TSsigned loc)        = locOf loc
-    locOf (TSunsigned loc)      = locOf loc
+    locOf (TSsigned loc)          = locOf loc
+    locOf (TSunsigned loc)        = locOf loc
 
-    locOf (TSvoid loc)          = locOf loc
-    locOf (TSchar loc)          = locOf loc
-    locOf (TSshort loc)         = locOf loc
-    locOf (TSint loc)           = locOf loc
-    locOf (TSlong loc)          = locOf loc
-    locOf (TSfloat loc)         = locOf loc
-    locOf (TSdouble loc)        = locOf loc
+    locOf (TSvoid loc)            = locOf loc
+    locOf (TSchar loc)            = locOf loc
+    locOf (TSshort loc)           = locOf loc
+    locOf (TSint loc)             = locOf loc
+    locOf (TSlong loc)            = locOf loc
+    locOf (TSfloat loc)           = locOf loc
+    locOf (TSdouble loc)          = locOf loc
 
-    locOf (TSstruct _ _ _ loc)  = locOf loc
-    locOf (TSunion _ _ _ loc)   = locOf loc
-    locOf (TSenum _ _ _ loc)    = locOf loc
-    locOf (TSnamed _ _ loc)     = locOf loc
+    locOf (TSstruct _ _ _ loc)    = locOf loc
+    locOf (TSunion _ _ _ loc)     = locOf loc
+    locOf (TSenum _ _ _ loc)      = locOf loc
+    locOf (TSnamed _ _ loc)       = locOf loc
 
-    locOf (TS_Bool loc)         = locOf loc
-    locOf (TS_Complex loc)      = locOf loc
-    locOf (TS_Imaginary loc)    = locOf loc
-    locOf (TSinline loc)        = locOf loc
-    locOf (TSrestrict loc)      = locOf loc
+    locOf (TSAntiTypeQual _ loc)  = locOf loc
+    locOf (TSAntiTypeQuals _ loc) = locOf loc
 
-    locOf (TStypeofExp _ loc)   = locOf loc
-    locOf (TStypeofType _ loc)  = locOf loc
-    locOf (TSva_list loc)       = locOf loc
-    locOf (TSAttr attr)         = locOf attr
+    locOf (TS_Bool loc)           = locOf loc
+    locOf (TS_Complex loc)        = locOf loc
+    locOf (TS_Imaginary loc)      = locOf loc
+    locOf (TSinline loc)          = locOf loc
+    locOf (TSrestrict loc)        = locOf loc
 
-    locOf (TS__block loc)       = locOf loc
+    locOf (TStypeofExp _ loc)     = locOf loc
+    locOf (TStypeofType _ loc)    = locOf loc
+    locOf (TSva_list loc)         = locOf loc
+    locOf (TSAttr attr)           = locOf attr
 
-    locOf (TSObjC__weak loc)    = locOf loc
-    locOf (TSObjC__strong loc)  = locOf loc
+    locOf (TS__block loc)         = locOf loc
+
+    locOf (TSObjC__weak loc)      = locOf loc
+    locOf (TSObjC__strong loc)    = locOf loc
     locOf (TSObjC__unsafe_unretained loc)
-                                = locOf loc
+                                  = locOf loc
 
-    locOf (TSCUDAdevice loc)    = locOf loc
-    locOf (TSCUDAglobal loc)    = locOf loc
-    locOf (TSCUDAhost loc)      = locOf loc
-    locOf (TSCUDAconstant loc)  = locOf loc
-    locOf (TSCUDAshared loc)    = locOf loc
-    locOf (TSCUDArestrict loc)  = locOf loc
-    locOf (TSCUDAnoinline loc)  = locOf loc
+    locOf (TSCUDAdevice loc)      = locOf loc
+    locOf (TSCUDAglobal loc)      = locOf loc
+    locOf (TSCUDAhost loc)        = locOf loc
+    locOf (TSCUDAconstant loc)    = locOf loc
+    locOf (TSCUDAshared loc)      = locOf loc
+    locOf (TSCUDArestrict loc)    = locOf loc
+    locOf (TSCUDAnoinline loc)    = locOf loc
 
-    locOf (TSCLprivate loc)     = locOf loc
-    locOf (TSCLlocal loc)       = locOf loc
-    locOf (TSCLglobal loc)      = locOf loc
-    locOf (TSCLconstant loc)    = locOf loc
-    locOf (TSCLreadonly loc)    = locOf loc
-    locOf (TSCLwriteonly loc)   = locOf loc
-    locOf (TSCLkernel loc)      = locOf loc
+    locOf (TSCLprivate loc)       = locOf loc
+    locOf (TSCLlocal loc)         = locOf loc
+    locOf (TSCLglobal loc)        = locOf loc
+    locOf (TSCLconstant loc)      = locOf loc
+    locOf (TSCLreadonly loc)      = locOf loc
+    locOf (TSCLwriteonly loc)     = locOf loc
+    locOf (TSCLkernel loc)        = locOf loc
 
 instance Pretty TySpec where
     ppr (TSauto _)                    = text "auto"
@@ -3542,51 +3560,55 @@ mkStorage specs = map mk (filter isStorage specs)
       mk _                               = error "internal error in mkStorage"
 
 isTypeQual :: TySpec -> Bool
-isTypeQual (TSconst _)        = True
-isTypeQual (TSvolatile _)     = True
-isTypeQual (TSinline _)       = True
-isTypeQual (TSrestrict _)     = True
-isTypeQual (TSAttr _)         = True
-isTypeQual (TSCUDAdevice _)   = True
-isTypeQual (TSCUDAglobal _)   = True
-isTypeQual (TSCUDAhost _)     = True
-isTypeQual (TSCUDAconstant _) = True
-isTypeQual (TSCUDAshared _)   = True
-isTypeQual (TSCUDArestrict _) = True
-isTypeQual (TSCUDAnoinline _) = True
-isTypeQual (TSCLprivate _)    = True
-isTypeQual (TSCLlocal _)      = True
-isTypeQual (TSCLglobal _)     = True
-isTypeQual (TSCLconstant _)   = True
-isTypeQual (TSCLreadonly _)   = True
-isTypeQual (TSCLwriteonly _)  = True
-isTypeQual (TSCLkernel _)     = True
-isTypeQual _                  = False
+isTypeQual (TSconst _)          = True
+isTypeQual (TSvolatile _)       = True
+isTypeQual (TSAntiTypeQual {})  = True
+isTypeQual (TSAntiTypeQuals {}) = True
+isTypeQual (TSinline _)         = True
+isTypeQual (TSrestrict _)       = True
+isTypeQual (TSAttr _)           = True
+isTypeQual (TSCUDAdevice _)     = True
+isTypeQual (TSCUDAglobal _)     = True
+isTypeQual (TSCUDAhost _)       = True
+isTypeQual (TSCUDAconstant _)   = True
+isTypeQual (TSCUDAshared _)     = True
+isTypeQual (TSCUDArestrict _)   = True
+isTypeQual (TSCUDAnoinline _)   = True
+isTypeQual (TSCLprivate _)      = True
+isTypeQual (TSCLlocal _)        = True
+isTypeQual (TSCLglobal _)       = True
+isTypeQual (TSCLconstant _)     = True
+isTypeQual (TSCLreadonly _)     = True
+isTypeQual (TSCLwriteonly _)    = True
+isTypeQual (TSCLkernel _)       = True
+isTypeQual _                    = False
 
 mkTypeQuals :: [TySpec] -> [TypeQual]
 mkTypeQuals specs = map mk (filter isTypeQual specs)
     where
       mk :: TySpec -> TypeQual
-      mk (TSconst loc)        = Tconst loc
-      mk (TSvolatile loc)     = Tvolatile loc
-      mk (TSinline loc)       = Tinline loc
-      mk (TSrestrict loc)     = Trestrict loc
-      mk (TSAttr attr)        = TAttr attr
-      mk (TSCUDAdevice loc)   = TCUDAdevice loc
-      mk (TSCUDAglobal loc)   = TCUDAglobal loc
-      mk (TSCUDAhost loc)     = TCUDAhost loc
-      mk (TSCUDAconstant loc) = TCUDAconstant loc
-      mk (TSCUDAshared loc)   = TCUDAshared loc
-      mk (TSCUDArestrict loc) = TCUDArestrict loc
-      mk (TSCUDAnoinline loc) = TCUDAnoinline loc
-      mk (TSCLprivate loc)    = TCLprivate loc
-      mk (TSCLlocal loc)      = TCLlocal loc
-      mk (TSCLglobal loc)     = TCLglobal loc
-      mk (TSCLconstant loc)   = TCLconstant loc
-      mk (TSCLreadonly loc)   = TCLreadonly loc
-      mk (TSCLwriteonly loc)  = TCLwriteonly loc
-      mk (TSCLkernel loc)     = TCLkernel loc
-      mk _                    = error "internal error in mkTypeQual"
+      mk (TSconst loc)           = Tconst loc
+      mk (TSvolatile loc)        = Tvolatile loc
+      mk (TSAntiTypeQual v loc)  = AntiTypeQual v loc
+      mk (TSAntiTypeQuals v loc) = AntiTypeQuals v loc
+      mk (TSinline loc)          = Tinline loc
+      mk (TSrestrict loc)        = Trestrict loc
+      mk (TSAttr attr)           = TAttr attr
+      mk (TSCUDAdevice loc)      = TCUDAdevice loc
+      mk (TSCUDAglobal loc)      = TCUDAglobal loc
+      mk (TSCUDAhost loc)        = TCUDAhost loc
+      mk (TSCUDAconstant loc)    = TCUDAconstant loc
+      mk (TSCUDAshared loc)      = TCUDAshared loc
+      mk (TSCUDArestrict loc)    = TCUDArestrict loc
+      mk (TSCUDAnoinline loc)    = TCUDAnoinline loc
+      mk (TSCLprivate loc)       = TCLprivate loc
+      mk (TSCLlocal loc)         = TCLlocal loc
+      mk (TSCLglobal loc)        = TCLglobal loc
+      mk (TSCLconstant loc)      = TCLconstant loc
+      mk (TSCLreadonly loc)      = TCLreadonly loc
+      mk (TSCLwriteonly loc)     = TCLwriteonly loc
+      mk (TSCLkernel loc)        = TCLkernel loc
+      mk _                       = error "internal error in mkTypeQual"
 
 isSign :: TySpec -> Bool
 isSign (TSsigned _)    = True

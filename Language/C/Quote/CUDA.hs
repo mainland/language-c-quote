@@ -15,6 +15,7 @@ module Language.C.Quote.CUDA (
     cdecl,
     csdecl,
     cenum,
+    ctyquals,
     cty,
     cparam,
     cparams,
@@ -47,19 +48,20 @@ typeN :: Int -> String -> [String]
 typeN k typename = [typename ++ show n | n <- [1..k]]
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, cparams, csdecl, cstm, cstms :: QuasiQuoter
-citem, citems, cty, cunit :: QuasiQuoter
-cdecl   = quasiquote exts typenames P.parseDecl
-cedecl  = quasiquote exts typenames P.parseEdecl
-cenum   = quasiquote exts typenames P.parseEnum
-cexp    = quasiquote exts typenames P.parseExp
-cfun    = quasiquote exts typenames P.parseFunc
-cinit   = quasiquote exts typenames P.parseInit
-cparam  = quasiquote exts typenames P.parseParam
-cparams = quasiquote exts typenames P.parseParams
-csdecl  = quasiquote exts typenames P.parseStructDecl
-cstm    = quasiquote exts typenames P.parseStm
-cstms   = quasiquote exts typenames P.parseStms
-citem   = quasiquote exts typenames P.parseBlockItem
-citems  = quasiquote exts typenames P.parseBlockItems
-cty     = quasiquote exts typenames P.parseType
-cunit   = quasiquote exts typenames P.parseUnit
+citem, citems, ctyquals, cty, cunit :: QuasiQuoter
+cdecl    = quasiquote exts typenames P.parseDecl
+cedecl   = quasiquote exts typenames P.parseEdecl
+cenum    = quasiquote exts typenames P.parseEnum
+cexp     = quasiquote exts typenames P.parseExp
+cfun     = quasiquote exts typenames P.parseFunc
+cinit    = quasiquote exts typenames P.parseInit
+cparam   = quasiquote exts typenames P.parseParam
+cparams  = quasiquote exts typenames P.parseParams
+csdecl   = quasiquote exts typenames P.parseStructDecl
+cstm     = quasiquote exts typenames P.parseStm
+cstms    = quasiquote exts typenames P.parseStms
+citem    = quasiquote exts typenames P.parseBlockItem
+citems   = quasiquote exts typenames P.parseBlockItems
+ctyquals = quasiquote exts typenames P.parseTypeQuals
+cty      = quasiquote exts typenames P.parseType
+cunit    = quasiquote exts typenames P.parseUnit

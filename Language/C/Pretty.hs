@@ -172,29 +172,32 @@ instance Pretty Storage where
     ppr (TObjC__unsafe_unretained _) = text "__unsafe_unretained"
 
 instance Pretty TypeQual where
-    ppr (Tconst _)        = text "const"
-    ppr (Tvolatile _)     = text "volatile"
-    ppr (Tinline _)       = text "inline"
+    ppr (Tconst _)          = text "const"
+    ppr (Tvolatile _)       = text "volatile"
 
-    ppr (Trestrict _)     = text "__restrict"
+    ppr (AntiTypeQual v _)  = pprAnti "tyqual" v
+    ppr (AntiTypeQuals v _) = pprAnti "tyquals" v
 
-    ppr (TAttr attr)      = ppr [attr]
+    ppr (Tinline _)         = text "inline"
+    ppr (Trestrict _)       = text "__restrict"
 
-    ppr (TCUDAdevice _)   = text "__device__"
-    ppr (TCUDAglobal _)   = text "__global__"
-    ppr (TCUDAhost _)     = text "__host__"
-    ppr (TCUDAconstant _) = text "__constant__"
-    ppr (TCUDAshared _)   = text "__shared__"
-    ppr (TCUDArestrict _) = text "__restrict__"
-    ppr (TCUDAnoinline _) = text "__noinline__"
+    ppr (TAttr attr)        = ppr [attr]
 
-    ppr (TCLprivate _)    = text "__private"
-    ppr (TCLlocal _)      = text "__local"
-    ppr (TCLglobal _)     = text "__global"
-    ppr (TCLconstant _)   = text "__constant"
-    ppr (TCLreadonly _)   = text "read_only"
-    ppr (TCLwriteonly _)  = text "write_only"
-    ppr (TCLkernel _)     = text "__kernel"
+    ppr (TCUDAdevice _)     = text "__device__"
+    ppr (TCUDAglobal _)     = text "__global__"
+    ppr (TCUDAhost _)       = text "__host__"
+    ppr (TCUDAconstant _)   = text "__constant__"
+    ppr (TCUDAshared _)     = text "__shared__"
+    ppr (TCUDArestrict _)   = text "__restrict__"
+    ppr (TCUDAnoinline _)   = text "__noinline__"
+
+    ppr (TCLprivate _)      = text "__private"
+    ppr (TCLlocal _)        = text "__local"
+    ppr (TCLglobal _)       = text "__global"
+    ppr (TCLconstant _)     = text "__constant"
+    ppr (TCLreadonly _)     = text "read_only"
+    ppr (TCLwriteonly _)    = text "write_only"
+    ppr (TCLkernel _)       = text "__kernel"
 
 instance Pretty Sign where
     ppr (Tsigned _)    = text "signed"

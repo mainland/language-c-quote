@@ -56,6 +56,8 @@
 --
 -- [@csdecl@] Declaration of a struct member, of type @'FieldGroup'@.
 --
+-- [@ctyquals@] A list of type qualifiers, of type @['TyQual']@.
+--
 -- [@cty@] A C type, of type @'Type'@.
 --
 -- [@cunit@] A compilation unit, of type @['Definition']@.
@@ -179,6 +181,11 @@
 -- [@stm@] A statement. The argument must have type @'Stm'@.
 --
 -- [@stms@] A list statements. The argument must have type @['Stm']@.
+--
+-- [@tyqual@] A type qualifier. The argument must have type @'TyQual'@.
+--
+-- [@tyquals@] A list of type qualifiers. The argument must have type
+-- @['TyQual']@.
 --
 -- [@ty@] A C type. The argument must have type @'Type'@.
 --

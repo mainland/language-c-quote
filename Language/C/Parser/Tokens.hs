@@ -154,6 +154,8 @@ data Token = Teof
            | Tanti_items String
            | Tanti_stm String
            | Tanti_stms String
+           | Tanti_type_qual String
+           | Tanti_type_quals String
            | Tanti_type String
            | Tanti_spec String
            | Tanti_param String
@@ -297,6 +299,8 @@ instance Show Token where
     show (Tanti_items s)                = showAnti "items"  s
     show (Tanti_stm s)                  = showAnti "stm"  s
     show (Tanti_stms s)                 = showAnti "stms"  s
+    show (Tanti_type_quals s)           = showAnti "tyquals" s
+    show (Tanti_type_qual s)            = showAnti "tyqual" s
     show (Tanti_type s)                 = showAnti "ty"  s
     show (Tanti_spec s)                 = showAnti "spec"  s
     show (Tanti_param s)                = showAnti "param"  s

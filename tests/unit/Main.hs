@@ -139,6 +139,8 @@ cQuotationTests = testGroup "C quotations"
     , testCase "enum antiquote" test_enum
     , testCase "statement antiquote" test_stm
     , testCase "parameter antiquote" test_param
+    , testCase "type qualifier antiquote" test_tyqual
+    , testCase "type qualifiers antiquote" test_tyquals
     , testCase "type antiquote" test_ty
     , testCase "initializer antiquote" test_init
     , testCase "initializers antiquote" test_inits
@@ -252,6 +254,20 @@ cQuotationTests = testGroup "C quotations"
         ty2 = [cparam|int|]
         ty3 = [cparam|float|]
         tys = [ty2, ty3]
+
+    test_tyqual :: Assertion
+    test_tyqual =
+        [cdecl|$tyqual:tyqual int i;|]
+          @?= [cdecl|const int i;|]
+      where
+        tyqual = C.Tconst noLoc
+
+    test_tyquals :: Assertion
+    test_tyquals =
+        [cdecl|$tyquals:tyquals int i;|]
+          @?= [cdecl|const volatile int i;|]
+      where
+        tyquals = [ctyquals|const volatile|]
 
     test_ty :: Assertion
     test_ty =

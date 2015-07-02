@@ -112,6 +112,8 @@ c :-
  "$items:"   / { allowAnti } { lexAnti Tanti_items }
  "$stm:"     / { allowAnti } { lexAnti Tanti_stm }
  "$stms:"    / { allowAnti } { lexAnti Tanti_stms }
+ "$tyqual:"  / { allowAnti } { lexAnti Tanti_type_qual }
+ "$tyquals:" / { allowAnti } { lexAnti Tanti_type_quals }
  "$ty:"      / { allowAnti } { lexAnti Tanti_type }
  "$spec:"    / { allowAnti } { lexAnti Tanti_spec }
  "$param:"   / { allowAnti } { lexAnti Tanti_param }

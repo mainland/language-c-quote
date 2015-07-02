@@ -54,6 +54,9 @@ data Storage = Tauto                   !SrcLoc
 data TypeQual = Tconst    !SrcLoc
               | Tvolatile !SrcLoc
 
+              | AntiTypeQual  String !SrcLoc
+              | AntiTypeQuals String !SrcLoc
+
               -- C99
               | Tinline   !SrcLoc
               | Trestrict !SrcLoc
@@ -543,8 +546,11 @@ instance Located Storage where
 instance Located TypeQual where
     locOf (Tconst loc)     = locOf loc
     locOf (Tvolatile loc)  = locOf loc
-    locOf (Tinline loc)    = locOf loc
 
+    locOf (AntiTypeQual _ loc)  = locOf loc
+    locOf (AntiTypeQuals _ loc) = locOf loc
+
+    locOf (Tinline loc)    = locOf loc
     locOf (Trestrict loc)  = locOf loc
 
     locOf (TAttr attr)     = locOf attr
