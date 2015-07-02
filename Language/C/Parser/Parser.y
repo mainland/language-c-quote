@@ -451,6 +451,22 @@ semi :
     ';'         { L (locOf $1) T.Tsemi }
   | ';' comment { L (locOf $1) T.Tsemi }
 
+string_literal :: { StringLit }
+string_literal :
+    string_literal_rlist
+      { let { slits = rev $1
+            ; raw   = map (fst . unLoc) slits
+            ; s     = (concat . map (snd . unLoc)) slits
+            }
+        in
+         StringLit raw s (srclocOf slits)
+      }
+
+string_literal_rlist :: { RevList (L (String, String)) }
+string_literal_rlist :
+    STRING                      { rsingleton (L (locOf $1) (getSTRING $1)) }
+  | string_literal_rlist STRING { rcons (L (locOf $2) (getSTRING $2)) $1 }
+
 primary_expression :: { Exp }
 primary_expression :
     identifier
@@ -478,29 +494,6 @@ primary_expression :
   | objc_message_expression { $1 }
   | objc_at_expression      { $1 }
 
-string_literal :: { StringLit }
-string_literal :
-    string_literal_rlist
-      { let { slits = rev $1
-            ; raw   = map (fst . unLoc) slits
-            ; s     = (concat . map (snd . unLoc)) slits
-            }
-        in
-         StringLit raw s (srclocOf slits)
-      }
-
-string_literal_rlist :: { RevList (L (String, String)) }
-string_literal_rlist :
-    STRING                      { rsingleton (L (locOf $1) (getSTRING $1)) }
-  | string_literal_rlist STRING { rcons (L (locOf $2) (getSTRING $2)) $1 }
-
-assignment_expression_rlist :: { RevList Exp }
-assignment_expression_rlist :
-    assignment_expression
-      { rsingleton $1 }
-  | assignment_expression_rlist ',' assignment_expression
-      { rcons $3 $1 }
-
 postfix_expression :: { Exp }
 postfix_expression :
     primary_expression
@@ -514,21 +507,21 @@ postfix_expression :
       {% unclosed (locOf $2) "(" }
   | postfix_expression '(' ')'
       { FnCall $1 [] ($1 `srcspan` $3) }
-  | postfix_expression '(' argument_expression_rlist error
-      {% unclosed ($2 <--> rev $3) "(" }
-  | postfix_expression '(' argument_expression_rlist ')'
-      { FnCall $1 (rev $3) ($1 `srcspan` $4) }
+  | postfix_expression '(' argument_expression_list error
+      {% unclosed ($2 <--> $3) "(" }
+  | postfix_expression '(' argument_expression_list ')'
+      { FnCall $1 $3 ($1 `srcspan` $4) }
 
   | postfix_expression '<<<' execution_configuration error
       {% unclosed ($2 <--> $3) "<<<" }
   | postfix_expression '<<<' execution_configuration '>>>' '(' ')'
       { CudaCall $1 $3 [] ($1 `srcspan` $6) }
   | postfix_expression '<<<' execution_configuration '>>>'
-                       '(' argument_expression_rlist error
-      {% unclosed ($5 <--> rev $6) "(" }
+                       '(' argument_expression_list error
+      {% unclosed ($5 <--> $6) "(" }
   | postfix_expression '<<<' execution_configuration '>>>'
-                       '(' argument_expression_rlist ')'
-      { CudaCall $1 $3 (rev $6) ($1 `srcspan` $7) }
+                       '(' argument_expression_list ')'
+      { CudaCall $1 $3 $6 ($1 `srcspan` $7) }
 
   | postfix_expression '.' identifier_or_typedef
       { Member $1 $3 ($1 `srcspan` $3) }
@@ -546,17 +539,6 @@ postfix_expression :
   -- GCC
   | '__builtin_va_arg' '(' assignment_expression ',' type_declaration ')'
       { BuiltinVaArg $3 $5 ($1 `srcspan` $6) }
-
-argument_expression_rlist :: { RevList Exp }
-argument_expression_rlist :
-    assignment_expression
-      { rsingleton $1 }
-  | ANTI_ARGS
-      { rsingleton (AntiArgs (getANTI_ARGS $1) (srclocOf $1)) }
-  | argument_expression_rlist ',' assignment_expression
-      { rcons $3 $1}
-  | argument_expression_rlist ',' ANTI_ARGS
-      { rcons (AntiArgs (getANTI_ARGS $3) (srclocOf $3)) $1 }
 
 unary_expression :: { Exp }
 unary_expression :
@@ -712,6 +694,34 @@ maybe_expression:
 constant_expression :: { Exp }
 constant_expression :
   conditional_expression { $1 }
+
+argument_expression_list :: { [Exp] }
+argument_expression_list :
+    argument_expression_rlist { rev $1 }
+
+argument_expression_rlist :: { RevList Exp }
+argument_expression_rlist :
+    assignment_expression
+      { rsingleton $1 }
+  | ANTI_ARGS
+      { rsingleton (AntiArgs (getANTI_ARGS $1) (srclocOf $1)) }
+  | argument_expression_rlist ',' assignment_expression
+      { rcons $3 $1}
+  | argument_expression_rlist ',' ANTI_ARGS
+      { rcons (AntiArgs (getANTI_ARGS $3) (srclocOf $3)) $1 }
+
+assignment_expression_list :: { [Exp] }
+assignment_expression_list :
+    assignment_expression_rlist { rev $1 }
+
+assignment_expression_rlist :: { RevList Exp }
+assignment_expression_rlist :
+    assignment_expression
+      { rsingleton $1 }
+  | assignment_expression_rlist ',' assignment_expression
+      { rcons $3 $1 }
+  | assignment_expression_rlist ','
+      { $1 }
 
 {------------------------------------------------------------------------------
  -
@@ -2020,8 +2030,8 @@ attrib :: { Attr }
 attrib :
     attrib_name
       { Attr $1 [] (srclocOf $1)}
-  | attrib_name '(' argument_expression_rlist ')'
-      { Attr $1 (rev $3) ($1 `srcspan` $4) }
+  | attrib_name '(' argument_expression_list ')'
+      { Attr $1 $3 ($1 `srcspan` $4) }
 
 attrib_name :: { Id }
 attrib_name :
@@ -2441,10 +2451,8 @@ objc_at_expression :
       { ObjCLitBool True ($1 `srcspan` $2) }
   | '@' '[' ']'
       { ObjCLitArray [] ($1 `srcspan` $3) }
-  | '@' '[' assignment_expression_rlist ']'
-      { ObjCLitArray (rev $3) ($1 `srcspan` $4) }
-  | '@' '[' assignment_expression_rlist ',' ']'
-      { ObjCLitArray (rev $3) ($1 `srcspan` $5) }
+  | '@' '[' assignment_expression_list ']'
+      { ObjCLitArray $3 ($1 `srcspan` $4) }
   | '@' lbrace '}'
       { ObjCLitDict [] ($1 `srcspan` $3) }
   | '@' lbrace objc_key_value_rlist '}'
@@ -2962,10 +2970,10 @@ objc_compatibility_alias :
 
 execution_configuration :: { ExeConfig }
 execution_configuration :
-  argument_expression_rlist
-    {%do {  let args = rev $1
+  argument_expression_list
+    {%do {  let args = $1
          ;  when (length args < 2 || length args > 4) $ do
-                parserError (locOf (rev $1)) $
+                parserError (locOf args) $
                   text "execution context should have 2-4 arguments, but saw" <+>
                   ppr (length args)
          ;  return $
