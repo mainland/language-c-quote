@@ -5,7 +5,7 @@ env:
  - CABALVER=1.16 GHCVER=7.4.2
  - CABALVER=1.18 GHCVER=7.6.3
  - CABALVER=1.18 GHCVER=7.8.3
- - CABALVER=1.22 GHCVER=7.10.1
+ - CABALVER=1.22 GHCVER=7.10.2
  - CABALVER=head GHCVER=head   # see section about GHC HEAD snapshots
 
 # Note: the distinction between `before_install` and `install` is not important.
@@ -38,12 +38,12 @@ script:
  - cabal check
  - cabal sdist   # tests that a source-distribution can be generated
 
-# The following scriptlet checks that the resulting source distribution can be built & installed
- - export SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}') ;
-   cd dist/;
-   if [ -f "$SRC_TGZ" ]; then
-      cabal install --force-reinstalls "$SRC_TGZ";
-   else
-      echo "expected '$SRC_TGZ' not found";
-      exit 1;
-   fi
+# Check that the resulting source distribution can be built & installed.
+# If there are no other `.tar.gz` files in `dist`, this can be even simpler:
+# `cabal install --force-reinstalls dist/*-*.tar.gz`
+ - SRC_TGZ=$(cabal info . | awk '{print $2;exit}').tar.gz &&
+   (cd dist && cabal install --force-reinstalls "$SRC_TGZ")
+
+matrix:
+  allow_failures:
+   - env: CABALVER=head GHCVER=head
