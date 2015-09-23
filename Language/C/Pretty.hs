@@ -299,34 +299,34 @@ pprDeclarator maybe_ident declarator =
       pprPtr :: Decl -> Doc -> (Decl, Doc)
       pprPtr (Ptr [] decl _) post =
           pprPtr decl $
-          text "*" <+> post
+          text "*" <> post
       pprPtr (Ptr quals decl _) post =
           pprPtr decl $
-          text "*" <+> spread (map ppr quals) <+> post
+          text "*" <> spread (map ppr quals) <+> post
       pprPtr (BlockPtr [] decl _) post =
           pprPtr decl $
-          text "^" <+> post
+          text "^" <> post
       pprPtr (BlockPtr quals decl _) post =
           pprPtr decl $
-          text "^" <+> spread (map ppr quals) <+> post
+          text "^" <> spread (map ppr quals) <+> post
       pprPtr decl post = (decl, post)
 
       pprDirDecl :: Decl -> Doc -> (Decl, Doc)
       pprDirDecl (Array [] size decl _) pre =
           pprDirDecl decl $
-          pre <+> brackets (align (ppr size))
+          pre <> brackets (align (ppr size))
 
       pprDirDecl (Array quals size decl _) pre =
           pprDirDecl decl $
-          pre <+> brackets (align (spread (map ppr quals) <> ppr size))
+          pre <> brackets (align (spread (map ppr quals) <> ppr size))
 
       pprDirDecl (Proto decl args _) pre =
           pprDirDecl decl $
-          pre <+> parens (ppr args)
+          pre <> parens (ppr args)
 
       pprDirDecl (OldProto decl args _) pre =
           pprDirDecl decl $
-          pre <+> parensList (map ppr args)
+          pre <> parensList (map ppr args)
 
       pprDirDecl decl pre = (decl, pre)
 
