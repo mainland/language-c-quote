@@ -180,7 +180,7 @@
 --
 -- [@stm@] A statement. The argument must have type @'Stm'@.
 --
--- [@stms@] A list statements. The argument must have type @['Stm']@.
+-- [@stms@] A list of statements. The argument must have type @['Stm']@.
 --
 -- [@tyqual@] A type qualifier. The argument must have type @'TyQual'@.
 --
