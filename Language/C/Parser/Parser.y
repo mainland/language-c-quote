@@ -824,6 +824,13 @@ unary_expression_nlt :
   | 'sizeof' '(' type_name ')'    { SizeofType $3 ($1 `srcspan` $4) }
   | 'sizeof' '(' type_name error  {% unclosed ($2 <--> $3) "(" }
 
+-- This lets us parse expressions like @foo = ...@ where @foo@ is a
+-- typedef. Quite disgusting...
+unary_expression_nlt_or_typedef :: { Exp }
+unary_expression_nlt_or_typedef :
+    unary_expression_nlt { $1 }
+  | NAMED                { Var (Id (getNAMED $1) (srclocOf $1)) (srclocOf $1) }
+
 cast_expression_nlt :: { Exp }
 cast_expression_nlt :
     unary_expression_nlt               { $1 }
@@ -927,27 +934,27 @@ assignment_expression_nlt :: { Exp }
 assignment_expression_nlt :
     conditional_expression_nlt
       { $1 }
-  | unary_expression_nlt '=' assignment_expression
+  | unary_expression_nlt_or_typedef '=' assignment_expression
       { Assign $1 JustAssign $3 ($1 `srcspan` $3) }
-  | unary_expression_nlt '*=' assignment_expression
+  | unary_expression_nlt_or_typedef '*=' assignment_expression
       { Assign $1 MulAssign $3 ($1 `srcspan` $3) }
-  | unary_expression_nlt '/=' assignment_expression
+  | unary_expression_nlt_or_typedef '/=' assignment_expression
       { Assign $1 DivAssign $3 ($1 `srcspan` $3) }
-  | unary_expression_nlt '%=' assignment_expression
+  | unary_expression_nlt_or_typedef '%=' assignment_expression
       { Assign $1 ModAssign $3 ($1 `srcspan` $3) }
-  | unary_expression_nlt '+=' assignment_expression
+  | unary_expression_nlt_or_typedef '+=' assignment_expression
       { Assign $1 AddAssign $3 ($1 `srcspan` $3) }
-  | unary_expression_nlt '-=' assignment_expression
+  | unary_expression_nlt_or_typedef '-=' assignment_expression
       { Assign $1 SubAssign $3 ($1 `srcspan` $3) }
-  | unary_expression_nlt '<<=' assignment_expression
+  | unary_expression_nlt_or_typedef '<<=' assignment_expression
       { Assign $1 LshAssign $3 ($1 `srcspan` $3) }
-  | unary_expression_nlt '>>=' assignment_expression
+  | unary_expression_nlt_or_typedef '>>=' assignment_expression
       { Assign $1 RshAssign $3 ($1 `srcspan` $3) }
-  | unary_expression_nlt '&=' assignment_expression
+  | unary_expression_nlt_or_typedef '&=' assignment_expression
       { Assign $1 AndAssign $3 ($1 `srcspan` $3) }
-  | unary_expression_nlt '^=' assignment_expression
+  | unary_expression_nlt_or_typedef '^=' assignment_expression
       { Assign $1 XorAssign $3 ($1 `srcspan` $3) }
-  | unary_expression_nlt '|=' assignment_expression
+  | unary_expression_nlt_or_typedef '|=' assignment_expression
       { Assign $1 OrAssign $3 ($1 `srcspan` $3) }
 
 expression_nlt :: { Exp }
