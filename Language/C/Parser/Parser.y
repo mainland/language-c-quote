@@ -1981,8 +1981,7 @@ statement :
   | iteration_statement    { $1 }
   | jump_statement         { $1 }
   | '#pragma'              { Pragma (getPRAGMA $1) (srclocOf $1) }
-  | '//' statement         { mkCommentStm $1 $2 }
-  | ANTI_COMMENT statement { AntiComment (getANTI_COMMENT $1) $2 ($1 `srcspan` $2) }
+  | comment statement      { $1 $2 }
   | ANTI_COMMENT error     {% expected ["statement"] Nothing }
   | ANTI_PRAGMA            { AntiPragma (getANTI_PRAGMA $1) (srclocOf $1) }
   | ANTI_STM               { AntiStm (getANTI_STM $1) (srclocOf $1) }
@@ -1993,16 +1992,16 @@ statement :
   -- Objective-C
   | objc_at_statement    { $1 }
 
-comment :: { Stm }
+comment :: { Stm -> Stm }
 comment :
-     '//'         { mkEmptyCommentStm $1 }
-  |  ANTI_COMMENT { AntiComment (getANTI_COMMENT $1) (Exp Nothing noLoc) (srclocOf $1) }
+     '//'         { mkCommentStm $1 }
+  |  ANTI_COMMENT { \stm -> AntiComment (getANTI_COMMENT $1) stm (srclocOf $1) }
 
 statement_list :: { [Stm] }
 statement_list :
-    comment                 { [$1] }
+    comment                 { [$1 (Exp Nothing noLoc)] }
   | statement_rlist         { rev $1 }
-  | statement_rlist comment { rev (rcons $2 $1) }
+  | statement_rlist comment { rev (rcons ($2 (Exp Nothing noLoc)) $1) }
 
 statement_rlist :: { RevList Stm }
 statement_rlist :
@@ -2011,13 +2010,13 @@ statement_rlist :
   |  ANTI_STMS
        { rsingleton (AntiStms (getANTI_STMS $1) (srclocOf $1)) }
   |  comment ANTI_STMS
-       { AntiStms (getANTI_STMS $2) (srclocOf $2) `rcons` $1 `rcons` rnil }
+       { AntiStms (getANTI_STMS $2) (srclocOf $2) `rcons` $1 (Exp Nothing noLoc) `rcons` rnil }
   |  statement_rlist statement
        { $2 `rcons` $1 }
   |  statement_rlist ANTI_STMS
        { AntiStms (getANTI_STMS $2) (srclocOf $2) `rcons` $1 }
   |  statement_rlist comment ANTI_STMS
-       { AntiStms (getANTI_STMS $3) (srclocOf $3) `rcons` $2 `rcons` $1 }
+       { AntiStms (getANTI_STMS $3) (srclocOf $3) `rcons` $2 (Exp Nothing noLoc) `rcons` $1 }
 
 labeled_statement :: { Stm }
 labeled_statement :
@@ -2045,12 +2044,11 @@ compound_statement:
 block_item_list :: { [BlockItem] }
 block_item_list :
      block_item_rlist         { rev $1 }
-  |  block_item_rlist comment { rev (rcons (BlockStm $2) $1) }
+  |  block_item_rlist comment { rev (rcons (BlockStm ($2 (Exp Nothing noLoc))) $1) }
 
 block_item_rlist :: { RevList BlockItem }
 block_item_rlist :
      block_item_no_stm                          { rsingleton $1 }
-  |  comment block_item_no_stm                  { rsingleton $2 }
   |  statement                                  { rsingleton (BlockStm $1) }
   |  block_item_rlist block_item_no_stm         { rcons $2 $1 }
   |  block_item_rlist comment block_item_no_stm { rcons $3 $1 }
