@@ -23,6 +23,7 @@ description:
 build-type: Custom
 
 extra-source-files:
+  Language/C/Syntax-instances.hs
   tests/unit/Objc.hs
 
 library
@@ -72,6 +73,8 @@ library
     Language.C.Smart
     Language.C.Syntax
 
+  include-dirs: .
+  
   ghc-options: -Wall
 
 test-suite unit
