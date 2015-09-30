@@ -1,5 +1,5 @@
 name:          language-c-quote
-version:       0.11.1
+version:       0.11.2
 cabal-version: >= 1.10
 license:       BSD3
 license-file:  LICENSE
@@ -41,7 +41,7 @@ library
     mainland-pretty        >= 0.4   && < 0.5,
     mtl                    >= 2.0   && < 3,
     srcloc                 >= 0.4   && < 0.6,
-    syb                    >= 0.3   && < 0.6,
+    syb                    >= 0.3   && < 0.7,
     symbol                 >= 0.1   && < 0.3,
     template-haskell
 
