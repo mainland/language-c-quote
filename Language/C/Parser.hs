@@ -25,7 +25,7 @@ parse :: [Extensions]
       -> [String]
       -> P a
       -> B.ByteString
-      -> Pos
+      -> Maybe Pos
       -> Either SomeException a
 parse exts typnames p bs pos =
     evalP p (emptyPState exts typnames bs pos)

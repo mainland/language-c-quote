@@ -249,7 +249,7 @@ inputString beg end =
 
 locateTok :: AlexInput -> AlexInput -> Token -> L Token
 locateTok beg end tok =
-    L (Loc (alexPos beg) (alexPos end)) tok
+    L (alexLoc beg end) tok
 
 token :: Token -> Action
 token tok beg end =
@@ -265,8 +265,10 @@ setLineFromPragma beg end = do
     line = read l - 1
     filename = (takeWhile (/= '\"') . drop 1 . concat . intersperse " ") ws
 
-    pos' :: Pos
-    pos' = Pos filename line 1 (posCoff (alexPos beg))
+    pos' :: Maybe Pos
+    pos' = case alexPos beg of
+             Nothing  -> Nothing
+             Just pos -> Just $ Pos filename line 1 (posCoff pos)
 
 identifier :: Action
 identifier beg end =
@@ -326,7 +328,7 @@ lexAnti antiTok beg end = do
         maybe_c <- maybePeekChar
         case maybe_c of
           Nothing               -> do end <- getInput
-                                      parserError (Loc (alexPos beg) (alexPos end))
+                                      parserError (alexLoc beg end)
                                                   (text "unterminated antiquotation")
           Just '('              -> skipChar >> lexExpression (depth+1) ('(' : s)
           Just ')' | depth == 0 -> skipChar >> return (unescape (reverse s))
@@ -598,7 +600,7 @@ lexToken = do
         st   <- get
         case alexScanUser st beg sc of
           AlexEOF ->
-              return $ L (Loc (alexPos beg) (alexPos beg)) Teof
+              return $ L (alexLoc beg beg) Teof
           AlexError end ->
               lexerError end (text rest)
             where

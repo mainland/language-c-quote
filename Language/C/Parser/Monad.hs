@@ -73,6 +73,7 @@ module Language.C.Parser.Monad (
     alexGetChar,
     alexGetByte,
     alexInputPrevChar,
+    alexLoc,
     nextChar,
     peekChar,
     maybePeekChar,
@@ -116,7 +117,7 @@ data PState = PState
 emptyPState :: [Extensions]
             -> [String]
             -> B.ByteString
-            -> Pos
+            -> Maybe Pos
             -> PState
 emptyPState exts typnames buf pos = PState
     { input       = inp
@@ -161,8 +162,7 @@ instance Monad P where
 
     fail msg = do
         inp <- getInput
-        throw $ ParserException (Loc (alexPos inp) (alexPos inp))
-                                (ppr (alexPos inp) <> colon <+> text msg)
+        throw $ ParserException (alexLoc inp inp) (text msg)
 
 instance MonadState PState P where
     get    = P $ \s -> Right (s, s)
@@ -307,7 +307,7 @@ useOpenCLExts = useExts openCLExts
 useObjCExts :: P Bool
 useObjCExts = useExts objcExts
 
-data LexerException = LexerException Pos Doc
+data LexerException = LexerException (Maybe Pos) Doc
   deriving (Typeable)
 
 instance Exception LexerException where
@@ -384,7 +384,7 @@ expectedAt tok@(L loc _) alts after = do
     pprAfter (Just what) = text " after" <+> text what
 
 data AlexInput = AlexInput
-  {  alexPos      :: {-#UNPACK#-} !Pos
+  {  alexPos      :: !(Maybe Pos)
   ,  alexPrevChar :: {-#UNPACK#-} !Char
   ,  alexInput    :: {-#UNPACK#-} !B.ByteString
   ,  alexOff      :: {-#UNPACK#-} !Int
@@ -394,7 +394,7 @@ alexGetChar :: AlexInput -> Maybe (Char, AlexInput)
 alexGetChar inp =
     case B.uncons (alexInput inp) of
       Nothing       -> Nothing
-      Just (c, bs)  -> Just (c, inp  {  alexPos       = advancePos (alexPos inp) c
+      Just (c, bs)  -> Just (c, inp  {  alexPos       = fmap (\pos -> advancePos pos c) (alexPos inp)
                                      ,  alexPrevChar  = c
                                      ,  alexInput     = bs
                                      ,  alexOff       = alexOff inp + 1
@@ -408,6 +408,12 @@ alexGetByte inp =
 
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar = alexPrevChar
+
+alexLoc :: AlexInput -> AlexInput -> Loc
+alexLoc inp1 inp2 =
+    case (alexPos inp1, alexPos inp2) of
+      (Just pos1, Just pos2) -> Loc pos1 pos2
+      _                      -> NoLoc
 
 nextChar :: P Char
 nextChar = do

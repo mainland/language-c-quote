@@ -446,7 +446,7 @@ regressionTests = testGroup "Regressions"
           Right grp -> (pretty 80 . ppr) grp @?= "$ty:something c"
       where
         parseDecl :: String -> Either SomeException C.InitGroup
-        parseDecl s = P.parse [C.Antiquotation] [] P.parseDecl (B.pack s) (startPos "<inline>")
+        parseDecl s = P.parse [C.Antiquotation] [] P.parseDecl (B.pack s) (Just (startPos "<inline>"))
 
     issue43 :: Test
     issue43 = testGroup "Issue #43"
