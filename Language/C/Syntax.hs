@@ -575,4 +575,3 @@ ctypedefGroup :: DeclSpec -> [Attr] -> [Typedef] -> InitGroup
 ctypedefGroup dspec attrs typedefs =
     TypedefGroup dspec attrs typedefs (dspec `srcspan` attrs `srcspan` typedefs)
 #endif /* !defined(ONLY_TYPEDEFS) */
-
