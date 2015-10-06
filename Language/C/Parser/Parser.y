@@ -1852,12 +1852,26 @@ type_name :
       }
   | ANTI_TYPE
       { AntiType (getANTI_TYPE $1) (srclocOf $1) }
+  | type_qualifier_list ANTI_TYPE
+      { let  {  v     = getANTI_TYPE $2
+             ;  decl  = declRoot (AntiTypeDecl v (srclocOf $2))
+             }
+        in
+          Type (AntiTypeDeclSpec [] $1 v (srclocOf $2)) decl ($1 `srcspan` decl)
+      }
   | ANTI_TYPE abstract_declarator
       { let  {  v     = getANTI_TYPE $1
              ;  decl  = $2 (AntiTypeDecl v (srclocOf $1))
              }
         in
           Type (AntiTypeDeclSpec [] [] v (srclocOf $1)) decl ($1 `srcspan` decl)
+      }
+  | type_qualifier_list ANTI_TYPE abstract_declarator
+      { let  {  v     = getANTI_TYPE $2
+             ;  decl  = $3 (AntiTypeDecl v (srclocOf $2))
+             }
+        in
+          Type (AntiTypeDeclSpec [] $1 v (srclocOf $2)) decl ($1 `srcspan` decl)
       }
 
 abstract_declarator :: { Decl -> Decl }

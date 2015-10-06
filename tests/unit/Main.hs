@@ -145,6 +145,8 @@ cQuotationTests = testGroup "C quotations"
     , testCase "initializer antiquote" test_init
     , testCase "initializers antiquote" test_inits
     , testCase "block items antiquote" test_item
+    , testCase "qualifier with type antiquote 1" test_qual_antitype1
+    , testCase "qualifier with type antiquote 2" test_qual_antitype2
     ]
   where
     test_id :: Assertion
@@ -297,6 +299,20 @@ cQuotationTests = testGroup "C quotations"
       where
         item1 = [citem|int y = 2;|]
         item2 = [citem|return x + y;|]
+
+    test_qual_antitype1 :: Assertion
+    test_qual_antitype1 =
+        [cexp|(const $ty:tau) NULL|]
+          @?= [cexp|(const int) NULL|]
+      where
+        tau = [cty|int|]
+
+    test_qual_antitype2 :: Assertion
+    test_qual_antitype2 =
+        [cexp|(const $ty:tau *) NULL|]
+          @?= [cexp|(const int*) NULL|]
+      where
+        tau = [cty|int|]
 
 cPatternAntiquotationTests :: Test
 cPatternAntiquotationTests = testGroup "C pattern antiquotations"
