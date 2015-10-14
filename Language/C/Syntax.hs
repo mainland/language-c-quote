@@ -15,6 +15,7 @@ module Language.C.Syntax where
 
 import Data.Data (Data(..))
 import Data.Loc
+import Data.String (IsString(..))
 import Data.Typeable (Typeable)
 
 data Extensions = Antiquotation
@@ -519,13 +520,19 @@ data ExeConfig = ExeConfig
     }
     deriving (Eq, Ord, Show, Data, Typeable)
 
-#if !defined(ONLY_TYPEDEFS)
 {------------------------------------------------------------------------------
  -
  - Instances
  -
  ------------------------------------------------------------------------------}
 
+instance IsString Id where
+    fromString s = Id s noLoc
+
+instance IsString StringLit where
+    fromString s = StringLit [s] s noLoc
+
+#if !defined(ONLY_TYPEDEFS)
 #include "Language/C/Syntax-instances.hs"
 
 {------------------------------------------------------------------------------

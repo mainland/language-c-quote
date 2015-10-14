@@ -1,4 +1,6 @@
 ## [Unreleased]
+### Added
+- `IsString` instances for `Id` and `StringLit` data types.
 
 ### Fixed
 - #55 Comments at the top of a block before a declaration.
