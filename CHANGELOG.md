@@ -1,4 +1,4 @@
-## [Unreleased]
+## [0.11.3] - 2015-10-14
 ### Added
 - `IsString` instances for `Id` and `StringLit` data types.
 
