@@ -336,6 +336,7 @@ statementCommentTests = testGroup "Statement comments"
     , testCase "antiquote comment" test_antiquote_comment
     , testCase "comment at end of statements quote" test_stms_end_comment
     , testCase "comment before antiquoted statements" test_block_stms_comment
+    , testCase "comment at beginning of a block" test_issue_55
     ]
   where
     test_lbrace_comment :: Assertion
@@ -397,6 +398,20 @@ statementCommentTests = testGroup "Statement comments"
         stm1 = [cstm|a = 1;|]
         stm2 = [cstm|b = 2;|]
         stms = [stm1, stm2]
+
+    test_issue_55 :: Assertion
+    test_issue_55 =
+        [cunit|int f(int x)
+              { // Breaking comment.
+                int y;
+                return x;
+              }|]
+        @?=
+        [cunit|int f(int x)
+              { $comment:("// Breaking comment.")
+                int y;
+                return x;
+              }|]
 
 regressionTests :: Test
 regressionTests = testGroup "Regressions"

@@ -1,3 +1,8 @@
+## [Unreleased]
+
+### Fixed
+- #55 Comments at the top of a block before a declaration.
+
 ## [0.11.2] - 2015-09-29
 ### Added
 - `qqPat` and `qqExp` are now exposed.

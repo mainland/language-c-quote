@@ -2070,6 +2070,7 @@ block_item_list :
 block_item_rlist :: { RevList BlockItem }
 block_item_rlist :
      block_item_no_stm                          { rsingleton $1 }
+  |  comment block_item_no_stm                  { rsingleton $2 }
   |  statement                                  { rsingleton (BlockStm $1) }
   |  block_item_rlist block_item_no_stm         { rcons $2 $1 }
   |  block_item_rlist comment block_item_no_stm { rcons $3 $1 }
