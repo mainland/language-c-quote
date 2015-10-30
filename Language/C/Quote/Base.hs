@@ -26,7 +26,11 @@ import Data.Data (Data(..))
 import Data.Generics (extQ)
 import Data.Loc
 import Data.Typeable (Typeable(..))
-import Language.Haskell.Meta (parseExp, parsePat)
+#ifdef FULL_HASKELL_ANTIQUOTES
+import Language.Haskell.Meta (parseExp,parsePat)
+#else
+import Language.Haskell.ParseExp (parseExp,parsePat)
+#endif
 import Language.Haskell.TH
 #if MIN_VERSION_template_haskell(2,7,0)
 import Language.Haskell.TH.Quote (QuasiQuoter(..),
