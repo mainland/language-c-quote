@@ -12,6 +12,7 @@ import Control.Exception (SomeException)
 import Language.C.Quote.C
 import qualified Language.C.Syntax as C
 import qualified Language.C.Parser as P
+import MainCPP
 import Numeric (showHex)
 import Objc (objcTests)
 import System.Exit (exitFailure, exitSuccess)
@@ -65,15 +66,15 @@ constantTests = testGroup "Constants"
           @?= C.Const (C.LongLongIntConst "0x10ULL" C.Unsigned 16 noLoc) noLoc
 
 constantAntiquotationsTests :: Test
-constantAntiquotationsTests = testGroup "Constant antiquotations"
+constantAntiquotationsTests = testGroup "Constant antiquotations" $
     [ testCase "int antiquotes" test_int
     , testCase "hex Const antiquote" test_hexconst
     , testCase "unsigned hex Const antiquote" test_hexconst_u
     , testCase "float antiquotes" test_float
     , testCase "char antiquote" test_char
     , testCase "string antiquote" test_string
-    , testCase "unsigned long antiquote of Haskell expression" test_int_hsexp
     ]
+    ++ testCase_test_int_hsexp
   where
     test_int :: Assertion
     test_int =
@@ -122,10 +123,6 @@ constantAntiquotationsTests = testGroup "Constant antiquotations"
         [cexp|$string:hello|] @?= [cexp|"Hello, world\n"|]
       where
         hello = "Hello, world\n"
-
-    test_int_hsexp :: Assertion
-    test_int_hsexp =
-        [cexp|$ulint:(13 - 2*5)|] @?= [cexp|3UL|]
 
 cQuotationTests :: Test
 cQuotationTests = testGroup "C quotations"
