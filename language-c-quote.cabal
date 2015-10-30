@@ -25,6 +25,7 @@ build-type: Custom
 extra-source-files:
   Language/C/Syntax-instances.hs
   tests/unit/Objc.hs
+  tests/unit/MainCPP.hs
 
 flag full-haskell-antiquotes
   description: Support full Haskell expressions/patterns in antiquotes. This
