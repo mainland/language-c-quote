@@ -107,6 +107,9 @@ test-suite unit
     test-framework       >= 0.8 && < 0.9,
     test-framework-hunit >= 0.3 && < 0.4
 
+  if flag(full-haskell-antiquotes)
+    cpp-options: -DFULL_HASKELL_ANTIQUOTES
+
 source-repository head
   type:     git
   location: git://github.com/mainland/language-c-quote.git
