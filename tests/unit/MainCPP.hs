@@ -2,6 +2,8 @@
 {-# LANGUAGE QuasiQuotes #-}
 
 -- This module is needed because it's not possible to turn on CPP in Main.hs.
+-- We need CPP because this test case doesn't work without FULL_HASKELL_ANTIQUOTES
+-- turned on. (The simpler Haskell parser doesn't support infix operators.)
 
 module MainCPP where
 
