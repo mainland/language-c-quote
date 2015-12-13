@@ -31,6 +31,7 @@ import Data.Char (isAlphaNum,
                   isLower,
                   isSpace,
                   chr,
+                  ord,
                   toLower)
 import Data.List (foldl',
                   intersperse,
