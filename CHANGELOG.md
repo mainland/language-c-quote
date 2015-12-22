@@ -1,7 +1,10 @@
+## [Unreleased]
+### Added
+- Conditionally use the lightweight haskell-exp-parser instead of haskell-src-meta.
+
 ## [0.11.3] - 2015-10-14
 ### Added
 - `IsString` instances for `Id` and `StringLit` data types.
-- Conditionally use the lightweight haskell-exp-parser instead of haskell-src-meta.
 
 ### Fixed
 - #55 Comments at the top of a block before a declaration.
