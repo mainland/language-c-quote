@@ -1,4 +1,4 @@
-## [Unreleased]
+## [0.11.4] - 2015-12-22
 ### Added
 - Conditionally use the lightweight haskell-exp-parser instead of haskell-src-meta.
 
