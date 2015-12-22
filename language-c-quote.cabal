@@ -25,6 +25,13 @@ build-type: Custom
 extra-source-files:
   Language/C/Syntax-instances.hs
   tests/unit/Objc.hs
+  tests/unit/MainCPP.hs
+
+flag full-haskell-antiquotes
+  description: Support full Haskell expressions/patterns in antiquotes. This
+               adds a dependency on haskell-src-meta, which increases
+               compilation time.
+  default:     True
 
 library
   default-language: Haskell98
@@ -37,13 +44,17 @@ library
     exception-mtl          >= 0.3   && < 0.5,
     exception-transformers >= 0.3   && < 0.5,
     filepath               >= 1.2   && < 1.5,
-    haskell-src-meta       >= 0.4   && < 0.7,
     mainland-pretty        >= 0.4   && < 0.5,
     mtl                    >= 2.0   && < 3,
     srcloc                 >= 0.4   && < 0.6,
     syb                    >= 0.3   && < 0.7,
     symbol                 >= 0.1   && < 0.3,
     template-haskell
+
+  if flag(full-haskell-antiquotes)
+    build-depends: haskell-src-meta   >= 0.4 && < 0.7
+  else
+    build-depends: haskell-exp-parser >= 0.1 && < 0.2
 
   if impl(ghc < 7.4)
     build-tools:
@@ -74,8 +85,11 @@ library
     Language.C.Syntax
 
   include-dirs: .
-  
+
   ghc-options: -Wall
+
+  if flag(full-haskell-antiquotes)
+    cpp-options: -DFULL_HASKELL_ANTIQUOTES
 
 test-suite unit
   type:             exitcode-stdio-1.0
@@ -93,6 +107,9 @@ test-suite unit
     symbol               >= 0.1 && < 0.3,
     test-framework       >= 0.8 && < 0.9,
     test-framework-hunit >= 0.3 && < 0.4
+
+  if flag(full-haskell-antiquotes)
+    cpp-options: -DFULL_HASKELL_ANTIQUOTES
 
 source-repository head
   type:     git
