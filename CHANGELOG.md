@@ -2,6 +2,9 @@
 ### Added
 - Conditionally use the lightweight haskell-exp-parser instead of haskell-src-meta.
 
+### Fixed
+- #57 language-c-quote-0.11.3 does not compile with alex 3.1.5
+
 ## [0.11.3] - 2015-10-14
 ### Added
 - `IsString` instances for `Id` and `StringLit` data types.

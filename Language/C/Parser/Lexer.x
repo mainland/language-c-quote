@@ -30,6 +30,7 @@ import Data.Char (isAlphaNum,
                   isHexDigit,
                   isLower,
                   isSpace,
+                  ord,
                   chr,
                   toLower)
 import Data.List (foldl',
