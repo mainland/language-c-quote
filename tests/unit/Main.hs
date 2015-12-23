@@ -15,6 +15,7 @@ import qualified Language.C.Parser as P
 import MainCPP
 import Numeric (showHex)
 import Objc (objcTests)
+import CUDA (cudaTests)
 import System.Exit (exitFailure, exitSuccess)
 import Text.PrettyPrint.Mainland
 
@@ -29,6 +30,7 @@ tests = [ constantTests
         , statementCommentTests
         , regressionTests
         , objcTests
+        , cudaTests
         ]
 
 constantTests :: Test
