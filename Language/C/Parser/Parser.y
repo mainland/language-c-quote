@@ -255,6 +255,7 @@ import qualified Language.C.Syntax as C
  --
  -- CUDA
  --
+ 'mutable'       { L _ T.TCUDAmutable }
  '<<<'           { L _ T.TCUDA3lt }
  '>>>'           { L _ T.TCUDA3gt }
  '__device__'    { L _ T.TCUDAdevice }
@@ -504,6 +505,10 @@ primary_expression :
   -- Objective-C
   | objc_message_expression { $1 }
   | objc_at_expression      { $1 }
+
+  -- CUDA -- C++11 lambda-expression subset
+  | cuda_lambda_expression  { $1 }
+
 
 postfix_expression :: { Exp }
 postfix_expression :
@@ -768,6 +773,9 @@ primary_expression_nlt :
   -- Objective-C
   | objc_message_expression { $1 }
   | objc_at_expression      { $1 }
+
+  -- CUDA -- C++11 lambda-expression subset
+  | cuda_lambda_expression  { $1 }
 
 postfix_expression_nlt :: { Exp }
 postfix_expression_nlt :
@@ -3248,6 +3256,45 @@ objc_compatibility_alias :
  - CUDA
  -
  ------------------------------------------------------------------------------}
+cuda_lambda_expression :: { Exp }
+cuda_lambda_expression : cuda_lambda_introducer cuda_lambda_declarator compound_statement
+    {% do { assertCudaEnabled ($1 <--> $3) "To use lambda-expressions, enable support for CUDA"
+          ; let Block items _ = $3
+          ; return $ Lambda $1 $2 items ($1 `srcspan` $3)
+          }
+    }
+
+cuda_lambda_declarator :: { Maybe LambdaDeclarator }
+cuda_lambda_declarator :
+      cuda_lambda_param_list cuda_lambda_mutable cuda_lambda_return_type { Just $ LambdaDeclarator $1 $2 $3 ($1 `srcspan` $3) }
+    | {- empty -} { Nothing }
+
+cuda_lambda_param_list :: { Params }
+cuda_lambda_param_list :
+      '(' ')' { Params [] False ($1 `srcspan` $2) }
+    | '(' parameter_type_list ')' { $2 }
+
+cuda_lambda_mutable :: { Bool }
+cuda_lambda_mutable :
+      'mutable'   { True  }
+    | {- Empty -} { False }
+
+cuda_lambda_return_type :: { Maybe Type }
+cuda_lambda_return_type :
+    {- Empty -} { Nothing }
+    -- FIXME: There should be possibility to explicitly state returned type.
+    -- | '->' type_name { Just ($2::Type) }
+
+cuda_lambda_introducer :: { LambdaIntroducer }
+cuda_lambda_introducer :
+    '[' cuda_lambda_capture_items ']' { LambdaIntroducer $2 ($1 `srcspan` $3)}
+
+cuda_lambda_capture_items :: { [CaptureListEntry] }
+cuda_lambda_capture_items :
+      '&' { [DefaultByReference] }
+    | '=' { [DefaultByValue] }
+    | {- empty -}  { [] }
+
 
 execution_configuration :: { ExeConfig }
 execution_configuration :
@@ -3947,6 +3994,12 @@ assertObjCEnabled loc errMsg = do
     objc_enabled <- useObjCExts
     unless objc_enabled $
      throw $ ParserException loc $ text errMsg
+
+assertCudaEnabled :: Loc -> String -> P ()
+assertCudaEnabled loc errMsg = do
+ cuda_enabled <- useCUDAExts
+ unless cuda_enabled $
+  throw $ ParserException loc $ text errMsg
 
 mkCommentStm :: L T.Token -> Stm -> Stm
 mkCommentStm tok stm = Comment (getCOMMENT tok) stm (srclocOf tok)

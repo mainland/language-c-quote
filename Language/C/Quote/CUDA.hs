@@ -5,6 +5,24 @@
 --             :  (c) 2013-2015 Drexel University
 -- License     :  BSD-style
 -- Maintainer  :  mainland@drexel.edu
+-- The quasiquoters exposed by this module support the CUDA extensions, including CUDA-specific declaration specifiers and @\<\<\<…>>>@ kernel invocation syntax.
+--
+-- It includees partial support for C++11 lambda expressions syntax.
+--
+-- Support for lambda-expressions has the following limitations:
+--
+--  * the capture list must either be empty or have only the default capture mode specifier;
+--
+--  * the return type cannot be explicitly specified;
+--
+--  * the package supports C language, not C++, therefore lambda parameter list and body must be in valid C syntax.
+--
+-- Examples of lambdas supported by the 'cexp' quasiquoter:
+--
+-- > [] (int i) mutable {}
+--
+-- > [&] { return 7; }
+--
 
 module Language.C.Quote.CUDA (
     ToIdent(..),
