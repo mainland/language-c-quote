@@ -218,6 +218,8 @@ instance Located Exp where
   locOf (CompoundLit _ _ l) = locOf l
   locOf (StmExpr _ l) = locOf l
   locOf (AntiExp _ l) = locOf l
+  locOf (EscExp _ l) = locOf l
+  locOf (AntiEscExp _ l) = locOf l
   locOf (AntiArgs _ l) = locOf l
   locOf (BuiltinVaArg _ _ l) = locOf l
   locOf (BlockLit _ _ _ l) = locOf l
@@ -519,6 +521,8 @@ instance Relocatable Exp where
   reloc l (CompoundLit x0 x1 _) = (CompoundLit x0 x1 (fromLoc l))
   reloc l (StmExpr x0 _) = (StmExpr x0 (fromLoc l))
   reloc l (AntiExp x0 _) = (AntiExp x0 (fromLoc l))
+  reloc l (EscExp x0 _) = (EscExp x0 (fromLoc l))
+  reloc l (AntiEscExp x0 _) = (AntiEscExp x0 (fromLoc l))
   reloc l (AntiArgs x0 _) = (AntiArgs x0 (fromLoc l))
   reloc l (BuiltinVaArg x0 x1 _) = (BuiltinVaArg x0 x1 (fromLoc l))
   reloc l (BlockLit x0 x1 x2 _) = (BlockLit x0 x1 x2 (fromLoc l))

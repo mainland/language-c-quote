@@ -166,7 +166,9 @@
 -- [@enums@] An list of enum members. The argument must have type @['CEnum']@.
 --
 -- [@esc@] An arbitrary top-level C "definition," such as an @#include@ or a
--- @#define@. The argument must have type @'String'@.
+-- @#define@. The argument must have type @'String'@.  Also: an uninterpreted,
+-- expression-level C escape hatch, which is useful for passing through macro
+-- calls. The argument must have type @'String'@.
 --
 -- [@edecl@] An external definition. The argument must have type @'Definition'@.
 --

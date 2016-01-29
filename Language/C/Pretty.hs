@@ -761,6 +761,14 @@ instance Pretty Exp where
         parensIf (p > unopPrec) $
         pprPrec unopPrec1 e <> text "--"
 
+    pprPrec _ (EscExp e loc) =
+        srcloc loc <> text e
+
+    pprPrec p (AntiEscExp e loc) =
+        pprLoc loc $
+        parensIf (p > unopPrec) $
+        text e
+
     -- When printing leading + and - operators, we print the argument at
     -- precedence 'unopPrec1' to ensure we get parentheses in cases like
     -- @-(-42)@. The same holds for @++@ and @--@ above.

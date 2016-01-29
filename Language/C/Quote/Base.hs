@@ -303,8 +303,9 @@ qqConstE = go
     floatConst e = [|show (fromRational $(e) :: Double)|]
 
 qqExpE :: C.Exp -> Maybe (Q Exp)
-qqExpE (C.AntiExp v loc) = Just [|toExp $(antiVarE v) $(qqLocE loc) :: C.Exp|]
-qqExpE _                 = Nothing
+qqExpE (C.AntiExp v loc)    = Just [|toExp $(antiVarE v) $(qqLocE loc) :: C.Exp|]
+qqExpE (C.AntiEscExp v loc) = Just [|C.EscExp $(antiVarE v) $(qqLocE loc) :: C.Exp|]
+qqExpE _                    = Nothing
 
 qqExpListE :: [C.Exp] -> Maybe (Q Exp)
 qqExpListE [] = Just [|[]|]
@@ -592,8 +593,9 @@ qqConstP = go
     unsigned = conP (mkName "C.Unsigned") []
 
 qqExpP :: C.Exp -> Maybe (Q Pat)
-qqExpP (C.AntiExp v _) = Just $ antiVarP v
-qqExpP _               = Nothing
+qqExpP (C.AntiExp v _)    = Just $ antiVarP v
+qqExpP (C.AntiEscExp v _) = Just $ conP (mkName "C.EscExp") [antiVarP v, wildP]
+qqExpP _                  = Nothing
 
 qqExpListP :: [C.Exp] -> Maybe (Q Pat)
 qqExpListP [] = Just $ listP []

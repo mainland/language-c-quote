@@ -491,6 +491,8 @@ primary_expression :
         in
           StmExpr items ($1 `srcspan` $3)
       }
+  | ANTI_ESC
+      { AntiEscExp (getANTI_ESC $1) (srclocOf $1) }
   | ANTI_EXP
       { AntiExp (getANTI_EXP $1) (srclocOf $1) }
 
@@ -753,6 +755,8 @@ primary_expression_nlt :
         in
           StmExpr items ($1 `srcspan` $3)
       }
+  | ANTI_ESC
+      { AntiEscExp (getANTI_ESC $1) (srclocOf $1) }
   | ANTI_EXP
       { AntiExp (getANTI_EXP $1) (srclocOf $1) }
 

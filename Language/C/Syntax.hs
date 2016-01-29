@@ -332,6 +332,8 @@ data Exp = Var Id !SrcLoc
          | Seq Exp Exp !SrcLoc
          | CompoundLit Type [(Maybe Designation, Initializer)] !SrcLoc
          | StmExpr [BlockItem] !SrcLoc
+         | EscExp String !SrcLoc
+         | AntiEscExp String !SrcLoc
          | AntiExp String !SrcLoc
          | AntiArgs String !SrcLoc
 
