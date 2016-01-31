@@ -127,6 +127,7 @@ constantAntiquotationsTests = testGroup "Constant antiquotations" $
 cQuotationTests :: Test
 cQuotationTests = testGroup "C quotations"
     [ testCase "raw expression-level escape" test_escexp
+    , testCase "raw statement-level escape" test_escstm
     , testCase "identifier antiquote" test_id
     , testCase "expression antiquote" test_exp
     , testCase "function antiquote" test_func
@@ -165,6 +166,13 @@ cQuotationTests = testGroup "C quotations"
         let rawstr = "a rather random string"
         in [cexp|$esc:rawstr|]
                @?= C.EscExp rawstr noLoc
+
+    test_escstm :: Assertion
+    test_escstm =
+        let rawstr = "a rather random string"
+        in [citems|$escstm:rawstr if (1) return;|]
+               @?= [ C.BlockStm $ C.EscStm rawstr noLoc
+                   , C.BlockStm $ C.If (C.Const (C.IntConst "1" C.Signed 1 noLoc) noLoc) (C.Return Nothing noLoc) Nothing noLoc ]
 
     test_exp :: Assertion
     test_exp =

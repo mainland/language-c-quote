@@ -247,6 +247,8 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
           | Return (Maybe Exp) !SrcLoc
           | Pragma String !SrcLoc
           | Comment String Stm !SrcLoc
+          | EscStm String !SrcLoc
+          | AntiEscStm String !SrcLoc
           | AntiPragma String !SrcLoc
           | AntiComment String Stm !SrcLoc
           | AntiStm String !SrcLoc

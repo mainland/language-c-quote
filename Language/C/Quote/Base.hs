@@ -316,6 +316,7 @@ qqExpListE (exp : exps) =
     Just [|$(dataToExpQ qqExp exp) : $(dataToExpQ qqExp exps)|]
 
 qqStmE :: C.Stm -> Maybe (Q Exp)
+qqStmE (C.AntiEscStm v loc)      = Just [|C.EscStm $(antiVarE v) $(qqLocE loc)|]
 qqStmE (C.AntiPragma v loc)      = Just [|C.Pragma $(antiVarE v) $(qqLocE loc)|]
 qqStmE (C.AntiComment v stm loc) = Just [|C.Comment $(antiVarE v) $(dataToExpQ qqExp stm) $(qqLocE loc)|]
 qqStmE (C.AntiStm v _)           = Just $ antiVarE v
@@ -606,8 +607,9 @@ qqExpListP (arg : args) =
     Just $ conP (mkName ":") [dataToPatQ qqPat arg,  dataToPatQ qqPat args]
 
 qqStmP :: C.Stm -> Maybe (Q Pat)
-qqStmP (C.AntiStm v _) = Just $ antiVarP v
-qqStmP _               = Nothing
+qqStmP (C.AntiStm v _)    = Just $ antiVarP v
+qqStmP (C.AntiEscStm v _) = Just $ conP (mkName "C.EscStm") [antiVarP v, wildP]
+qqStmP _                  = Nothing
 
 qqStmListP :: [C.Stm] -> Maybe (Q Pat)
 qqStmListP [] = Just $ listP []

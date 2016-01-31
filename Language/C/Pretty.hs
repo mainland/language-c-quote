@@ -609,6 +609,10 @@ instance Pretty Stm where
     ppr (Comment com stm sloc) =
         srcloc sloc <> text com </> ppr stm
 
+    ppr (EscStm esc sloc) =
+        srcloc sloc <> text esc
+
+    ppr (AntiEscStm v _)      = pprAnti "escstm" v
     ppr (AntiPragma v _)      = pprAnti "pragma" v
     ppr (AntiComment v stm _) = pprAnti "pragma" v </> ppr stm
     ppr (AntiStm v _)         = pprAnti "stm" v

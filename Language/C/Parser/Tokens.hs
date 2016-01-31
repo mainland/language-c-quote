@@ -148,6 +148,7 @@ data Token = Teof
            | Tanti_enum String
            | Tanti_enums String
            | Tanti_esc String
+           | Tanti_escstm String
            | Tanti_edecl String
            | Tanti_edecls String
            | Tanti_item String
@@ -293,6 +294,7 @@ instance Show Token where
     show (Tanti_enum s)                 = showAnti "enum"  s
     show (Tanti_enums s)                = showAnti "enums"  s
     show (Tanti_esc s)                  = showAnti "esc"  s
+    show (Tanti_escstm s)               = showAnti "escstm"  s
     show (Tanti_edecl s)                = showAnti "edecl"  s
     show (Tanti_edecls s)               = showAnti "edecls"  s
     show (Tanti_item s)                 = showAnti "item"  s

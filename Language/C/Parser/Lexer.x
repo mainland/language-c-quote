@@ -107,6 +107,7 @@ c :-
  "$enum:"    / { allowAnti } { lexAnti Tanti_enum }
  "$enums:"   / { allowAnti } { lexAnti Tanti_enums }
  "$esc:"     / { allowAnti } { lexAnti Tanti_esc }
+ "$escstm:"  / { allowAnti } { lexAnti Tanti_escstm }
  "$edecl:"   / { allowAnti } { lexAnti Tanti_edecl }
  "$edecls:"  / { allowAnti } { lexAnti Tanti_edecls }
  "$item:"    / { allowAnti } { lexAnti Tanti_item }

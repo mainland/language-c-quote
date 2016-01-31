@@ -159,6 +159,8 @@ instance Located Stm where
   locOf (Return _ l) = locOf l
   locOf (Pragma _ l) = locOf l
   locOf (Comment _ _ l) = locOf l
+  locOf (EscStm _ l) = locOf l
+  locOf (AntiEscStm _ l) = locOf l
   locOf (AntiPragma _ l) = locOf l
   locOf (AntiComment _ _ l) = locOf l
   locOf (AntiStm _ l) = locOf l
@@ -460,6 +462,8 @@ instance Relocatable Stm where
   reloc l (Return x0 _) = (Return x0 (fromLoc l))
   reloc l (Pragma x0 _) = (Pragma x0 (fromLoc l))
   reloc l (Comment x0 x1 _) = (Comment x0 x1 (fromLoc l))
+  reloc l (EscStm x0 _) = (EscStm x0 (fromLoc l))
+  reloc l (AntiEscStm x0 _) = (AntiEscStm x0 (fromLoc l))
   reloc l (AntiPragma x0 _) = (AntiPragma x0 (fromLoc l))
   reloc l (AntiComment x0 x1 _) = (AntiComment x0 x1 (fromLoc l))
   reloc l (AntiStm x0 _) = (AntiStm x0 (fromLoc l))

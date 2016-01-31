@@ -170,6 +170,9 @@
 -- expression-level C escape hatch, which is useful for passing through macro
 -- calls. The argument must have type @'String'@.
 --
+-- [@escstm@] An uninterpreted, statement-level C escape hatch, which is useful
+-- for passing through macro calls. The argument must have type @'String'@.
+--
 -- [@edecl@] An external definition. The argument must have type @'Definition'@.
 --
 -- [@edecls@] An list of external definitions. The argument must have type
