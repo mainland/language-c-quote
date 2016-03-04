@@ -412,7 +412,8 @@ statementCommentTests = testGroup "Statement comments"
 
 regressionTests :: Test
 regressionTests = testGroup "Regressions"
-    [ testCase "pragmas" test_pragmas
+    [ issue64
+    , testCase "pragmas" test_pragmas
     , issue48
     , testCase "Issue #44" issue44
     , issue43
@@ -438,6 +439,21 @@ regressionTests = testGroup "Regressions"
                       ]
                       noLoc
             ]
+
+    issue64 :: Test
+    issue64 = testGroup "Issue #64"
+              [ testCase "-($int:i)"  test_issue64_1
+              , testCase "--($int:i)" test_issue64_2
+              ]
+      where
+        i :: Int
+        i = -42
+
+        test_issue64_1 :: Assertion
+        test_issue64_1 = pretty 80 (ppr [cexp|-($int:i)|]) @?= "-(-42)"
+
+        test_issue64_2 :: Assertion
+        test_issue64_2 = pretty 80 (ppr [cexp|--$int:i|]) @?= "--(-42)"
 
     issue48 :: Test
     issue48 = testGroup "Issue #48"
