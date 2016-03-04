@@ -7,7 +7,7 @@
 -- Module      :  Language.C.Pretty
 -- Copyright   :  (c) 2006-2011 Harvard University
 --                (c) 2011-2013 Geoffrey Mainland
---             :  (c) 2013-2015 Drexel University
+--             :  (c) 2013-2016 Drexel University
 -- License     :  BSD-style
 -- Maintainer  :  mainland@cs.drexel.edu
 
@@ -707,31 +707,42 @@ instance Pretty BlockItem where
                      rbrace
 
 instance Pretty Const where
-    ppr (IntConst s _ _ _)          = text s
-    ppr (LongIntConst s _ _ _)      = text s
-    ppr (LongLongIntConst s _ _ _)  = text s
-    ppr (FloatConst s _ _)          = text s
-    ppr (DoubleConst s _ _)         = text s
-    ppr (LongDoubleConst s _ _)     = text s
-    ppr (CharConst s _ _)           = text s
-    ppr (StringConst ss _ _)        = sep (map string ss)
+    pprPrec p (IntConst s _ i _)          = parensIf (i < 0 && p > unopPrec) $
+                                            text s
+    pprPrec p (LongIntConst s _ i _)      = parensIf (i < 0 && p > unopPrec) $
+                                            text s
+    pprPrec p (LongLongIntConst s _ i _)  = parensIf (i < 0 && p > unopPrec) $
+                                            text s
+    pprPrec p (FloatConst s r _)          = parensIf (r < 0 && p > unopPrec) $
+                                            text s
+    pprPrec p (DoubleConst s r _)         = parensIf (r < 0 && p > unopPrec) $
+                                            text s
+    pprPrec p (LongDoubleConst s r _)     = parensIf (r < 0 && p > unopPrec) $
+                                            text s
+    pprPrec _ (CharConst s _ _)           = text s
+    pprPrec _ (StringConst ss _ _)        = sep (map string ss)
 
-    ppr (AntiConst v _)       = pprAnti "const"  v
-    ppr (AntiString v _)      = pprAnti "string"  v
-    ppr (AntiChar v _)        = pprAnti "char"    v
-    ppr (AntiLongDouble v _)  = pprAnti "ldouble" v
-    ppr (AntiDouble v _)      = pprAnti "double"  v
-    ppr (AntiFloat v _)       = pprAnti "float"   v
-    ppr (AntiULInt v _)       = pprAnti "ulint"   v
-    ppr (AntiLInt v _)        = pprAnti "lint"    v
-    ppr (AntiULLInt v _)      = pprAnti "ullint"  v
-    ppr (AntiLLInt v _)       = pprAnti "llint"   v
-    ppr (AntiUInt v _)        = pprAnti "uint"    v
-    ppr (AntiInt v _)         = pprAnti "int"     v
+    pprPrec _ (AntiConst v _)       = pprAnti "const"  v
+    pprPrec _ (AntiString v _)      = pprAnti "string"  v
+    pprPrec _ (AntiChar v _)        = pprAnti "char"    v
+    pprPrec _ (AntiLongDouble v _)  = pprAnti "ldouble" v
+    pprPrec _ (AntiDouble v _)      = pprAnti "double"  v
+    pprPrec _ (AntiFloat v _)       = pprAnti "float"   v
+    pprPrec _ (AntiULInt v _)       = pprAnti "ulint"   v
+    pprPrec _ (AntiLInt v _)        = pprAnti "lint"    v
+    pprPrec _ (AntiULLInt v _)      = pprAnti "ullint"  v
+    pprPrec _ (AntiLLInt v _)       = pprAnti "llint"   v
+    pprPrec _ (AntiUInt v _)        = pprAnti "uint"    v
+    pprPrec _ (AntiInt v _)         = pprAnti "int"     v
 
 instance Pretty Exp where
-    pprPrec _ (Var ident loc) = pprLoc loc $ ppr ident
-    pprPrec _ (Const k loc) = pprLoc loc $ ppr k
+    pprPrec p (Var ident loc) =
+        pprLoc loc $
+        pprPrec p ident
+
+    pprPrec p (Const k loc) =
+        pprLoc loc $
+        pprPrec p k
 
     pprPrec p (BinOp op e1 e2 loc) =
         pprLoc loc $
