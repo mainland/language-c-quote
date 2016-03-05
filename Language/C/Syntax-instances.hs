@@ -231,6 +231,11 @@ instance Located Exp where
   locOf (ObjCEncode _ l) = locOf l
   locOf (ObjCProtocol _ l) = locOf l
   locOf (ObjCSelector _ l) = locOf l
+  locOf (Lambda _ _ _ l) = locOf l
+instance Located LambdaIntroducer where
+  locOf (LambdaIntroducer _ l) = locOf l
+instance Located LambdaDeclarator where
+  locOf (LambdaDeclarator _ _ _ l) = locOf l
 instance Located BlockType where
   locOf (BlockVoid l) = locOf l
   locOf (BlockParam _ l) = locOf l
@@ -532,6 +537,12 @@ instance Relocatable Exp where
   reloc l (ObjCEncode x0 _) = (ObjCEncode x0 (fromLoc l))
   reloc l (ObjCProtocol x0 _) = (ObjCProtocol x0 (fromLoc l))
   reloc l (ObjCSelector x0 _) = (ObjCSelector x0 (fromLoc l))
+  reloc l (Lambda x0 x1 x2 _) = (Lambda x0 x1 x2 (fromLoc l))
+instance Relocatable LambdaIntroducer where
+  reloc l (LambdaIntroducer x0 _) = (LambdaIntroducer x0 (fromLoc l))
+instance Relocatable LambdaDeclarator where
+  reloc l (LambdaDeclarator x0 x1 x2 _) =
+    (LambdaDeclarator x0 x1 x2 (fromLoc l))
 instance Relocatable BlockType where
   reloc l (BlockVoid _) = (BlockVoid (fromLoc l))
   reloc l (BlockParam x0 _) = (BlockParam x0 (fromLoc l))

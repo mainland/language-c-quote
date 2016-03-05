@@ -181,6 +181,7 @@ data Token = Teof
            | Ttypeof
 
            -- CUDA
+           | TCUDAmutable
            | TCUDA3lt
            | TCUDA3gt
            | TCUDAdevice
@@ -494,6 +495,7 @@ tokenStrings = [(Tlparen,     "("),
                 --
                 -- CUDA extensions
                 --
+                (TCUDAmutable,  "mutable"),
                 (TCUDAdevice,   "__device__"),
                 (TCUDAglobal,   "__global__"),
                 (TCUDAhost,     "__host__"),
@@ -617,6 +619,7 @@ keywords = [("auto",       Tauto,      Nothing),
             --
             -- CUDA
             --
+            ("mutable",      TCUDAmutable,  Just [CUDA]),
             ("__device__",   TCUDAdevice,   Just [CUDA]),
             ("__global__",   TCUDAglobal,   Just [CUDA]),
             ("__host__",     TCUDAhost,     Just [CUDA]),
