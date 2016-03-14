@@ -77,6 +77,10 @@ parensList = enclosesep lparen rparen comma
 bracesList :: [Doc] -> Doc
 bracesList = enclosesep lbrace rbrace comma
 
+embrace :: [Doc] -> Doc
+embrace [] = lbrace <+> rbrace
+embrace ds = lbrace <> nest 4 (line <> stack ds) </> rbrace
+
 bracesSemiList :: [Doc] -> Doc
 bracesSemiList = enclosesep lbrace rbrace semi
 
@@ -408,7 +412,7 @@ instance Pretty FieldGroup where
     ppr (AntiSdecl v _)   = pprAnti "sdecl" v
 
     pprList fields =
-        lbrace <+> align (stack (zipWith (<>) (map ppr fields) (repeat semi))) </> rbrace
+        embrace (zipWith (<>) (map ppr fields) (repeat semi))
 
 instance Pretty CEnum where
     ppr (CEnum ident maybe_e _) =
@@ -424,7 +428,7 @@ instance Pretty CEnum where
         empty
 
     pprList cenums =
-        lbrace <+> align (stack (zipWith (<>) (map ppr cenums) (repeat comma))) </> rbrace
+        embrace (zipWith (<>) (map ppr cenums) (repeat comma))
 
 instance Pretty Attr where
     ppr (Attr ident [] _) = ppr ident
@@ -699,12 +703,6 @@ instance Pretty BlockItem where
             (ppr item1 <> line) : loop (item2 : items)
         loop (item : items) =
             ppr item : loop items
-
-        embrace :: [Doc] -> Doc
-        embrace [] = lbrace <+> rbrace
-        embrace ds = lbrace <>
-                     nest 4 (line <> stack ds) </>
-                     rbrace
 
 instance Pretty Const where
     pprPrec p (IntConst s _ i _)          = parensIf (i < 0 && p > unopPrec) $
