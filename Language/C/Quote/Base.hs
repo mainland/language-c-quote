@@ -24,8 +24,10 @@ import Control.Monad ((>=>))
 import qualified Data.ByteString.Char8 as B
 import Data.Data (Data(..))
 import Data.Generics (extQ)
+import Data.Int
 import Data.Loc
 import Data.Typeable (Typeable(..))
+import Data.Word
 #ifdef FULL_HASKELL_ANTIQUOTES
 import Language.Haskell.Meta (parseExp,parsePat)
 #else
@@ -65,11 +67,38 @@ class ToConst a where
 instance ToConst C.Const where
     toConst k _ = k
 
-instance ToConst Int where
-    toConst n loc = C.IntConst (show n) C.Signed (fromIntegral n) loc
-
 instance ToConst Integer where
     toConst n loc = C.IntConst (show n) C.Signed n loc
+
+instance ToConst Int where
+    toConst = toConst . toInteger
+
+instance ToConst Int8 where
+    toConst = toConst . toInteger
+
+instance ToConst Int16 where
+    toConst = toConst . toInteger
+
+instance ToConst Int32 where
+    toConst = toConst . toInteger
+
+instance ToConst Int64 where
+    toConst = toConst . toInteger
+
+instance ToConst Word where
+    toConst = toConst . toInteger
+
+instance ToConst Word8 where
+    toConst = toConst . toInteger
+
+instance ToConst Word16 where
+    toConst = toConst . toInteger
+
+instance ToConst Word32 where
+    toConst = toConst . toInteger
+
+instance ToConst Word64 where
+    toConst = toConst . toInteger
 
 instance ToConst Rational where
     toConst n loc = C.DoubleConst (show n) n loc
@@ -93,11 +122,38 @@ class ToExp a where
 instance ToExp C.Exp where
     toExp e _ = e
 
-instance ToExp Int where
-    toExp n loc = C.Const (C.IntConst (show n) C.Signed (fromIntegral n) loc) loc
-
 instance ToExp Integer where
     toExp n loc = C.Const (C.IntConst (show n) C.Signed n loc) loc
+
+instance ToExp Int where
+    toExp = toExp . toInteger
+
+instance ToExp Int8 where
+    toExp = toExp . toInteger
+
+instance ToExp Int16 where
+    toExp = toExp . toInteger
+
+instance ToExp Int32 where
+    toExp = toExp . toInteger
+
+instance ToExp Int64 where
+    toExp = toExp . toInteger
+
+instance ToExp Word where
+    toExp = toExp . toInteger
+
+instance ToExp Word8 where
+    toExp = toExp . toInteger
+
+instance ToExp Word16 where
+    toExp = toExp . toInteger
+
+instance ToExp Word32 where
+    toExp = toExp . toInteger
+
+instance ToExp Word64 where
+    toExp = toExp . toInteger
 
 instance ToExp Rational where
     toExp n loc = C.Const (C.DoubleConst (show n) n loc) loc
