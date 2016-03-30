@@ -2,7 +2,7 @@
 -- Module      :  Language.C.Quote
 -- Copyright   :  (c) 2006-2011 Harvard University
 --                (c) 2011-2013 Geoffrey Mainland
---             :  (c) 2013-2015 Drexel University
+--             :  (c) 2013-2016 Drexel University
 -- License     :  BSD-style
 -- Maintainer  :  mainland@drexel.edu
 
@@ -24,8 +24,10 @@ import Control.Monad ((>=>))
 import qualified Data.ByteString.Char8 as B
 import Data.Data (Data(..))
 import Data.Generics (extQ)
+import Data.Int
 import Data.Loc
 import Data.Typeable (Typeable(..))
+import Data.Word
 #ifdef FULL_HASKELL_ANTIQUOTES
 import Language.Haskell.Meta (parseExp,parsePat)
 #else
@@ -66,7 +68,34 @@ instance ToConst C.Const where
     toConst k _ = k
 
 instance ToConst Int where
-    toConst n loc = C.IntConst (show n) C.Signed (fromIntegral n) loc
+    toConst = toConst . toInteger
+
+instance ToConst Int8 where
+    toConst = toConst . toInteger
+
+instance ToConst Int16 where
+    toConst = toConst . toInteger
+
+instance ToConst Int32 where
+    toConst = toConst . toInteger
+
+instance ToConst Int64 where
+    toConst = toConst . toInteger
+
+instance ToConst Word where
+    toConst n loc = C.IntConst (show n) C.Unsigned (toInteger n) loc
+
+instance ToConst Word8 where
+    toConst n loc = C.IntConst (show n) C.Unsigned (toInteger n) loc
+
+instance ToConst Word16 where
+    toConst n loc = C.IntConst (show n) C.Unsigned (toInteger n) loc
+
+instance ToConst Word32 where
+    toConst n loc = C.IntConst (show n) C.Unsigned (toInteger n) loc
+
+instance ToConst Word64 where
+    toConst n loc = C.IntConst (show n) C.Unsigned (toInteger n) loc
 
 instance ToConst Integer where
     toConst n loc = C.IntConst (show n) C.Signed n loc
@@ -94,25 +123,52 @@ instance ToExp C.Exp where
     toExp e _ = e
 
 instance ToExp Int where
-    toExp n loc = C.Const (C.IntConst (show n) C.Signed (fromIntegral n) loc) loc
+    toExp n loc = C.Const (toConst n loc) loc
+
+instance ToExp Int8 where
+    toExp n loc = C.Const (toConst n loc) loc
+
+instance ToExp Int16 where
+    toExp n loc = C.Const (toConst n loc) loc
+
+instance ToExp Int32 where
+    toExp n loc = C.Const (toConst n loc) loc
+
+instance ToExp Int64 where
+    toExp n loc = C.Const (toConst n loc) loc
+
+instance ToExp Word where
+    toExp n loc = C.Const (toConst n loc) loc
+
+instance ToExp Word8 where
+    toExp n loc = C.Const (toConst n loc) loc
+
+instance ToExp Word16 where
+    toExp n loc = C.Const (toConst n loc) loc
+
+instance ToExp Word32 where
+    toExp n loc = C.Const (toConst n loc) loc
+
+instance ToExp Word64 where
+    toExp n loc = C.Const (toConst n loc) loc
 
 instance ToExp Integer where
-    toExp n loc = C.Const (C.IntConst (show n) C.Signed n loc) loc
+    toExp n loc = C.Const (toConst n loc) loc
 
 instance ToExp Rational where
-    toExp n loc = C.Const (C.DoubleConst (show n) n loc) loc
+    toExp n loc = C.Const (toConst n loc) loc
 
 instance ToExp Float where
-    toExp n loc = C.Const (C.DoubleConst (show n) (toRational n) loc) loc
+    toExp n loc = C.Const (toConst n loc) loc
 
 instance ToExp Double where
-    toExp n loc = C.Const (C.DoubleConst (show n) (toRational n) loc) loc
+    toExp n loc = C.Const (toConst n loc) loc
 
 instance ToExp Char where
-    toExp c loc = C.Const (C.CharConst (show c) c loc) loc
+    toExp n loc = C.Const (toConst n loc) loc
 
 instance ToExp String where
-    toExp s loc = C.Const (C.StringConst [show s] s loc) loc
+    toExp n loc = C.Const (toConst n loc) loc
 
 antiVarE :: String -> ExpQ
 antiVarE = either fail return . parseExp
