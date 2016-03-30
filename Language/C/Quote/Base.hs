@@ -400,23 +400,20 @@ qqBlockItemListE (C.AntiBlockItems v _ : items) =
 qqBlockItemListE (stm : stms) =
     Just [|$(dataToExpQ qqExp stm) : $(dataToExpQ qqExp stms)|]
 
-qqObjcIfaceDeclE :: [C.ObjCIfaceDecl] -> Maybe (Q Exp)
-qqObjcIfaceDeclE [] = Just [|[]|]
-qqObjcIfaceDeclE (C.AntiObjCIfaceDecls v _ : decls) =
+qqObjcIfaceDeclE :: C.ObjCIfaceDecl -> Maybe (Q Exp)
+qqObjcIfaceDeclE (C.AntiObjCProp p _) = Just $ antiVarE p
+qqObjcIfaceDeclE _                    = Nothing
+
+qqObjcIfaceDeclListE :: [C.ObjCIfaceDecl] -> Maybe (Q Exp)
+qqObjcIfaceDeclListE [] = Just [|[]|]
+qqObjcIfaceDeclListE (C.AntiObjCProps p _ : decls) =
+    Just [|$(antiVarE p) ++ $(dataToExpQ qqExp decls)|]
+qqObjcIfaceDeclListE (C.AntiObjCIfaceDecls v _ : decls) =
     Just [|$(antiVarE v) ++ $(dataToExpQ qqExp decls)|]
-qqObjcIfaceDeclE (C.AntiObjCIfaceDecl v _  : decls) =
+qqObjcIfaceDeclListE (C.AntiObjCIfaceDecl v _  : decls) =
     Just [|$(antiVarE v) : $(dataToExpQ qqExp decls)|]
-qqObjcIfaceDeclE (decl : decls) =
-  Just [|$(dataToExpQ qqExp decl) : $(dataToExpQ qqExp decls)|]
-
-qqObjCPropE :: C.ObjCIfaceDecl -> Maybe (Q Exp)
-qqObjCPropE (C.AntiObjCProp p _) = Just $ antiVarE p
-qqObjCPropE _                    = Nothing
-
-qqObjCPropListE :: [C.ObjCIfaceDecl] -> Maybe (Q Exp)
-qqObjCPropListE [] = Just [|[]|]
-qqObjCPropListE (C.AntiObjCProps p _: props) = Just $ [|$(antiVarE p) ++ $(dataToExpQ qqExp props)|]
-qqObjCPropListE _                            = Nothing
+qqObjcIfaceDeclListE (decl : decls) =
+    Just [|$(dataToExpQ qqExp decl) : $(dataToExpQ qqExp decls)|]
 
 qqObjCPropAttrE :: C.ObjCPropAttr -> Maybe (Q Exp)
 qqObjCPropAttrE (C.AntiObjCAttr pa _) = Just $ antiVarE pa
@@ -494,8 +491,7 @@ qqExp = const Nothing  `extQ` qqStringE
                        `extQ` qqBlockItemE
                        `extQ` qqBlockItemListE
                        `extQ` qqObjcIfaceDeclE
-                       `extQ` qqObjCPropE
-                       `extQ` qqObjCPropListE
+                       `extQ` qqObjcIfaceDeclListE
                        `extQ` qqObjCPropAttrE
                        `extQ` qqObjCPropAttrListE
                        `extQ` qqObjCDictsE

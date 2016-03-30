@@ -1,6 +1,9 @@
 {-# LANGUAGE QuasiQuotes #-}
 
-module Objc (objcTests) where
+module Objc (
+    objcTests,
+    objcRegressionTests
+  ) where
 
 import Test.Framework
 import Test.Framework.Providers.HUnit
@@ -148,3 +151,29 @@ objcTests = testGroup "Objective-C"
     objcLits =
         [cexp|@[$(objcLit "foo"), $(objcLit True), $(objcLit False), $(objcLit 'a'), nil]|]
         @?= [cexp|@[@"foo", @YES, @NO, @'a', nil]|]
+
+objcRegressionTests :: Test
+objcRegressionTests = testGroup "Objective-C Regressions"
+    [ testCase "Issue #51" issue51 ]
+  where
+    issue51 :: Assertion
+    issue51 = [cunit|
+          @interface $id:prefixedClassName : NSObject
+          $ifdecls:ifaceDecls
+          @end
+        |]
+
+        @?= [cunit|
+          @interface dummyClass : NSObject
+          - (void) foo:(int)str fo:(int)str1;
+          + (int) test1:(int)str2;
+          @end
+        |]
+      where
+        prefixedClassName :: String
+        prefixedClassName = "dummyClass"
+
+        ifaceDecls = [objcifdecls|
+            - (void) foo:(int)str fo:(int)str1;
+            + (int) test1:(int)str2;
+            |]
