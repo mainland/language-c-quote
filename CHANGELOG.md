@@ -1,3 +1,14 @@
+## [0.11.5] - 2016-03-30
+### Added
+- Added ToConst and ToExp instances for Int/Word types (Emil Axelsson)
+- Expression and statement raw string escapes (Kosyrev Serge)
+- Partial support for C++11 lambda expressions in CUDA code (Michał Wawrzyniec Urbańczyk)
+
+### Fixed
+- #64 Negated negative constants do not correctly pretty-print.
+- #59 No obvious way to generate macro code -- not even through $esc:(... :: String)
+- #51 Objective-C anti-quotations for interface decls broken
+
 ## [0.11.4] - 2015-12-22
 ### Added
 - Conditionally use the lightweight haskell-exp-parser instead of haskell-src-meta.
