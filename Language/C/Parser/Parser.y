@@ -159,6 +159,7 @@ import qualified Language.C.Syntax as C
  ANTI_ENUM        { L _ (T.Tanti_enum _) }
  ANTI_ENUMS       { L _ (T.Tanti_enums _) }
  ANTI_ESC         { L _ (T.Tanti_esc _) }
+ ANTI_ESCSTM      { L _ (T.Tanti_escstm _) }
  ANTI_EDECL       { L _ (T.Tanti_edecl _) }
  ANTI_EDECLS      { L _ (T.Tanti_edecls _) }
  ANTI_ITEM        { L _ (T.Tanti_item _) }
@@ -492,6 +493,8 @@ primary_expression :
         in
           StmExpr items ($1 `srcspan` $3)
       }
+  | ANTI_ESC
+      { AntiEscExp (getANTI_ESC $1) (srclocOf $1) }
   | ANTI_EXP
       { AntiExp (getANTI_EXP $1) (srclocOf $1) }
 
@@ -754,6 +757,8 @@ primary_expression_nlt :
         in
           StmExpr items ($1 `srcspan` $3)
       }
+  | ANTI_ESC
+      { AntiEscExp (getANTI_ESC $1) (srclocOf $1) }
   | ANTI_EXP
       { AntiExp (getANTI_EXP $1) (srclocOf $1) }
 
@@ -2007,6 +2012,7 @@ statement :
   | jump_statement         { $1 }
   | '#pragma'              { Pragma (getPRAGMA $1) (srclocOf $1) }
   | comment statement      { $1 $2 }
+  | ANTI_ESCSTM            { AntiEscStm (getANTI_ESCSTM $1) (srclocOf $1) }
   | ANTI_COMMENT error     {% expected ["statement"] Nothing }
   | ANTI_PRAGMA            { AntiPragma (getANTI_PRAGMA $1) (srclocOf $1) }
   | ANTI_STM               { AntiStm (getANTI_STM $1) (srclocOf $1) }
@@ -3313,6 +3319,7 @@ getANTI_SDECLS      (L _ (T.Tanti_sdecls v))      = v
 getANTI_ENUM        (L _ (T.Tanti_enum v))        = v
 getANTI_ENUMS       (L _ (T.Tanti_enums v))       = v
 getANTI_ESC         (L _ (T.Tanti_esc v))         = v
+getANTI_ESCSTM      (L _ (T.Tanti_escstm v))      = v
 getANTI_EDECL       (L _ (T.Tanti_edecl v))       = v
 getANTI_EDECLS      (L _ (T.Tanti_edecls v))      = v
 getANTI_ITEM        (L _ (T.Tanti_item v))        = v

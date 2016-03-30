@@ -606,6 +606,10 @@ instance Pretty Stm where
     ppr (Comment com stm sloc) =
         srcloc sloc <> text com </> ppr stm
 
+    ppr (EscStm esc sloc) =
+        srcloc sloc <> text esc
+
+    ppr (AntiEscStm v _)      = pprAnti "escstm" v
     ppr (AntiPragma v _)      = pprAnti "pragma" v
     ppr (AntiComment v stm _) = pprAnti "pragma" v </> ppr stm
     ppr (AntiStm v _)         = pprAnti "stm" v
@@ -762,6 +766,14 @@ instance Pretty Exp where
         pprLoc loc $
         parensIf (p > unopPrec) $
         pprPrec unopPrec1 e <> text "--"
+
+    pprPrec _ (EscExp e loc) =
+        srcloc loc <> text e
+
+    pprPrec p (AntiEscExp e loc) =
+        pprLoc loc $
+        parensIf (p > unopPrec) $
+        text e
 
     -- When printing leading + and - operators, we print the argument at
     -- precedence 'unopPrec1' to ensure we get parentheses in cases like

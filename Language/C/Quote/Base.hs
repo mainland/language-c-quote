@@ -359,8 +359,9 @@ qqConstE = go
     floatConst e = [|show (fromRational $(e) :: Double)|]
 
 qqExpE :: C.Exp -> Maybe (Q Exp)
-qqExpE (C.AntiExp v loc) = Just [|toExp $(antiVarE v) $(qqLocE loc) :: C.Exp|]
-qqExpE _                 = Nothing
+qqExpE (C.AntiExp v loc)    = Just [|toExp $(antiVarE v) $(qqLocE loc) :: C.Exp|]
+qqExpE (C.AntiEscExp v loc) = Just [|C.EscExp $(antiVarE v) $(qqLocE loc) :: C.Exp|]
+qqExpE _                    = Nothing
 
 qqExpListE :: [C.Exp] -> Maybe (Q Exp)
 qqExpListE [] = Just [|[]|]
@@ -371,6 +372,7 @@ qqExpListE (exp : exps) =
     Just [|$(dataToExpQ qqExp exp) : $(dataToExpQ qqExp exps)|]
 
 qqStmE :: C.Stm -> Maybe (Q Exp)
+qqStmE (C.AntiEscStm v loc)      = Just [|C.EscStm $(antiVarE v) $(qqLocE loc)|]
 qqStmE (C.AntiPragma v loc)      = Just [|C.Pragma $(antiVarE v) $(qqLocE loc)|]
 qqStmE (C.AntiComment v stm loc) = Just [|C.Comment $(antiVarE v) $(dataToExpQ qqExp stm) $(qqLocE loc)|]
 qqStmE (C.AntiStm v _)           = Just $ antiVarE v
@@ -648,8 +650,9 @@ qqConstP = go
     unsigned = conP (mkName "C.Unsigned") []
 
 qqExpP :: C.Exp -> Maybe (Q Pat)
-qqExpP (C.AntiExp v _) = Just $ antiVarP v
-qqExpP _               = Nothing
+qqExpP (C.AntiExp v _)    = Just $ antiVarP v
+qqExpP (C.AntiEscExp v _) = Just $ conP (mkName "C.EscExp") [antiVarP v, wildP]
+qqExpP _                  = Nothing
 
 qqExpListP :: [C.Exp] -> Maybe (Q Pat)
 qqExpListP [] = Just $ listP []
@@ -660,8 +663,9 @@ qqExpListP (arg : args) =
     Just $ conP (mkName ":") [dataToPatQ qqPat arg,  dataToPatQ qqPat args]
 
 qqStmP :: C.Stm -> Maybe (Q Pat)
-qqStmP (C.AntiStm v _) = Just $ antiVarP v
-qqStmP _               = Nothing
+qqStmP (C.AntiStm v _)    = Just $ antiVarP v
+qqStmP (C.AntiEscStm v _) = Just $ conP (mkName "C.EscStm") [antiVarP v, wildP]
+qqStmP _                  = Nothing
 
 qqStmListP :: [C.Stm] -> Maybe (Q Pat)
 qqStmListP [] = Just $ listP []

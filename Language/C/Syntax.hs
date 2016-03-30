@@ -248,6 +248,8 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
           | Return (Maybe Exp) !SrcLoc
           | Pragma String !SrcLoc
           | Comment String Stm !SrcLoc
+          | EscStm String !SrcLoc
+          | AntiEscStm String !SrcLoc
           | AntiPragma String !SrcLoc
           | AntiComment String Stm !SrcLoc
           | AntiStm String !SrcLoc
@@ -333,6 +335,8 @@ data Exp = Var Id !SrcLoc
          | Seq Exp Exp !SrcLoc
          | CompoundLit Type [(Maybe Designation, Initializer)] !SrcLoc
          | StmExpr [BlockItem] !SrcLoc
+         | EscExp String !SrcLoc
+         | AntiEscExp String !SrcLoc
          | AntiExp String !SrcLoc
          | AntiArgs String !SrcLoc
 

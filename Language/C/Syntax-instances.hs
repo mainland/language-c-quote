@@ -160,6 +160,8 @@ instance Located Stm where
   locOf (Return _ l) = locOf l
   locOf (Pragma _ l) = locOf l
   locOf (Comment _ _ l) = locOf l
+  locOf (EscStm _ l) = locOf l
+  locOf (AntiEscStm _ l) = locOf l
   locOf (AntiPragma _ l) = locOf l
   locOf (AntiComment _ _ l) = locOf l
   locOf (AntiStm _ l) = locOf l
@@ -219,6 +221,8 @@ instance Located Exp where
   locOf (CompoundLit _ _ l) = locOf l
   locOf (StmExpr _ l) = locOf l
   locOf (AntiExp _ l) = locOf l
+  locOf (EscExp _ l) = locOf l
+  locOf (AntiEscExp _ l) = locOf l
   locOf (AntiArgs _ l) = locOf l
   locOf (BuiltinVaArg _ _ l) = locOf l
   locOf (BlockLit _ _ _ l) = locOf l
@@ -460,6 +464,8 @@ instance Relocatable Stm where
   reloc l (Return x0 _) = (Return x0 (fromLoc l))
   reloc l (Pragma x0 _) = (Pragma x0 (fromLoc l))
   reloc l (Comment x0 x1 _) = (Comment x0 x1 (fromLoc l))
+  reloc l (EscStm x0 _) = (EscStm x0 (fromLoc l))
+  reloc l (AntiEscStm x0 _) = (AntiEscStm x0 (fromLoc l))
   reloc l (AntiPragma x0 _) = (AntiPragma x0 (fromLoc l))
   reloc l (AntiComment x0 x1 _) = (AntiComment x0 x1 (fromLoc l))
   reloc l (AntiStm x0 _) = (AntiStm x0 (fromLoc l))
@@ -521,6 +527,8 @@ instance Relocatable Exp where
   reloc l (CompoundLit x0 x1 _) = (CompoundLit x0 x1 (fromLoc l))
   reloc l (StmExpr x0 _) = (StmExpr x0 (fromLoc l))
   reloc l (AntiExp x0 _) = (AntiExp x0 (fromLoc l))
+  reloc l (EscExp x0 _) = (EscExp x0 (fromLoc l))
+  reloc l (AntiEscExp x0 _) = (AntiEscExp x0 (fromLoc l))
   reloc l (AntiArgs x0 _) = (AntiArgs x0 (fromLoc l))
   reloc l (BuiltinVaArg x0 x1 _) = (BuiltinVaArg x0 x1 (fromLoc l))
   reloc l (BlockLit x0 x1 x2 _) = (BlockLit x0 x1 x2 (fromLoc l))
