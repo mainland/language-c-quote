@@ -30,7 +30,7 @@ endif
 #
 # Support Cabal's MIN_VERSION
 #
-GHCFLAGS += -optP-include -optPdist/build/autogen/cabal_macros.h
+GHCFLAGS += -DFULL_HASKELL_ANTIQUOTES -I. -optP-include -optPdist/build/autogen/cabal_macros.h
 
 .PHONY : all
 all : Language/C/Syntax-instances.hs
