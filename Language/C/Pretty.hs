@@ -569,7 +569,7 @@ instance Pretty Stm where
 
     ppr (Switch e stm sloc) =
         srcloc sloc <>
-        text "switch" <+> parens (ppr e ) <+/> ppr stm
+        text "switch" <+> parens (ppr e) <+/> ppr stm
 
     ppr (While e stm sloc) =
         srcloc sloc <>
