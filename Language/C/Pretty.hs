@@ -16,6 +16,8 @@ module Language.C.Pretty where
 import Data.Char (isAlphaNum,
                   isLower)
 import Data.Loc
+import Data.Maybe (isJust)
+
 import Language.C.Syntax
 import Text.PrettyPrint.Mainland
 
@@ -944,9 +946,28 @@ instance Pretty Exp where
         srcloc loc <>
         text "@selector" <> parens (text sel)
 
+    pprPrec _ (Lambda captureList decl blockItems loc) =
+        srcloc loc <>
+        ppr captureList <>
+        ppr decl <>
+        ppr blockItems
+
     pprPrec _ (AntiArgs v _)  = pprAnti "args"  v
 
     pprPrec _ (AntiExp v _)   = pprAnti "var"  v
+
+instance Pretty LambdaDeclarator where
+    pprPrec _ (LambdaDeclarator params isMutable returnType loc) =
+        parens (ppr params) <>
+        (if isMutable then text "mutable" else empty) <>
+        (if isJust returnType then text "->" <> ppr returnType else empty)
+
+instance Pretty LambdaIntroducer where
+    pprPrec _ (LambdaIntroducer items loc) = pprLoc loc $ brackets $ commasep (map ppr items)
+
+instance Pretty CaptureListEntry where
+    pprPrec _ DefaultByValue = char '='
+    pprPrec _ DefaultByReference = char '&'
 
 instance Pretty ObjCDictElem where
     pprPrec _ (ObjCDictElem l r _)    = ppr l <+> colon <+> ppr r
