@@ -83,6 +83,12 @@ bracesSemiList = enclosesep lbrace rbrace semi
 angleList :: [Doc] -> Doc
 angleList = enclosesep langle rangle comma
 
+embrace :: [Doc] -> Doc
+embrace [] = lbrace <+> rbrace
+embrace ds = lbrace <>
+             nest 4 (line <> stack ds) </>
+             rbrace
+
 pprAnti :: String -> String -> Doc
 pprAnti anti s = char '$' <> text anti <> colon <>
                  if isIdentifier s then text s else parens (text s)
@@ -216,13 +222,13 @@ instance Pretty TypeSpec where
     ppr (Tlong_double _)     = text "long double"
 
     ppr (Tstruct maybe_ident maybe_fields attrs _) =
-        pprStructOrUnion "struct" maybe_ident maybe_fields attrs
+        align $ pprStructOrUnion "struct" maybe_ident maybe_fields attrs
 
     ppr (Tunion maybe_ident maybe_fields attrs _) =
-        pprStructOrUnion "union" maybe_ident maybe_fields attrs
+        align $ pprStructOrUnion "union" maybe_ident maybe_fields attrs
 
     ppr (Tenum maybe_ident cenums attrs _) =
-        pprEnum maybe_ident cenums attrs
+        align $ pprEnum maybe_ident cenums attrs
 
     ppr (Tnamed ident refs _) =
         ppr ident <> if null refs then empty else angles (commasep (map ppr refs))
@@ -402,8 +408,7 @@ instance Pretty FieldGroup where
     ppr (AntiSdecls v _)  = pprAnti "sdecls" v
     ppr (AntiSdecl v _)   = pprAnti "sdecl" v
 
-    pprList fields =
-        lbrace <+> align (stack (zipWith (<>) (map ppr fields) (repeat semi))) </> rbrace
+    pprList fields = embrace (zipWith (<>) (map ppr fields) (repeat semi))
 
 instance Pretty CEnum where
     ppr (CEnum ident maybe_e _) =
@@ -415,11 +420,8 @@ instance Pretty CEnum where
     ppr (AntiEnums v _)  = pprAnti "enums" v
     ppr (AntiEnum v _)   = pprAnti "enum" v
 
-    pprList [] =
-        empty
-
-    pprList cenums =
-        lbrace <+> align (stack (zipWith (<>) (map ppr cenums) (repeat comma))) </> rbrace
+    pprList []     = empty
+    pprList cenums = embrace (zipWith (<>) (map ppr cenums) (repeat comma))
 
 instance Pretty Attr where
     ppr (Attr ident [] _) = ppr ident
@@ -694,12 +696,6 @@ instance Pretty BlockItem where
             (ppr item1 <> line) : loop (item2 : items)
         loop (item : items) =
             ppr item : loop items
-
-        embrace :: [Doc] -> Doc
-        embrace [] = lbrace <+> rbrace
-        embrace ds = lbrace <>
-                     nest 4 (line <> stack ds) </>
-                     rbrace
 
 instance Pretty Const where
     pprPrec p (IntConst s _ i _)          = parensIf (i < 0 && p > unopPrec) $
