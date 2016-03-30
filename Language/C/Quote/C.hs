@@ -4,7 +4,7 @@
 --                (c) 2011-2013 Geoffrey Mainland
 --             :  (c) 2013-2015 Drexel University
 -- License     :  BSD-style
--- Maintainer  :  mainland@cs.drexel.edu
+-- Maintainer  :  mainland@drexel.edu
 
 module Language.C.Quote.C (
     ToIdent(..),

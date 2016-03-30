@@ -5,7 +5,7 @@
 --                (c) 2013-2014 Manuel M T Chakravarty
 --             :  (c) 2013-2015 Drexel University
 -- License     :  BSD-style
--- Maintainer  :  mainland@cs.drexel.edu
+-- Maintainer  :  mainland@drexel.edu
 
 {-# LANGUAGE FlexibleInstances #-}
 

@@ -3,7 +3,7 @@
 -- Copyright   :  (c) 2010-2011 Harvard University
 --                (c) 2011-2013 Geoffrey Mainland
 -- License     :  BSD-style
--- Maintainer  :  mainland@cs.drexel.edu
+-- Maintainer  :  mainland@drexel.edu
 
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE QuasiQuotes #-}

@@ -4,7 +4,7 @@
 --                (c) 2011-2013 Geoffrey Mainland
 --             :  (c) 2013-2015 Drexel University
 -- License     :  BSD-style
--- Maintainer  :  mainland@cs.drexel.edu
+-- Maintainer  :  mainland@drexel.edu
 --
 -- There are five modules that provide quasiquoters, each for a different C
 -- variant. 'Language.C.Quote.C' parses C99, 'Language.C.Quote.GCC' parses C99

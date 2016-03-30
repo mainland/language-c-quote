@@ -3,7 +3,7 @@
 -- Copyright   :  (c) 2006-2008 Harvard University
 --             :  (c) 2013-2015 Drexel University
 -- License     :  BSD-style
--- Maintainer  :  mainland@cs.drexel.edu
+-- Maintainer  :  mainland@drexel.edu
 
 module Language.C.Properties where
 
