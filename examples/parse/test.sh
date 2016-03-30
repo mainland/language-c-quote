@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-FILES=`find httpd-2.4.16 -name *.i`
+FILES=`find httpd-2.4.18 -name *.i`
 
 for FILE in ${FILES}; do
     echo ${FILE}

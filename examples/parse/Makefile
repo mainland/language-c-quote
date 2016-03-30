@@ -6,17 +6,14 @@ HAPPY_ARGS=-agci
 ALEX=alex 
 ALEX_ARGS=-gi
 
-APACHE_VERSION=2.4.16
+APACHE_VERSION=2.4.18
 APR_VERSION=1.5.2
 APRUTIL_VERSION=1.5.4
 
 GHCFLAGS = -Wall -O
 
 # So we can use MIN_VERSION macros
-GHCFLAGS += -optP-include -optP../../dist/build/autogen/cabal_macros.h
-
-# So we can use MIN_VERSION macros
-GHCFLAGS += -optP-include -optP../../dist/build/autogen/cabal_macros.h
+GHCFLAGS += -DFULL_HASKELL_ANTIQUOTES -I../.. -optP-include -optPdist/build/autogen/cabal_macros.h
 
 #
 # To support cabal sandbox

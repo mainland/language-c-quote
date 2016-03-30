@@ -28,7 +28,7 @@ prop_ParsePrintUnitId exts s_ =
 
     parse :: B.ByteString -> Either String [C.Definition]
     parse s =
-        case P.parse exts [] P.parseUnit s pos of
+        case P.parse exts [] P.parseUnit s (Just pos) of
           Left err   -> fail $ show err
           Right defs -> return defs
       where

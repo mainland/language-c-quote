@@ -42,8 +42,8 @@ lexFile exts filename = do
     tokens :: B.ByteString -> Either SomeException [L T.Token]
     tokens buf = P.evalP tokensP (P.emptyPState exts [] buf start)
 
-    start :: Pos
-    start = startPos filename
+    start :: Maybe Pos
+    start = Just $ startPos filename
 
     tokensP :: P.P [L T.Token]
     tokensP = do
@@ -71,5 +71,5 @@ parseFile flags exts filename = do
     doPrama :: Bool
     doPrama = Pragma `elem` flags
 
-    start :: Pos
-    start = startPos filename
+    start :: Maybe Pos
+    start = Just $ startPos filename
