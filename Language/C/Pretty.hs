@@ -556,15 +556,16 @@ instance Pretty Stm where
     ppr (If test then' maybe_else sloc) =
         srcloc sloc <>
         text "if" <+> parens (ppr test) <>
-        pprStm then' <+>
-        case maybe_else of
-          Nothing     -> empty
-          Just else'  -> text "else" <> pprStm else'
+        pprStm then' (fmap pprElse maybe_else)
       where
-        pprStm :: Stm -> Doc
-        pprStm stm@(Block _ _)   = space <> ppr stm
-        pprStm stm@(If _ _ _ _)  = space <> ppr stm
-        pprStm stm               = nest 4 (line <> ppr stm) <> line
+        pprElse :: Stm -> Doc
+        pprElse else' = text "else" <> pprStm else' Nothing
+
+        pprStm :: Stm -> Maybe Doc -> Doc
+        pprStm stm@(Block {}) rest        = space <> ppr stm <+> maybe empty id rest
+        pprStm stm@(If {})    rest        = space <> ppr stm <+> maybe empty id rest
+        pprStm stm            Nothing     = nest 4 (line <> ppr stm)
+        pprStm stm            (Just rest) = nest 4 (line <> ppr stm) </> rest
 
     ppr (Switch e stm sloc) =
         srcloc sloc <>
