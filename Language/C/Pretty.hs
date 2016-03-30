@@ -957,7 +957,7 @@ instance Pretty Exp where
     pprPrec _ (AntiExp v _)   = pprAnti "var"  v
 
 instance Pretty LambdaDeclarator where
-    pprPrec _ (LambdaDeclarator params isMutable returnType loc) =
+    pprPrec _ (LambdaDeclarator params isMutable returnType _) =
         parens (ppr params) <>
         (if isMutable then text "mutable" else empty) <>
         (if isJust returnType then text "->" <> ppr returnType else empty)
