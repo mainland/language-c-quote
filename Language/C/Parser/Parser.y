@@ -8,7 +8,7 @@
 -- Copyright   :  (c) 2006-2011 Harvard University
 --                (c) 2011-2012 Geoffrey Mainland
 --                (c) 2013-2014 Manuel M T Chakravarty
---                (c) 2013-2015 Drexel University
+--                (c) 2013-2016 Drexel University
 -- License     :  BSD-style
 -- Maintainer  :  mainland@drexel.edu
 
@@ -194,6 +194,7 @@ import qualified Language.C.Syntax as C
  '__builtin_va_arg'  { L _ T.Tbuiltin_va_arg }
  '__builtin_va_list' { L _ T.Tbuiltin_va_list }
  '__typeof__'        { L _ T.Ttypeof }
+ '__restrict'        { L _ T.T__restrict }
 
  --
  -- Clang blocks
@@ -1478,6 +1479,9 @@ type_qualifier :
   -- C99
   | 'inline'   { TSinline (srclocOf $1) }
   | 'restrict' { TSrestrict (srclocOf $1) }
+
+  -- GCC
+  | '__restrict' { TS__restrict (srclocOf $1) }
 
   -- CUDA
   | '__device__'   { TSCUDAdevice (srclocOf $1) }
@@ -3394,6 +3398,7 @@ data TySpec = TSauto !SrcLoc
             | TStypeofType Type !SrcLoc
             | TSva_list !SrcLoc
             | TSAttr Attr
+            | TS__restrict !SrcLoc
 
             -- Clang blocks
             | TS__block !SrcLoc
@@ -3461,6 +3466,7 @@ instance Located TySpec where
     locOf (TStypeofType _ loc)    = locOf loc
     locOf (TSva_list loc)         = locOf loc
     locOf (TSAttr attr)           = locOf attr
+    locOf (TS__restrict loc)      = locOf loc
 
     locOf (TS__block loc)         = locOf loc
 
@@ -3529,6 +3535,7 @@ instance Pretty TySpec where
     ppr (TStypeofType ty _) = text "__typeof__" <> parens (ppr ty)
     ppr (TSva_list _)       = text "__builtin_va_list"
     ppr (TSAttr attr)       = ppr [attr]
+    ppr (TS__restrict _)    = text "__restrict"
 
     ppr (TS__block _) = text "__block"
 
@@ -3587,6 +3594,7 @@ isTypeQual (TSAntiTypeQuals {}) = True
 isTypeQual (TSinline _)         = True
 isTypeQual (TSrestrict _)       = True
 isTypeQual (TSAttr _)           = True
+isTypeQual (TS__restrict _)     = True
 isTypeQual (TSCUDAdevice _)     = True
 isTypeQual (TSCUDAglobal _)     = True
 isTypeQual (TSCUDAhost _)       = True
@@ -3614,6 +3622,7 @@ mkTypeQuals specs = map mk (filter isTypeQual specs)
       mk (TSinline loc)          = Tinline loc
       mk (TSrestrict loc)        = Trestrict loc
       mk (TSAttr attr)           = TAttr attr
+      mk (TS__restrict loc)      = T__restrict loc
       mk (TSCUDAdevice loc)      = TCUDAdevice loc
       mk (TSCUDAglobal loc)      = TCUDAglobal loc
       mk (TSCUDAhost loc)        = TCUDAhost loc

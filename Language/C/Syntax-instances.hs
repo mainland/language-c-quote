@@ -21,6 +21,7 @@ instance Located TypeQual where
   locOf (Tinline l) = locOf l
   locOf (Trestrict l) = locOf l
   locOf (TAttr _) = noLoc
+  locOf (T__restrict l) = locOf l
   locOf (TCUDAdevice l) = locOf l
   locOf (TCUDAglobal l) = locOf l
   locOf (TCUDAhost l) = locOf l
@@ -315,6 +316,7 @@ instance Relocatable TypeQual where
   reloc l (Tinline _) = (Tinline (fromLoc l))
   reloc l (Trestrict _) = (Trestrict (fromLoc l))
   reloc _ (TAttr x0) = (TAttr x0)
+  reloc l (T__restrict _) = (T__restrict (fromLoc l))
   reloc l (TCUDAdevice _) = (TCUDAdevice (fromLoc l))
   reloc l (TCUDAglobal _) = (TCUDAglobal (fromLoc l))
   reloc l (TCUDAhost _) = (TCUDAhost (fromLoc l))

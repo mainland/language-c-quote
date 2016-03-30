@@ -3,7 +3,7 @@
 -- Copyright   :  (c) 2006-2011 Harvard University
 --                (c) 2011-2013 Geoffrey Mainland
 --                (c) 2013 Manuel M T Chakravarty
---                (c) 2013-2015 Drexel University
+--                (c) 2013-2016 Drexel University
 -- License     :  BSD-style
 -- Maintainer  :  mainland@drexel.edu
 
@@ -179,6 +179,7 @@ data Token = Teof
            | Tbuiltin_va_list
            | Textension
            | Ttypeof
+           | T__restrict
 
            -- CUDA
            | TCUDA3lt
@@ -452,6 +453,7 @@ tokenStrings = [(Tlparen,     "("),
                 (Tbuiltin_va_list, "__builtin_va_list"),
                 (Textension,       "__extension__"),
                 (Ttypeof,          "typeof"),
+                (T__restrict,      "__restrict"),
 
                 --
                 -- Clang extensions
@@ -570,8 +572,8 @@ keywords = [("auto",       Tauto,      Nothing),
             ("__const__",         Tconst,           Just [Gcc]),
             ("__inline",          Tinline,          Just [Gcc]),
             ("__inline__",        Tinline,          Just [Gcc]),
-            ("__restrict",        Trestrict,        Just [Gcc]),
-            ("__restrict__",      Trestrict,        Just [Gcc]),
+            ("__restrict",        T__restrict,      Just [Gcc]),
+            ("__restrict__",      T__restrict,      Just [Gcc]),
             ("typeof",            Ttypeof,          Just [Gcc]),
             ("__typeof",          Ttypeof,          Just [Gcc]),
             ("__typeof__",        Ttypeof,          Just [Gcc]),

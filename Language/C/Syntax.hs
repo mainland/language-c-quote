@@ -3,7 +3,7 @@
 -- Copyright   :  (c) 2006-2011 Harvard University
 --                (c) 2011-2013 Geoffrey Mainland
 --                (c) 2013 Manuel M T Chakravarty
---             :  (c) 2013-2015 Drexel University
+--             :  (c) 2013-2016 Drexel University
 -- License     :  BSD-style
 -- Maintainer  :  mainland@drexel.edu
 
@@ -63,6 +63,7 @@ data TypeQual = Tconst    !SrcLoc
               | Trestrict !SrcLoc
 
               -- GCC
+              | T__restrict !SrcLoc
               | TAttr Attr
 
               -- CUDA

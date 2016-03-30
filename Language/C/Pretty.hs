@@ -179,9 +179,10 @@ instance Pretty TypeQual where
     ppr (AntiTypeQuals v _) = pprAnti "tyquals" v
 
     ppr (Tinline _)         = text "inline"
-    ppr (Trestrict _)       = text "__restrict"
+    ppr (Trestrict _)       = text "restrict"
 
     ppr (TAttr attr)        = ppr [attr]
+    ppr (T__restrict _)     = text "__restrict"
 
     ppr (TCUDAdevice _)     = text "__device__"
     ppr (TCUDAglobal _)     = text "__global__"
