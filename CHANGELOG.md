@@ -1,4 +1,4 @@
-## Unreleased
+## [0.11.5.1] - 2016-04-07
 ### Fixed
 - ry to be -Wparentheses clean.
 - Fix pretty-pretty of dangling else.
@@ -48,6 +48,7 @@
 ### Changed
 - `Located` instances are also now automatically generated.
 
+[0.11.5.1]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.5...language-c-quote-0.11.5.1
 [0.11.5]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.4...language-c-quote-0.11.5
 [0.11.4]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.3...language-c-quote-0.11.4
 [0.11.3]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.2...language-c-quote-0.11.3
