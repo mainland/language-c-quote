@@ -1,3 +1,7 @@
+## Unreleased
+### Fixed
+- Add missing test modules to tarball.
+
 ## [0.11.5] - 2016-03-30
 ### Added
 - Added ToConst and ToExp instances for Int/Word types (Emil Axelsson)
