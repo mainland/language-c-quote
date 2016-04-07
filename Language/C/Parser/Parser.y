@@ -490,10 +490,7 @@ primary_expression :
   | '(' expression_nlt error
       {% unclosed ($1 <--> $2) "(" }
   | '(' compound_statement ')'
-      { let Block items _ = $2
-        in
-          StmExpr items ($1 `srcspan` $3)
-      }
+      { StmExpr (mkBlockItems $2) ($1 `srcspan` $3) }
   | ANTI_ESC
       { AntiEscExp (getANTI_ESC $1) (srclocOf $1) }
   | ANTI_EXP
@@ -758,10 +755,7 @@ primary_expression_nlt :
   | '(' expression_nlt error
       {% unclosed ($1 <--> $2) "(" }
   | '(' compound_statement ')'
-      { let Block items _ = $2
-        in
-          StmExpr items ($1 `srcspan` $3)
-      }
+      { StmExpr (mkBlockItems $2) ($1 `srcspan` $3) }
   | ANTI_ESC
       { AntiEscExp (getANTI_ESC $1) (srclocOf $1) }
   | ANTI_EXP
@@ -2074,9 +2068,9 @@ labeled_statement :
 compound_statement :: { Stm }
 compound_statement:
     '{' begin_scope end_scope '}'
-      { Block [] ($1 `srcspan` $4) }
+      { mkBlock [] ($1 `srcspan` $4) }
   | '{' begin_scope block_item_list end_scope '}'
-      { Block $3 ($1 `srcspan` $5) }
+      { mkBlock $3 ($1 `srcspan` $5) }
   | '{' begin_scope error
       {% unclosed (locOf $3) "{" }
 
@@ -2220,7 +2214,7 @@ function_definition :
     declaration_specifiers declarator compound_statement
       {% do{ let (dspec, declRoot)   =  $1
            ; let (ident, declToDecl) =  $2
-           ; let Block blockItems _  =  $3
+           ; let blockItems          =  mkBlockItems $3
            ; let decl                =  declToDecl declRoot
            ; case decl of
                { Proto protoDecl args _ -> return $
@@ -2240,7 +2234,7 @@ function_definition :
       {% do{ let (dspec, declRoot)   =  $1
            ; let (ident, declToDecl) =  $2
            ; let argDecls            =  $3
-           ; let Block blockItems _  =  $4
+           ; let blockItems          =  mkBlockItems $4
            ; let decl                =  declToDecl declRoot
            ; case decl of
                { OldProto protoDecl args _ -> return $
@@ -2448,23 +2442,22 @@ block_literal :: { Exp }
 block_literal :
     '^'                                              attribute_specifiers_opt compound_statement
       {% do { assertBlocksEnabled ($1 <--> $3) "To use blocks, enable the blocks language extension"
-            ; let Block items _ = $3
+            ; let items = mkBlockItems $3
             ; return $ BlockLit (BlockVoid (srclocOf $1)) $2 items ($1 `srcspan` $3)
             }
       }
   | '^' '(' parameter_list ')'                       attribute_specifiers_opt compound_statement
       {% do { assertBlocksEnabled ($1 <--> $6) "To use blocks, enable blocks language extension"
-            ; let Block items _ = $6
+            ; let items = mkBlockItems $6
             ; return $ BlockLit (BlockParam $3 ($2 `srcspan` $4)) $5 items ($1 `srcspan` $6)
             }
       }
   | '^' specifier_qualifier_list abstract_declarator attribute_specifiers_opt compound_statement
       {% do { assertBlocksEnabled ($1 <--> $5) "To use blocks, enable blocks language extension"
-            ; let { decl          = $3 (declRoot $2)
-                  ; Block items _ = $5
-                  }
-            ; dspec <- mkDeclSpec $2
-            ; let typeLoc = dspec `srcspan` decl
+            ; let decl    =  $3 (declRoot $2)
+            ; let items   =  mkBlockItems $5
+            ; dspec       <- mkDeclSpec $2
+            ; let typeLoc =  dspec `srcspan` decl
             ; return $ BlockLit (BlockType (Type dspec decl typeLoc) typeLoc) $4 items ($1 `srcspan` $5)
             }
       }
@@ -2527,15 +2520,15 @@ objc_selector_rlist :
 objc_at_statement :: { Stm }
 objc_at_statement :
     '@' 'try' compound_statement objc_catch_statement_rlist '@' 'finally' compound_statement
-      { let { Block tryItems _     = $3
-            ; Block finallyItems _ = $7
+      { let { tryItems     = mkBlockItems $3
+            ; finallyItems = mkBlockItems $7
             }
         in
          ObjCTry tryItems (rev $4) (Just finallyItems) ($1 `srcspan` $7)
       }
   | '@' 'try' compound_statement objc_catch_statement_rlist
-      {% do { let { Block tryItems _ = $3
-                  ; catchStmts       = rev $4
+      {% do { let { tryItems   = mkBlockItems $3
+                  ; catchStmts = rev $4
                   }
             ; when (null catchStmts) $
                 throw $ ParserException ($1 <--> $3) $
@@ -2556,12 +2549,12 @@ objc_at_statement :
   | '@' 'throw' error
       {% expected ["';'", "expression"] Nothing }
   | '@' 'synchronized' '(' expression ')' compound_statement
-      { let Block items _ = $6
+      { let items = mkBlockItems $6
         in
          ObjCSynchronized $4 items ($1 `srcspan` $6)
       }
   | '@' 'autoreleasepool' compound_statement
-      { let Block items _ = $3
+      { let items = mkBlockItems $3
         in
          ObjCAutoreleasepool items ($1 `srcspan` $3)
       }
@@ -2571,11 +2564,11 @@ objc_catch_statement_rlist :
     {- empty -}
       { rnil }
   | objc_catch_statement_rlist '@' 'catch' '(' parameter_declaration ')' compound_statement
-      { let Block items _ = $7
+      { let items = mkBlockItems $7
         in
         rcons (ObjCCatch (Just $5) items ($2 `srcspan` $7)) $1 }
   | objc_catch_statement_rlist '@' 'catch' '(' '...' ')' compound_statement
-      { let Block items _ = $7
+      { let items = mkBlockItems $7
         in
         rcons (ObjCCatch Nothing items ($2 `srcspan` $7)) $1 }
 
@@ -3224,14 +3217,14 @@ property_dynamic :
 objc_method_definition :: { Definition }
 objc_method_definition :
     objc_method_proto semi compound_statement
-      { let Block stmts loc = $3
+      { let stmts = mkBlockItems $3
         in
-          ObjCMethDef $1 stmts ($1 `srcspan` loc)
+          ObjCMethDef $1 stmts ($1 `srcspan` $3)
       }
-  | objc_method_proto     compound_statement
-      { let Block stmts loc = $2
+  | objc_method_proto      compound_statement
+      { let stmts = mkBlockItems $2
         in
-          ObjCMethDef $1 stmts ($1 `srcspan` loc)
+          ObjCMethDef $1 stmts ($1 `srcspan` $2)
       }
   | ANTI_OBJC_METHOD_DEF
       { AntiObjCMeth (getANTI_OBJC_METHOD_DEF $1) (srclocOf $1) }
@@ -3259,7 +3252,7 @@ objc_compatibility_alias :
 cuda_lambda_expression :: { Exp }
 cuda_lambda_expression : cuda_lambda_introducer cuda_lambda_declarator compound_statement
     {% do { assertCudaEnabled ($1 <--> $3) "To use lambda-expressions, enable support for CUDA"
-          ; let Block items _ = $3
+          ; let items = mkBlockItems $3
           ; return $ Lambda $1 $2 items ($1 `srcspan` $3)
           }
     }
@@ -4000,6 +3993,14 @@ assertCudaEnabled loc errMsg = do
  cuda_enabled <- useCUDAExts
  unless cuda_enabled $
   throw $ ParserException loc $ text errMsg
+
+mkBlock :: [BlockItem] -> SrcLoc -> Stm
+mkBlock [BlockStm stm] _    = stm
+mkBlock items          sloc = Block items sloc
+
+mkBlockItems :: Stm -> [BlockItem]
+mkBlockItems (Block items _) = items
+mkBlockItems stm             = [BlockStm stm]
 
 mkCommentStm :: L T.Token -> Stm -> Stm
 mkCommentStm tok stm = Comment (getCOMMENT tok) stm (srclocOf tok)

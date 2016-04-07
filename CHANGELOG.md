@@ -1,5 +1,6 @@
 ## Unreleased
 ### Fixed
+- Fix pretty-pretty of dangling else.
 - Add missing test modules to tarball.
 
 ## [0.11.5] - 2016-03-30

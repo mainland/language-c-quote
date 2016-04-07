@@ -555,36 +555,40 @@ instance Pretty Stm where
     ppr (If test then' maybe_else sloc) =
         srcloc sloc <>
         text "if" <+> parens (ppr test) <>
-        pprStm then' (fmap pprElse maybe_else)
+        pprThen then' (fmap pprElse maybe_else)
       where
-        pprElse :: Stm -> Doc
-        pprElse else' = text "else" <> pprStm else' Nothing
+        pprThen :: Stm -> Maybe Doc -> Doc
+        pprThen stm@(Block {}) rest        = space <> ppr stm <+> maybe empty id rest
+        pprThen stm@(If {})    rest        = space <> ppr [BlockStm stm] <+> maybe empty id rest
+        pprThen stm            Nothing     = nest 4 (line <> ppr stm)
+        pprThen stm            (Just rest) = nest 4 (line <> ppr stm) </> rest
 
-        pprStm :: Stm -> Maybe Doc -> Doc
-        pprStm stm@(Block {}) rest        = space <> ppr stm <+> maybe empty id rest
-        pprStm stm@(If {})    rest        = space <> ppr stm <+> maybe empty id rest
-        pprStm stm            Nothing     = nest 4 (line <> ppr stm)
-        pprStm stm            (Just rest) = nest 4 (line <> ppr stm) </> rest
+        pprElse :: Stm -> Doc
+        pprElse stm =
+            text "else" <> go stm
+          where
+            go :: Stm -> Doc
+            go (Block {}) = space <> ppr stm
+            go (If {})    = space <> ppr stm
+            go _stm       = nest 4 (line <> ppr stm)
 
     ppr (Switch e stm sloc) =
         srcloc sloc <>
-        text "switch" <+> parens (ppr e) <+/> ppr stm
+        text "switch" <+> parens (ppr e) <> pprBlock stm
 
     ppr (While e stm sloc) =
         srcloc sloc <>
-        text "while" <+> parens (ppr e) <+/> ppr stm
+        text "while" <+> parens (ppr e) <> pprBlock stm
 
     ppr (DoWhile stm e sloc) =
         srcloc sloc <>
-        text "do" <+/> ppr stm <+/> text "while" <> parens (ppr e) <> semi
+        text "do" <> pprBlock stm <+/> text "while" <> parens (ppr e) <> semi
 
     ppr (For ini test post stm sloc) =
         srcloc sloc <>
         text "for" <+>
         (parens . semisep) [either ppr ppr ini, ppr test, ppr post] <>
-        case stm of
-          Block {} -> space <> ppr stm
-          _ -> nest 4 $ line <> ppr stm
+        pprBlock stm
 
     ppr (Goto ident sloc) =
         srcloc sloc <>
@@ -681,6 +685,11 @@ instance Pretty Stm where
         srcloc sloc
         <>  text "@autoreleasepool"
         </> ppr block
+
+pprBlock :: Stm -> Doc
+pprBlock stm@(Block {}) = space <> ppr stm
+pprBlock stm@(If {})    = space <> ppr [BlockStm stm]
+pprBlock stm            = nest 4 $ line <> ppr stm
 
 instance Pretty BlockItem where
     ppr (BlockDecl decl) = ppr decl <> semi
