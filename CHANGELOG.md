@@ -1,5 +1,6 @@
 ## Unreleased
 ### Fixed
+- ry to be -Wparentheses clean.
 - Fix pretty-pretty of dangling else.
 - Add missing test modules to tarball.
 

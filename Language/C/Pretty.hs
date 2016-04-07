@@ -47,7 +47,7 @@ infixop :: (Pretty a, Pretty b, Pretty op, CFixity op)
         -> b   -- ^ right argument
         -> Doc
 infixop prec op l r =
-    parensIf (prec > opPrec) $
+    parensOp prec op $
     pprPrec leftPrec l <+> ppr op <+/> pprPrec rightPrec r
   where
     leftPrec | opAssoc == RightAssoc = opPrec + 1
@@ -107,6 +107,12 @@ pprAnti anti s = char '$' <> text anti <> colon <>
 class CFixity a where
     fixity :: a -> Fixity
 
+    parensOp :: Int -> a -> Doc -> Doc
+    parensOp prec op =
+        parensIf (prec > opPrec)
+      where
+        Fixity _ opPrec = fixity op
+
 --
 -- Fixities are taken from Table 2-1 in Section 2.12 of K&R (2nd ed.)
 --
@@ -153,6 +159,35 @@ instance CFixity BinOp where
     fixity Xor  = infixl_ 7
     fixity Lsh  = infixl_ 11
     fixity Rsh  = infixl_ 11
+
+    parensOp prec op =
+        go op
+      where
+        go :: BinOp -> Doc -> Doc
+        go Add  | isBitwiseOp = parens
+        go Sub  | isBitwiseOp = parens
+        go Land | isOp Lor    = parens
+        go Lor  | isOp Land   = parens
+        go And  | isOp Or     = parens
+                | isOp Xor    = parens
+        go Or   | isOp And    = parens
+                | isOp Xor    = parens
+        go Xor  | isOp And    = parens
+                | isOp Or     = parens
+        go _                  = parensIf (prec > opPrec)
+
+        isBitwiseOp :: Bool
+        isBitwiseOp = isOp And || isOp Or || isOp Xor
+
+        -- Return 'True' if we are potentially an immediate subterm of the
+        -- binary operator op'. We make this determination based of the value of
+        -- @prec@.
+        isOp :: BinOp -> Bool
+        isOp op' = prec == op'Prec || prec == op'Prec + 1
+          where
+            Fixity _ op'Prec = fixity op'
+
+        Fixity _ opPrec = fixity op
 
 instance CFixity AssignOp where
     fixity _ = infixr_ 2
