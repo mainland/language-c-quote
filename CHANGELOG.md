@@ -1,6 +1,10 @@
+## [0.11.6] - 2016-04-12
+### Added
+- Add support for type qualifier escapes.
+
 ## [0.11.5.1] - 2016-04-07
 ### Fixed
-- ry to be -Wparentheses clean.
+- Try to be -Wparentheses clean.
 - Fix pretty-pretty of dangling else.
 - Add missing test modules to tarball.
 
@@ -48,6 +52,7 @@
 ### Changed
 - `Located` instances are also now automatically generated.
 
+[0.11.6]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.5.1...language-c-quote-0.11.6
 [0.11.5.1]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.5...language-c-quote-0.11.5.1
 [0.11.5]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.4...language-c-quote-0.11.5
 [0.11.4]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.3...language-c-quote-0.11.4
