@@ -16,12 +16,13 @@ instance Located Storage where
 instance Located TypeQual where
   locOf (Tconst l) = locOf l
   locOf (Tvolatile l) = locOf l
+  locOf (EscTypeQual _ l) = locOf l
   locOf (AntiTypeQual _ l) = locOf l
   locOf (AntiTypeQuals _ l) = locOf l
   locOf (Tinline l) = locOf l
   locOf (Trestrict l) = locOf l
-  locOf (TAttr _) = noLoc
   locOf (T__restrict l) = locOf l
+  locOf (TAttr _) = noLoc
   locOf (TCUDAdevice l) = locOf l
   locOf (TCUDAglobal l) = locOf l
   locOf (TCUDAhost l) = locOf l
@@ -220,9 +221,9 @@ instance Located Exp where
   locOf (Seq _ _ l) = locOf l
   locOf (CompoundLit _ _ l) = locOf l
   locOf (StmExpr _ l) = locOf l
-  locOf (AntiExp _ l) = locOf l
   locOf (EscExp _ l) = locOf l
   locOf (AntiEscExp _ l) = locOf l
+  locOf (AntiExp _ l) = locOf l
   locOf (AntiArgs _ l) = locOf l
   locOf (BuiltinVaArg _ _ l) = locOf l
   locOf (BlockLit _ _ _ l) = locOf l
@@ -320,12 +321,13 @@ instance Relocatable Storage where
 instance Relocatable TypeQual where
   reloc l (Tconst _) = (Tconst (fromLoc l))
   reloc l (Tvolatile _) = (Tvolatile (fromLoc l))
+  reloc l (EscTypeQual x0 _) = (EscTypeQual x0 (fromLoc l))
   reloc l (AntiTypeQual x0 _) = (AntiTypeQual x0 (fromLoc l))
   reloc l (AntiTypeQuals x0 _) = (AntiTypeQuals x0 (fromLoc l))
   reloc l (Tinline _) = (Tinline (fromLoc l))
   reloc l (Trestrict _) = (Trestrict (fromLoc l))
-  reloc _ (TAttr x0) = (TAttr x0)
   reloc l (T__restrict _) = (T__restrict (fromLoc l))
+  reloc _ (TAttr x0) = (TAttr x0)
   reloc l (TCUDAdevice _) = (TCUDAdevice (fromLoc l))
   reloc l (TCUDAglobal _) = (TCUDAglobal (fromLoc l))
   reloc l (TCUDAhost _) = (TCUDAhost (fromLoc l))
@@ -531,9 +533,9 @@ instance Relocatable Exp where
   reloc l (Seq x0 x1 _) = (Seq x0 x1 (fromLoc l))
   reloc l (CompoundLit x0 x1 _) = (CompoundLit x0 x1 (fromLoc l))
   reloc l (StmExpr x0 _) = (StmExpr x0 (fromLoc l))
-  reloc l (AntiExp x0 _) = (AntiExp x0 (fromLoc l))
   reloc l (EscExp x0 _) = (EscExp x0 (fromLoc l))
   reloc l (AntiEscExp x0 _) = (AntiEscExp x0 (fromLoc l))
+  reloc l (AntiExp x0 _) = (AntiExp x0 (fromLoc l))
   reloc l (AntiArgs x0 _) = (AntiArgs x0 (fromLoc l))
   reloc l (BuiltinVaArg x0 x1 _) = (BuiltinVaArg x0 x1 (fromLoc l))
   reloc l (BlockLit x0 x1 x2 _) = (BlockLit x0 x1 x2 (fromLoc l))

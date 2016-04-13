@@ -218,6 +218,8 @@ instance Pretty TypeQual where
     ppr (Tconst _)          = text "const"
     ppr (Tvolatile _)       = text "volatile"
 
+    ppr (EscTypeQual esc _) = text esc
+
     ppr (AntiTypeQual v _)  = pprAnti "tyqual" v
     ppr (AntiTypeQuals v _) = pprAnti "tyquals" v
 

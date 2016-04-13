@@ -55,6 +55,8 @@ data Storage = Tauto                   !SrcLoc
 data TypeQual = Tconst    !SrcLoc
               | Tvolatile !SrcLoc
 
+              | EscTypeQual String !SrcLoc
+
               | AntiTypeQual  String !SrcLoc
               | AntiTypeQuals String !SrcLoc
 
