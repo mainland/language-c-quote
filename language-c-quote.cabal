@@ -20,7 +20,7 @@ description:
   extensions and some CUDA and OpenCL extensions as well as the entire Objective-C
   language.
 
-build-type: Custom
+build-type: Simple
 
 extra-source-files:
   Language/C/Syntax-instances.hs
