@@ -1,3 +1,7 @@
+## [0.11.6.1] - 2016-05-10
+### Added
+- Bump `syb` upper boudn for GHC 8.0.1 compatibility.
+
 ## [0.11.6] - 2016-04-12
 ### Added
 - Add support for type qualifier escapes.
