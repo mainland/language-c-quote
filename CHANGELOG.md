@@ -1,6 +1,10 @@
+## [0.11.6.2] - 2016-05-18
+### Fixed
+- #68 Cannot create block consisting of a single statements antiquote
+
 ## [0.11.6.1] - 2016-05-10
 ### Added
-- Bump `syb` upper boudn for GHC 8.0.1 compatibility.
+- Bump `syb` upper bound for GHC 8.0.1 compatibility.
 
 ## [0.11.6] - 2016-04-12
 ### Added
@@ -56,6 +60,8 @@
 ### Changed
 - `Located` instances are also now automatically generated.
 
+[0.11.6.2]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.6.1...language-c-quote-0.11.6.2
+[0.11.6.1]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.6...language-c-quote-0.11.6.1
 [0.11.6]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.5.1...language-c-quote-0.11.6
 [0.11.5.1]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.5...language-c-quote-0.11.5.1
 [0.11.5]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.4...language-c-quote-0.11.5
