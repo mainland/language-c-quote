@@ -3995,8 +3995,9 @@ assertCudaEnabled loc errMsg = do
   throw $ ParserException loc $ text errMsg
 
 mkBlock :: [BlockItem] -> SrcLoc -> Stm
-mkBlock [BlockStm stm] _    = stm
-mkBlock items          sloc = Block items sloc
+mkBlock items@[BlockStm AntiStms{}] sloc = Block items sloc
+mkBlock [BlockStm stm]              _    = stm
+mkBlock items                       sloc = Block items sloc
 
 mkBlockItems :: Stm -> [BlockItem]
 mkBlockItems (Block items _) = items

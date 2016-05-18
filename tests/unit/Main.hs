@@ -7,6 +7,7 @@ import Test.Framework.Providers.HUnit
 import Test.HUnit (Assertion, (@?=))
 
 import qualified Data.ByteString.Char8 as B
+import Data.Char (isSpace)
 import Data.Loc (SrcLoc, noLoc, startPos)
 import Control.Exception (SomeException)
 import Language.C.Quote.C
@@ -430,7 +431,8 @@ statementCommentTests = testGroup "Statement comments"
 
 regressionTests :: Test
 regressionTests = testGroup "Regressions"
-    [ issue64
+    [ issue68
+    , issue64
     , testCase "pragmas" test_pragmas
     , issue48
     , testCase "Issue #44" issue44
@@ -457,6 +459,15 @@ regressionTests = testGroup "Regressions"
                       ]
                       noLoc
             ]
+
+    issue68 :: Test
+    issue68 = testCase "Issue #68"$
+        simpleRender (ppr [cstm|if (!initialized) { $stms:init_stms }|])
+        @?=
+        "if (!initialized) { return; }"
+      where
+        init_stms :: [C.Stm]
+        init_stms = [[cstm|return;|]]
 
     issue64 :: Test
     issue64 = testGroup "Issue #64"
@@ -541,3 +552,12 @@ regressionTests = testGroup "Regressions"
                          C.Type (C.DeclSpec [] [] (C.Tlong_double_Imaginary noLoc) noLoc)
                                 (C.DeclRoot noLoc)
                                 noLoc
+
+-- | Render a document as a single line.
+simpleRender :: Doc -> String
+simpleRender doc =
+    map space2space (displayS (renderCompact doc) "")
+  where
+    space2space :: Char -> Char
+    space2space c | isSpace c = ' '
+                  | otherwise = c
