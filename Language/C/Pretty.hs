@@ -647,7 +647,7 @@ instance Pretty Stm where
         srcloc sloc <> text "#pragma" <+> text pragma
 
     ppr (Comment com stm sloc) =
-        srcloc sloc <> text com </> ppr stm
+        align $ srcloc sloc <> text com </> ppr stm
 
     ppr (EscStm esc sloc) =
         srcloc sloc <> text esc
