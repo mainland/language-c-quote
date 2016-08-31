@@ -1,3 +1,7 @@
+## [0.11.6.2] - 2016-08-30
+### Fixed
+- Fix alignment of pretty-printed comments.
+
 ## [0.11.6.2] - 2016-05-18
 ### Fixed
 - #68 Cannot create block consisting of a single statements antiquote
@@ -60,6 +64,7 @@
 ### Changed
 - `Located` instances are also now automatically generated.
 
+[0.11.6.3]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.6.2...language-c-quote-0.11.6.3
 [0.11.6.2]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.6.1...language-c-quote-0.11.6.2
 [0.11.6.1]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.6...language-c-quote-0.11.6.1
 [0.11.6]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.5.1...language-c-quote-0.11.6
