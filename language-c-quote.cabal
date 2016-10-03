@@ -1,5 +1,5 @@
 name:          language-c-quote
-version:       0.11.6.3
+version:       0.11.7
 cabal-version: >= 1.10
 license:       BSD3
 license-file:  LICENSE
@@ -50,7 +50,10 @@ library
     template-haskell
 
   if flag(full-haskell-antiquotes)
-    build-depends: haskell-src-meta   >= 0.4 && < 0.7
+    if impl(ghc >= 7.6)
+      build-depends: haskell-src-meta >= 0.4 && < 0.8
+    else
+      build-depends: haskell-src-meta >= 0.4 && < 0.7
   else
     build-depends: haskell-exp-parser >= 0.1 && < 0.2
 

@@ -1,3 +1,7 @@
+## [0.11.7] - 2016-10-03
+### Fixed
+- Fix compatibility with `haskell-src-meta` 0.7.0.
+
 ## [0.11.6.2] - 2016-08-30
 ### Fixed
 - Fix alignment of pretty-printed comments.
