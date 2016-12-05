@@ -56,28 +56,26 @@ install:
  - sed -i -e '1,/^Resolving /d' installplan.txt; cat installplan.txt
 
 # check whether current requested install-plan matches cached package-db snapshot
- - CABSNAP=$(ghc --numeric-version)
- - if diff -u installplan.txt $HOME/.cabsnap/$CABSNAP/installplan.txt;
+ - if diff -u $HOME/.cabsnap/installplan.txt installplan.txt;
    then
      echo "cabal build-cache HIT";
      rm -rfv .ghc;
-     cp -a $HOME/.cabsnap/$CABSNAP/ghc $HOME/.ghc;
-     cp -a $HOME/.cabsnap/$CABSNAP/lib $HOME/.cabsnap/$CABSNAP/share $HOME/.cabsnap/$CABSNAP/bin $HOME/.cabal/;
+     cp -a $HOME/.cabsnap/ghc $HOME/.ghc;
+     cp -a $HOME/.cabsnap/lib $HOME/.cabsnap/share $HOME/.cabsnap/bin $HOME/.cabal/;
    else
      echo "cabal build-cache MISS";
-     rm -rf $HOME/.cabsnap/$CABSNAP;
+     rm -rf $HOME/.cabsnap;
      mkdir -p $HOME/.ghc $HOME/.cabal/lib $HOME/.cabal/share $HOME/.cabal/bin;
      cabal install --only-dependencies --enable-tests --enable-benchmarks $FLAGS;
    fi
 
 # snapshot package-db on cache miss
- - if [ ! -d $HOME/.cabsnap/$CABSNAP ];
+ - if [ ! -d $HOME/.cabsnap ];
    then
       echo "snapshotting package-db to build-cache";
       mkdir $HOME/.cabsnap;
-      mkdir $HOME/.cabsnap/$CABSNAP;
-      cp -a $HOME/.ghc $HOME/.cabsnap/$CABSNAP/ghc;
-      cp -a $HOME/.cabal/lib $HOME/.cabal/share $HOME/.cabal/bin installplan.txt $HOME/.cabsnap/$CABSNAP/;
+      cp -a $HOME/.ghc $HOME/.cabsnap/ghc;
+      cp -a $HOME/.cabal/lib $HOME/.cabal/share $HOME/.cabal/bin installplan.txt $HOME/.cabsnap/;
    fi
 
 # Here starts the actual work to be performed for the package under test;
