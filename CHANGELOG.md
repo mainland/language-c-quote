@@ -1,3 +1,7 @@
+## [0.11.7.1] - 2016-12-05
+### Fixed
+- Bump `HUnit` upper bound.
+
 ## [0.11.7] - 2016-10-03
 ### Fixed
 - Fix compatibility with `haskell-src-meta` 0.7.0.
@@ -68,7 +72,8 @@
 ### Changed
 - `Located` instances are also now automatically generated.
 
-[0.11.7]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.7...language-c-quote-0.11.6.3
+[0.11.7.1]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.7...language-c-quote-0.11.7.1
+[0.11.7]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.6.3...language-c-quote-0.11.7
 [0.11.6.3]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.6.2...language-c-quote-0.11.6.3
 [0.11.6.2]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.6.1...language-c-quote-0.11.6.2
 [0.11.6.1]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.6...language-c-quote-0.11.6.1
