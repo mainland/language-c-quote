@@ -2,7 +2,7 @@
 ### Fixed
 - Fix compatibility with `haskell-src-meta` 0.7.0.
 
-## [0.11.6.2] - 2016-08-30
+## [0.11.6.3] - 2016-08-30
 ### Fixed
 - Fix alignment of pretty-printed comments.
 
@@ -68,6 +68,7 @@
 ### Changed
 - `Located` instances are also now automatically generated.
 
+[0.11.7]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.7...language-c-quote-0.11.6.3
 [0.11.6.3]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.6.2...language-c-quote-0.11.6.3
 [0.11.6.2]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.6.1...language-c-quote-0.11.6.2
 [0.11.6.1]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.6...language-c-quote-0.11.6.1
