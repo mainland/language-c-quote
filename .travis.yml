@@ -25,13 +25,17 @@ matrix:
     - env: CABALVER=1.22 GHCVER=7.10.3 ALEXVER=3.1.7 HAPPYVER=1.19.5 FLAGS=""
       compiler: ": #GHC 7.10.3"
       addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.3,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
-    - env: CABALVER=1.22 GHCVER=7.10.3 ALEXVER=3.1.7 HAPPYVER=1.19.5 FLAGS="-f -full-haskell-antiquotes"
-      compiler: ": #GHC 7.10.3"
-      addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.3,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
-    - env: CABALVER=1.24 GHCVER=8.0.1 ALEXVER=3.1.7 HAPPYVER=1.19.5 FLAGS=""
-      compiler: ": #GHC 8.0.1"
-      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.1,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
+    - env: CABALVER=1.24 GHCVER=8.0.2 ALEXVER=3.1.7 HAPPYVER=1.19.5 FLAGS=""
+      compiler: ": #GHC 8.0.2"
+      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
+    - env: CABALVER=1.24 GHCVER=8.0.2 ALEXVER=3.1.7 HAPPYVER=1.19.5 FLAGS="-f -full-haskell-antiquotes"
+      compiler: ": #GHC 8.0.2"
+      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
+    - env: CABALVER=head GHCVER=8.2.1 ALEXVER=3.1.7 HAPPYVER=1.19.5 FLAGS=""
+      compiler: ": #GHC 8.2.1"
+      addons: {apt: {packages: [cabal-install-head,ghc-8.2.1,alex-3.1.7,happy-1.19.5], sources: [hvr-ghc]}}
     - env: CABALVER=head GHCVER=head ALEXVER=3.1.7 HAPPYVER=1.19.5 FLAGS=""
+      compiler: ": #GHC HEAD"
       addons: {apt: {packages: [cabal-install-head,ghc-head,alex-3.1.7,happy-1.19.5],  sources: [hvr-ghc]}}
 
   allow_failures:

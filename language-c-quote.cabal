@@ -13,7 +13,7 @@ stability:     alpha
 homepage:      http://www.drexel.edu/~mainland/
 category:      Language
 synopsis:      C/CUDA/OpenCL/Objective-C quasiquoting library.
-tested-with:   GHC==7.4.2, GHC==7.6.3, GHC==7.8.3, GHC==7.10.3, GHC==8.0.1
+tested-with:   GHC==7.4.2, GHC==7.6.3, GHC==7.8.3, GHC==7.10.3, GHC==8.0.2, GHC==8.2.1
 
 description:
   This package provides a general parser for the C language, including most GCC
