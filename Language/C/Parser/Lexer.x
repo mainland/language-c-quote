@@ -481,7 +481,7 @@ lexFloat :: Action
 lexFloat beg end =
     case i of
       [n] -> return $ locateTok beg end (toToken n)
-      _   -> fail "bad parse for integer"
+      _   -> fail "bad parse for float"
   where
     s :: String
     s = inputString beg end
@@ -502,9 +502,9 @@ lexFloat beg end =
     toToken :: Rational -> Token
     toToken n =
         case suffix of
-          ""  -> TdoubleConst (s, n)
-          "f" -> TfloatConst (s, n)
-          "l" -> TlongDoubleConst (s, n)
+          ""  -> TdoubleConst (s, fromRational n)
+          "f" -> TfloatConst (s, fromRational n)
+          "l" -> TlongDoubleConst (s, fromRational n)
 
 type Radix = (Integer, Char -> Bool, Char -> Int)
 

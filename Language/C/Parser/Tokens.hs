@@ -32,9 +32,9 @@ data Token = Teof
            | TintConst (String, Signed, Integer)
            | TlongIntConst (String, Signed, Integer)
            | TlongLongIntConst (String, Signed, Integer)
-           | TfloatConst (String, Rational)
-           | TdoubleConst (String, Rational)
-           | TlongDoubleConst (String, Rational)
+           | TfloatConst (String, Float)
+           | TdoubleConst (String, Double)
+           | TlongDoubleConst (String, Double)
            | TcharConst (String, Char)
            | TstringConst (String, String)
            | Tidentifier String

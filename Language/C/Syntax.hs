@@ -296,9 +296,9 @@ data Signed = Signed
 data Const = IntConst         String   Signed Integer !SrcLoc
            | LongIntConst     String   Signed Integer !SrcLoc
            | LongLongIntConst String   Signed Integer !SrcLoc
-           | FloatConst       String   Rational       !SrcLoc
-           | DoubleConst      String   Rational       !SrcLoc
-           | LongDoubleConst  String   Rational       !SrcLoc
+           | FloatConst       String   Float          !SrcLoc
+           | DoubleConst      String   Double         !SrcLoc
+           | LongDoubleConst  String   Double         !SrcLoc
            | CharConst        String   Char           !SrcLoc
            | StringConst      [String] String         !SrcLoc
 

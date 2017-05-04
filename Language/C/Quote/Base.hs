@@ -49,6 +49,8 @@ import Numeric (showOct, showHex)
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
 
+newtype LongDouble = LongDouble Double
+
 -- | An instance of 'ToIndent' can be converted to a 'C.Id'.
 class ToIdent a where
     toIdent :: a -> SrcLoc -> C.Id
@@ -103,13 +105,22 @@ instance ToConst Integer where
     toConst n loc = C.IntConst (show n) C.Signed n loc
 
 instance ToConst Rational where
-    toConst n loc = C.DoubleConst (show n) n loc
+    toConst n loc = toConst (fromRational n :: Double) loc
 
 instance ToConst Float where
-    toConst n loc = C.DoubleConst (show n) (toRational n) loc
+    toConst n loc = C.FloatConst (realFloatToString n ++ "F") n loc
 
 instance ToConst Double where
-    toConst n loc = C.DoubleConst (show n) (toRational n) loc
+    toConst n loc = C.DoubleConst (realFloatToString n) n loc
+
+instance ToConst LongDouble where
+    toConst (LongDouble n) loc = C.LongDoubleConst (realFloatToString n ++ "L") n loc
+
+realFloatToString :: (RealFloat a, Show a) => a -> String
+realFloatToString n
+  | isNaN n      = "NAN"
+  | isInfinite n = if n < 0 then "-INFINITY" else "INFINITY"
+  | otherwise    = show n
 
 instance ToConst Char where
     toConst c loc = C.CharConst ("'" ++ charToString c ++ "'") c loc
@@ -354,22 +365,14 @@ qqConstE = go
                                (fromIntegral $(antiVarE v))
                                $(qqLocE loc)|]
 
-
-
     go (C.AntiFloat v loc) =
-        Just [|C.FloatConst  ($(floatConst (antiVarE v)) ++ "F")
-                             (fromRational $(antiVarE v))
-                             $(qqLocE loc)|]
+        Just [|toConst ($(antiVarE v) :: Float) $(qqLocE loc)|]
 
     go (C.AntiDouble v loc) =
-        Just [|C.DoubleConst  ($(floatConst (antiVarE v)))
-                              (fromRational $(antiVarE v))
-                              $(qqLocE loc)|]
+        Just [|toConst ($(antiVarE v) :: Double) $(qqLocE loc)|]
 
     go (C.AntiLongDouble v loc) =
-        Just [|C.LongDoubleConst  ($(floatConst (antiVarE v)) ++ "L")
-                                  (fromRational $(antiVarE v))
-                                  $(qqLocE loc)|]
+        Just [|toConst (LongDouble $(antiVarE v)) $(qqLocE loc)|]
 
     go (C.AntiChar v loc) =
         Just [|toConst $(antiVarE v) $(qqLocE loc)|]
@@ -381,9 +384,6 @@ qqConstE = go
 
     intConst :: ExpQ -> ExpQ
     intConst e = [|show $(e)|]
-
-    floatConst :: ExpQ -> ExpQ
-    floatConst e = [|show (fromRational $(e) :: Double)|]
 
 qqExpE :: C.Exp -> Maybe (Q Exp)
 qqExpE (C.AntiExp v loc)    = Just [|toExp $(antiVarE v) $(qqLocE loc) :: C.Exp|]

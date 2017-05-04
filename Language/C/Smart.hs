@@ -41,9 +41,9 @@ instance Num C.Exp where
     fromInteger n = [cexp|$int:n|]
 
 instance Real C.Exp where
-    toRational [cexp|$float:n|]   = n
-    toRational [cexp|$double:n|]  = n
-    toRational [cexp|$ldouble:n|] = n
+    toRational [cexp|$float:n|]   = toRational n
+    toRational [cexp|$double:n|]  = toRational n
+    toRational [cexp|$ldouble:n|] = toRational n
 
     toRational _ =
         error "fromEnum: non-rational constant C expressions"
@@ -63,7 +63,7 @@ instance Fractional C.Exp where
     e1 / e2 = [cexp|$exp:e1 / $exp:e2|]
     recip e = [cexp|1 / $exp:e|]
 
-    fromRational n = [cexp|$double:n|]
+    fromRational n = [cexp|$double:(fromRational n)|]
 
 instance Floating C.Exp where
     pi            = [cexp|3.141592653589793238|]

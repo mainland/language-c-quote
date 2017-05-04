@@ -74,7 +74,7 @@ constantAntiquotationsTests = testGroup "Constant antiquotations" $
     [ testCase "int antiquotes" test_int
     , testCase "hex Const antiquote" test_hexconst
     , testCase "unsigned hex Const antiquote" test_hexconst_u
-    , testCase "float antiquotes" test_float
+    , testGroup "float antiquotes" floatConstTests
     , testCase "char antiquote" test_char
     , testCase "string antiquote" test_string
     , testGroup "misc char constants" charConstTests
@@ -110,12 +110,33 @@ constantAntiquotationsTests = testGroup "Constant antiquotations" $
             x :: Integer
             x = fromIntegral i
 
-    test_float :: Assertion
-    test_float =
-        [cexp|$float:one + $double:one + $ldouble:one|]
-          @?= [cexp|1.0F + 1.0 + 1.0L|]
+    floatConstTests :: [Test]
+    floatConstTests = [ testCase "float antiquotes" test_float
+                      , testCase "NaN" test_NaN
+                      , testCase "Infinity" test_infinity
+                      ]
       where
-        one = 1
+        test_float :: Assertion
+        test_float =
+            [cexp|$float:one + $double:one + $ldouble:one|]
+              @?= [cexp|1.0F + 1.0 + 1.0L|]
+          where
+            one :: Fractional a => a
+            one = 1
+
+        test_NaN :: Assertion
+        test_NaN =
+            showCompact [cexp|$double:nan|] @?= "NAN"
+          where
+            nan :: RealFloat a => a
+            nan = acos 2
+
+        test_infinity :: Assertion
+        test_infinity =
+            showCompact [cexp|$double:inf|] @?= "INFINITY"
+          where
+            inf :: RealFloat a => a
+            inf = 1/0
 
     test_char :: Assertion
     test_char =
@@ -138,7 +159,10 @@ constantAntiquotationsTests = testGroup "Constant antiquotations" $
         charConstTest :: Char -> String -> Test
         charConstTest c s =
           testCase ("character constant " ++ show c) $
-          (flip displayS "" . renderCompact . ppr) [cexp|$char:c|] @?= s
+          showCompact [cexp|$char:c|] @?= s
+
+showCompact :: Pretty a => a -> String
+showCompact = flip displayS "" . renderCompact . ppr
 
 cQuotationTests :: Test
 cQuotationTests = testGroup "C quotations"
