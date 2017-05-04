@@ -77,6 +77,7 @@ constantAntiquotationsTests = testGroup "Constant antiquotations" $
     , testCase "float antiquotes" test_float
     , testCase "char antiquote" test_char
     , testCase "string antiquote" test_string
+    , testGroup "misc char constants" charConstTests
     ]
     ++ testCase_test_int_hsexp
   where
@@ -127,6 +128,17 @@ constantAntiquotationsTests = testGroup "Constant antiquotations" $
         [cexp|$string:hello|] @?= [cexp|"Hello, world\n"|]
       where
         hello = "Hello, world\n"
+
+    charConstTests :: [Test]
+    charConstTests = [ charConstTest '\0' "'\\0'"
+                     , charConstTest '\xfff' "'\\u0fff'"
+                     , charConstTest '\xfffff' "'\\U000fffff'"
+                     ]
+      where
+        charConstTest :: Char -> String -> Test
+        charConstTest c s =
+          testCase ("character constant " ++ show c) $
+          (flip displayS "" . renderCompact . ppr) [cexp|$char:c|] @?= s
 
 cQuotationTests :: Test
 cQuotationTests = testGroup "C quotations"

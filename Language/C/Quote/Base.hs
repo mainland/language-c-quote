@@ -2,7 +2,7 @@
 -- Module      :  Language.C.Quote
 -- Copyright   :  (c) 2006-2011 Harvard University
 --                (c) 2011-2013 Geoffrey Mainland
---             :  (c) 2013-2016 Drexel University
+--             :  (c) 2013-2017 Drexel University
 -- License     :  BSD-style
 -- Maintainer  :  mainland@drexel.edu
 
@@ -22,6 +22,7 @@ module Language.C.Quote.Base (
 
 import Control.Monad ((>=>))
 import qualified Data.ByteString.Char8 as B
+import Data.Char (isAscii, isPrint, ord)
 import Data.Data (Data(..))
 import Data.Generics (extQ)
 import Data.Int
@@ -43,6 +44,7 @@ import Language.Haskell.TH.Quote (QuasiQuoter(..),
 import Language.Haskell.TH.Quote (QuasiQuoter(..))
 #endif /* !MIN_VERSION_template_haskell(2,7,0) */
 import Language.Haskell.TH.Syntax
+import Numeric (showOct, showHex)
 
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
@@ -110,7 +112,32 @@ instance ToConst Double where
     toConst n loc = C.DoubleConst (show n) (toRational n) loc
 
 instance ToConst Char where
-    toConst c loc = C.CharConst (show c) c loc
+    toConst c loc = C.CharConst ("'" ++ charToString c ++ "'") c loc
+      where
+        charToString :: Char -> String
+        charToString '\0' = "\\0"
+        charToString '\a' = "\\a"
+        charToString '\b' = "\\b"
+        charToString '\f' = "\\f"
+        charToString '\n' = "\\n"
+        charToString '\r' = "\\r"
+        charToString '\t' = "\\t"
+        charToString '\v' = "\\v"
+        charToString '\\' = "\\\\"
+        charToString '\"' = "\\\""
+        charToString c
+          | isAscii c && isPrint c = [c]
+          | isAscii c              = "\\x" ++ hexOf Nothing c
+          | ord c < 0x10000        = "\\u" ++ hexOf (Just 4) c
+          | otherwise              = "\\U" ++ hexOf (Just 8) c
+          where
+            hexOf :: Maybe Int -> Char -> String
+            hexOf len c = case len of
+                            Nothing -> hex
+                            Just i  -> replicate (i - length hex) '0' ++ hex
+              where
+                hex :: String
+                hex = showHex (ord c) ""
 
 instance ToConst String where
     toConst s loc = C.StringConst [show s] s loc
@@ -345,7 +372,7 @@ qqConstE = go
                                   $(qqLocE loc)|]
 
     go (C.AntiChar v loc) =
-        Just [|C.CharConst (show $(antiVarE v)) $(antiVarE v) $(qqLocE loc)|]
+        Just [|toConst $(antiVarE v) $(qqLocE loc)|]
 
     go (C.AntiString v loc) =
         Just [|C.StringConst [show $(antiVarE v)] $(antiVarE v) $(qqLocE loc)|]
