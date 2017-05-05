@@ -20,6 +20,7 @@ import Data.Maybe (isJust)
 
 import Language.C.Syntax
 import Text.PrettyPrint.Mainland
+import Text.PrettyPrint.Mainland.Class
 
 pprLoc :: SrcLoc -> Doc -> Doc
 pprLoc loc doc = srcloc loc <> doc

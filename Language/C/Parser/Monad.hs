@@ -99,6 +99,7 @@ import qualified Data.Set as Set
 import Data.Typeable (Typeable)
 import Data.Word
 import Text.PrettyPrint.Mainland
+import Text.PrettyPrint.Mainland.Class
 
 import Language.C.Parser.Tokens
 import Language.C.Syntax

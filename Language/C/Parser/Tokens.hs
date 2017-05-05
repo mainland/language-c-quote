@@ -22,6 +22,7 @@ import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
 import Data.Word
 import Text.PrettyPrint.Mainland
+import Text.PrettyPrint.Mainland.Class
 
 import Language.C.Syntax (Extensions(..),
                           Signed(..))

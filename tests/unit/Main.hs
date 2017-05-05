@@ -19,6 +19,7 @@ import Objc (objcTests, objcRegressionTests)
 import CUDA (cudaTests)
 import System.Exit (exitFailure, exitSuccess)
 import Text.PrettyPrint.Mainland
+import Text.PrettyPrint.Mainland.Class
 
 main :: IO ()
 main = defaultMain tests

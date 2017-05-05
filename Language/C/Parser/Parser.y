@@ -24,6 +24,7 @@ import Data.Loc
 import Data.Maybe (fromMaybe, catMaybes)
 import Data.Monoid
 import Text.PrettyPrint.Mainland
+import Text.PrettyPrint.Mainland.Class
 
 import Language.C.Parser.Lexer
 import Language.C.Parser.Monad
