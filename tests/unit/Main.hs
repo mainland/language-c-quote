@@ -162,9 +162,6 @@ constantAntiquotationsTests = testGroup "Constant antiquotations" $
           testCase ("character constant " ++ show c) $
           showCompact [cexp|$char:c|] @?= s
 
-showCompact :: Pretty a => a -> String
-showCompact = flip displayS "" . renderCompact . ppr
-
 cQuotationTests :: Test
 cQuotationTests = testGroup "C quotations"
     [ testCase "raw expression-level escape" test_escexp
@@ -499,7 +496,7 @@ regressionTests = testGroup "Regressions"
 
     issue68 :: Test
     issue68 = testCase "Issue #68"$
-        simpleRender (ppr [cstm|if (!initialized) { $stms:init_stms }|])
+        showCompact [cstm|if (!initialized) { $stms:init_stms }|]
         @?=
         "if (!initialized) { return; }"
       where
@@ -590,10 +587,9 @@ regressionTests = testGroup "Regressions"
                                 (C.DeclRoot noLoc)
                                 noLoc
 
--- | Render a document as a single line.
-simpleRender :: Doc -> String
-simpleRender doc =
-    map space2space (displayS (renderCompact doc) "")
+-- | Pretty-print a value on single line.
+showCompact :: Pretty a => a -> String
+showCompact = map space2space . flip displayS "" . renderCompact . ppr
   where
     space2space :: Char -> Char
     space2space c | isSpace c = ' '
