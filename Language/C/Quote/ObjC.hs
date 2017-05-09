@@ -48,7 +48,7 @@ import Language.C.Quote.Base (ToIdent(..), ToConst(..), ToExp(..), quasiquote)
 import Language.Haskell.TH.Quote (QuasiQuoter)
 
 exts :: [C.Extensions]
-exts = [C.ObjC]
+exts = [C.ObjC, C.Blocks, C.Gcc]
 
 typenames :: [String]
 typenames = ["id", "instancetype"]
