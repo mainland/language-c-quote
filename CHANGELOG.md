@@ -1,3 +1,22 @@
+## [0.12.1] - 2017-07-25
+### Fixed
+- #75 ObjC needs blocks and GCC extension
+
+## [0.12] - 2017-05-05
+### Fixed
+- Test with GHC 8.2.1.
+- Bump various bounds.
+- #71 Bad char literal output
+- #69 The antiquoter for double and float does not handle infinity correctly	
+
+## [0.11.7.3] - 2017-03-10
+### Fixed
+- Bump other `mainland-pretty` upper bound.
+
+## [0.11.7.2] - 2017-03-05
+### Fixed
+- Bump `mainland-pretty` upper bound.
+
 ## [0.11.7.1] - 2016-12-05
 ### Fixed
 - Bump `HUnit` upper bound.
@@ -72,6 +91,10 @@
 ### Changed
 - `Located` instances are also now automatically generated.
 
+[0.12.1]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.12...language-c-quote-0.12.1
+[0.12]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.7.2...language-c-quote-0.12
+[0.11.7.3]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.7.2...language-c-quote-0.11.7.3
+[0.11.7.2]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.7.1...language-c-quote-0.11.7.2
 [0.11.7.1]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.7...language-c-quote-0.11.7.1
 [0.11.7]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.6.3...language-c-quote-0.11.7
 [0.11.6.3]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.6.2...language-c-quote-0.11.6.3
