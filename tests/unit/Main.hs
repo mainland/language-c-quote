@@ -167,6 +167,7 @@ cQuotationTests = testGroup "C quotations"
     [ testCase "raw expression-level escape" test_escexp
     , testCase "raw statement-level escape" test_escstm
     , testCase "identifier antiquote" test_id
+    , testCase "nested antiquote" test_nested
     , testCase "expression antiquote" test_exp
     , testCase "function antiquote" test_func
     , testCase "args antiquote" test_args
@@ -186,6 +187,15 @@ cQuotationTests = testGroup "C quotations"
     , testCase "qualifier with type antiquote 2" test_qual_antitype2
     ]
   where
+    test_nested :: Assertion
+    test_nested =
+      let
+        methods = [[csdecl|int foo;|], [csdecl| int bar;|]]
+      in
+      [cdecl| struct A { $sdecls:(methods) }; |]
+      @?=
+      [cdecl| struct A { $sdecls:(flip map ["foo","bar"] \$nm -> [csdecl| int $id:nm; \|\]) }; |]
+
     test_id :: Assertion
     test_id =
         [cexp|$id:f($id:x, $id:y)|] @?= [cexp|f(x, y)|]
@@ -386,6 +396,7 @@ statementCommentTests = testGroup "Statement comments"
     , testCase "antiquote comment" test_antiquote_comment
     , testCase "comment at end of statements quote" test_stms_end_comment
     , testCase "comment before antiquoted statements" test_block_stms_comment
+    , testCase "comment inside cunit block" test_cunit_inner_comment
     , testCase "comment at beginning of a block" test_issue_55
     ]
   where
@@ -438,6 +449,22 @@ statementCommentTests = testGroup "Statement comments"
     test_stms_end_comment =
         [cstms|x = 1; return x + y; $comment:("// Test")|]
           @?= [cstms|x = 1; return x + y; // Test|]
+
+    test_cunit_inner_comment :: Assertion
+    test_cunit_inner_comment =
+        [cunit|
+          /* AAA */
+          struct A { int foo; };
+          /* BBB */
+          struct B { int bar; };
+        |]
+        @?=
+        [cunit|
+          /* AAA */
+          struct A { int foo; };
+          $comment:(" BBB ")
+          struct B { int bar; };
+        |]
 
     test_block_stms_comment :: Assertion
     test_block_stms_comment =
