@@ -387,6 +387,7 @@ statementCommentTests = testGroup "Statement comments"
     , testCase "comment at end of statements quote" test_stms_end_comment
     , testCase "comment before antiquoted statements" test_block_stms_comment
     , testCase "comment at beginning of a block" test_issue_55
+    , testCase "comment inside cunit block" test_issue_76
     ]
   where
     test_lbrace_comment :: Assertion
@@ -462,6 +463,29 @@ statementCommentTests = testGroup "Statement comments"
                 int y;
                 return x;
               }|]
+
+    test_issue_76 :: Assertion
+    test_issue_76 =
+        [cunit|
+          $edecl:d1
+          /* AAA */
+          $edecl:d2
+          struct A { int foo; };
+          /* BBB */
+          struct B { int bar; };
+        |]
+        @?=
+        [cunit|
+          int i;
+          /* AAA */
+          int j;
+          struct A { int foo; };
+          $comment:(" BBB ")
+          struct B { int bar; };
+        |]
+      where
+        d1 = [cedecl|int i;|]
+        d2 = [cedecl|int j;|]
 
 regressionTests :: Test
 regressionTests = testGroup "Regressions"

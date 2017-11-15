@@ -2185,6 +2185,8 @@ translation_unit_rlist :: { RevList Definition }
 translation_unit_rlist :
     {- empty -}
       { rnil }
+  | comment
+      { rnil }
   | translation_unit_rlist external_declaration
       { rcons $2 $1 }
   | translation_unit_rlist ANTI_EDECLS
@@ -2192,6 +2194,20 @@ translation_unit_rlist :
 
 external_declaration :: { Definition }
 external_declaration :
+    external_declaration_
+      { $1 }
+  | external_declaration_ comment
+      { $1 }
+
+  -- Objective-C
+  | objc_class_declaration    { $1 }
+  | objc_interface            { $1 }
+  | objc_protocol_declaration { $1 }
+  | objc_implementation       { $1 }
+  | objc_compatibility_alias  { $1 }
+
+external_declaration_ :: { Definition }
+external_declaration_ :
     function_definition
       { FuncDef $1 (srclocOf $1) }
   | declaration
@@ -2202,13 +2218,6 @@ external_declaration :
       { AntiEsc (getANTI_ESC $1) (srclocOf $1) }
   | ANTI_EDECL
       { AntiEdecl (getANTI_EDECL $1) (srclocOf $1) }
-
-  -- Objective-C
-  | objc_class_declaration    { $1 }
-  | objc_interface            { $1 }
-  | objc_protocol_declaration { $1 }
-  | objc_implementation       { $1 }
-  | objc_compatibility_alias  { $1 }
 
 function_definition :: { Func }
 function_definition :
