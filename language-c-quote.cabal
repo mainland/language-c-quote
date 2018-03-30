@@ -6,7 +6,7 @@ license-file:  LICENSE
 copyright:     (c) 2006-2011 Harvard University
                (c) 2011-2013 Geoffrey Mainland
                (c) 2013 Manuel M. T. Chakravarty
-               (c) 2013-2017 Drexel University
+               (c) 2013-2018 Drexel University
 author:        Geoffrey Mainland <mainland@drexel.edu>
 maintainer:    Geoffrey Mainland <mainland@drexel.edu>
 stability:     alpha
@@ -14,7 +14,7 @@ homepage:      https://github.com/mainland/language-c-quote
 bug-reports:   https://github.com/mainland/language-c-quote/issues
 category:      Language
 synopsis:      C/CUDA/OpenCL/Objective-C quasiquoting library.
-tested-with:   GHC==7.4.2, GHC==7.6.3, GHC==7.8.3, GHC==7.10.3, GHC==8.0.2, GHC==8.2.1
+tested-with:   GHC==7.4.2, GHC==7.6.3, GHC==7.8.3, GHC==7.10.3, GHC==8.0.2, GHC==8.2.2, GHC==8.4.1
 
 description:
   This package provides a general parser for the C language, including most GCC
