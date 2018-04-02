@@ -1,3 +1,9 @@
+## [0.12.2] - 2018-04-02
+### Added
+ - Support for GHC 8.4.1.
+### Fixed
+- #76 C-style comments in cunit declarations
+
 ## [0.12.1] - 2017-07-25
 ### Fixed
 - #75 ObjC needs blocks and GCC extension
