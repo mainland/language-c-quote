@@ -95,6 +95,12 @@ import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Internal (c2w)
 import Data.List (foldl')
 import Data.Loc
+#if !(MIN_VERSION_base(4,9,0))
+import Data.Monoid (Monoid(..), (<>))
+#endif /* !(MIN_VERSION_base(4,9,0)) */
+#if MIN_VERSION_base(4,9,0) && !(MIN_VERSION_base(4,11,0))
+import Data.Semigroup (Semigroup(..))
+#endif
 import qualified Data.Set as Set
 import Data.Typeable (Typeable)
 import Data.Word
