@@ -25,6 +25,7 @@ build-type: Simple
 
 extra-source-files:
   Language/C/Syntax-instances.hs
+  CHANGELOG.md
 
 flag full-haskell-antiquotes
   description: Support full Haskell expressions/patterns in antiquotes. This
