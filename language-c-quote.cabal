@@ -14,7 +14,8 @@ homepage:      https://github.com/mainland/language-c-quote
 bug-reports:   https://github.com/mainland/language-c-quote/issues
 category:      Language
 synopsis:      C/CUDA/OpenCL/Objective-C quasiquoting library.
-tested-with:   GHC==7.4.2, GHC==7.6.3, GHC==7.8.3, GHC==7.10.3, GHC==8.0.2, GHC==8.2.2, GHC==8.4.1
+tested-with:   GHC==7.4.2, GHC==7.6.3, GHC==7.8.3, GHC==7.10.3, GHC==8.0.2, GHC==8.2.2, GHC==8.4.4,
+               GHC==8.6.1
 
 description:
   This package provides a general parser for the C language, including most GCC
@@ -41,7 +42,7 @@ library
     array                  >= 0.2   && < 0.6,
     base                   >= 4.5   && < 5,
     bytestring             >= 0.9   && < 0.11,
-    containers             >= 0.4   && < 0.6,
+    containers             >= 0.4   && < 0.7,
     exception-mtl          >= 0.3   && < 0.5,
     exception-transformers >= 0.3   && < 0.5,
     filepath               >= 1.2   && < 1.5,
