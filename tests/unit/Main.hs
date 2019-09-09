@@ -17,7 +17,6 @@ import MainCPP
 import Numeric (showHex)
 import Objc (objcTests, objcRegressionTests)
 import CUDA (cudaTests)
-import System.Exit (exitFailure, exitSuccess)
 import Text.PrettyPrint.Mainland
 import Text.PrettyPrint.Mainland.Class
 
@@ -87,11 +86,12 @@ constantAntiquotationsTests = testGroup "Constant antiquotations" $
         [cexp|$int:one + $uint:one + $lint:one + $ulint:one + $llint:one + $ullint:one|]
           @?= [cexp|1 + 1U + 1L + 1UL + 1LL + 1ULL|]
       where
+        one :: Integer
         one = 1
 
     test_hexconst :: Assertion
     test_hexconst =
-        [cexp|$const:(hexconst 10)|]
+        [cexp|$const:(hexconst (10 :: Integer))|]
           @?= C.Const (C.IntConst "0xa" C.Signed 10 noLoc) noLoc
       where
         hexconst :: Integral a => a -> C.Const
@@ -102,7 +102,7 @@ constantAntiquotationsTests = testGroup "Constant antiquotations" $
 
     test_hexconst_u :: Assertion
     test_hexconst_u =
-        [cexp|$const:(hexconst_u 10)|]
+        [cexp|$const:(hexconst_u (10 :: Integer))|]
           @?= C.Const (C.IntConst "0xa" C.Unsigned 10 noLoc) noLoc
       where
         hexconst_u :: Integral a => a -> C.Const
@@ -224,7 +224,7 @@ cQuotationTests = testGroup "C quotations"
         [cunit|$func:f|]
           @?= [cunit|int add(int x) { return x + 10; }|]
       where
-        f = add 10
+        f = add (10 :: Integer)
         add n = [cfun|int add(int x) { return x + $int:n; } |]
 
     test_args :: Assertion
@@ -292,6 +292,7 @@ cQuotationTests = testGroup "C quotations"
         [cfun|int add(int x) { $stms:stms return x + 1; }|]
           @?= [cfun|int add(int x) { a = 1; b = 2; return x + 1; }|]
       where
+        one :: Integer
         one = 1
         stm1 = [cstm|a = $int:one;|]
         stm2 = [cstm|b = 2;|]

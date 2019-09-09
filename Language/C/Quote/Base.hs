@@ -8,6 +8,7 @@
 
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -w #-}
 
@@ -34,7 +35,7 @@ import Language.Haskell.Meta (parseExp,parsePat)
 #else
 import Language.Haskell.ParseExp (parseExp,parsePat)
 #endif
-import Language.Haskell.TH
+import Language.Haskell.TH as TH
 #if MIN_VERSION_template_haskell(2,7,0)
 import Language.Haskell.TH.Quote (QuasiQuoter(..),
                                   dataToQa,
@@ -224,19 +225,25 @@ qqIdE _                 = Nothing
 qqDeclSpecE :: C.DeclSpec -> Maybe (Q Exp)
 qqDeclSpecE (C.AntiDeclSpec v _) = Just $ antiVarE v
 qqDeclSpecE (C.AntiTypeDeclSpec extraStorage extraTypeQuals v _) =
-    Just [|let C.Type (C.DeclSpec storage typeQuals typeSpec loc) _ _
-                   = $(antiVarE v)
-           in
-             C.DeclSpec (storage ++ $(dataToExpQ qqExp extraStorage))
+    Just
+        [|  case $(antiVarE v) of
+                C.Type (C.DeclSpec storage typeQuals typeSpec loc) _ _ ->
+                    C.DeclSpec
+                        (storage ++ $(dataToExpQ qqExp extraStorage))
                         (typeQuals ++ $(dataToExpQ qqExp extraTypeQuals))
                         typeSpec
                         loc
-         |]
+                t -> error $ "Illegal value in type antiquote: " ++ show t
+            |]
 qqDeclSpecE _ = Nothing
 
 qqDeclE :: C.Decl -> Maybe (Q Exp)
 qqDeclE (C.AntiTypeDecl v _) =
-    Just [|let C.Type _ decl _ = $(antiVarE v) in decl|]
+    Just
+        [|  case $(antiVarE v) of
+                C.Type _ decl _ -> decl
+                t -> error $ "Illegal value in type antiquote" ++ show t
+            |]
 qqDeclE _ = Nothing
 
 qqTypeQualE :: C.TypeQual -> Maybe (Q Exp)
@@ -393,7 +400,7 @@ qqExpE _                    = Nothing
 qqExpListE :: [C.Exp] -> Maybe (Q Exp)
 qqExpListE [] = Just [|[]|]
 qqExpListE (C.AntiArgs v loc : exps) =
-    Just [|map (uncurry toExp) ($(antiVarE v) `zip` repeat $(qqLocE loc)) ++
+    Just [|[toExp v $(qqLocE loc) | v <- $(antiVarE v)] ++
            $(dataToExpQ qqExp exps)|]
 qqExpListE (exp : exps) =
     Just [|$(dataToExpQ qqExp exp) : $(dataToExpQ qqExp exps)|]
@@ -449,14 +456,14 @@ qqObjCPropAttrE _                     = Nothing
 qqObjCPropAttrListE :: [C.ObjCPropAttr] -> Maybe (Q Exp)
 qqObjCPropAttrListE [] = Just [|[]|]
 qqObjCPropAttrListE (C.AntiObjCAttrs pa _:attrelems) =
-    Just $ [|$(antiVarE pa) ++ $(dataToExpQ qqExp attrelems)|]
+    Just [|$(antiVarE pa) ++ $(dataToExpQ qqExp attrelems)|]
 qqObjCPropAttrListE (pattr : pattrs) =
     Just [|$(dataToExpQ qqExp pattr) : $(dataToExpQ qqExp pattrs)|]
 
 qqObjCDictsE :: [C.ObjCDictElem] -> Maybe (Q Exp)
 qqObjCDictsE [] = Just [|[]|]
 qqObjCDictsE (C.AntiObjCDictElems e _:elems) =
-    Just $ [|$(antiVarE e) ++ $(dataToExpQ qqExp elems)|]
+    Just [|$(antiVarE e) ++ $(dataToExpQ qqExp elems)|]
 qqObjCDictsE (elem : elems) =
     Just [|$(dataToExpQ qqExp elem) : $(dataToExpQ qqExp elems)|]
 
@@ -467,7 +474,7 @@ qqObjCParamE _                     = Nothing
 qqObjCParamsE :: [C.ObjCParam] -> Maybe (Q Exp)
 qqObjCParamsE [] = Just [|[]|]
 qqObjCParamsE (C.AntiObjCParams p _: props) =
-    Just $ [|$(antiVarE p) ++ $(dataToExpQ qqExp props)|]
+    Just [|$(antiVarE p) ++ $(dataToExpQ qqExp props)|]
 qqObjCParamsE (param : params) =
     Just [|$(dataToExpQ qqExp param) : $(dataToExpQ qqExp params)|]
 
@@ -486,7 +493,7 @@ qqObjCArgE _                  = Nothing
 qqObjCArgsE :: [C.ObjCArg] -> Maybe (Q Exp)
 qqObjCArgsE [] = Just [|[]|]
 qqObjCArgsE (C.AntiObjCArgs a _: args) =
-    Just $ [|$(antiVarE a) ++ $(dataToExpQ qqExp args)|]
+    Just [|$(antiVarE a) ++ $(dataToExpQ qqExp args)|]
 qqObjCArgsE (arg : args) =
     Just [|$(dataToExpQ qqExp arg) : $(dataToExpQ qqExp args)|]
 
@@ -536,7 +543,7 @@ qqStringP :: String -> Maybe (Q Pat)
 qqStringP s = Just $ litP $ stringL s
 
 qqLocP :: Data.Loc.Loc -> Maybe (Q Pat)
-qqLocP _ = Just $ wildP
+qqLocP _ = Just wildP
 
 qqIdP :: C.Id -> Maybe (Q Pat)
 qqIdP (C.AntiId v _) = Just $ conP (mkName "C.Id") [antiVarP v, wildP]
@@ -544,12 +551,12 @@ qqIdP _              = Nothing
 
 qqDeclSpecP :: C.DeclSpec -> Maybe (Q Pat)
 qqDeclSpecP (C.AntiDeclSpec v _) = Just $ antiVarP v
-qqDeclSpecP (C.AntiTypeDeclSpec {}) =
+qqDeclSpecP  C.AntiTypeDeclSpec {} =
     error "Illegal antiquoted type in pattern"
 qqDeclSpecP _ = Nothing
 
 qqDeclP :: C.Decl -> Maybe (Q Pat)
-qqDeclP (C.AntiTypeDecl {}) =
+qqDeclP C.AntiTypeDecl {} =
     error "Illegal antiquoted type in pattern"
 qqDeclP _ = Nothing
 
@@ -647,23 +654,23 @@ qqConstP :: C.Const -> Maybe (Q Pat)
 qqConstP = go
   where
     go (C.AntiInt v _) =
-        Just $ (con "C.IntConst") [wildP, signed, antiVarP v, wildP]
+        Just $ con "C.IntConst" [wildP, signed, antiVarP v, wildP]
     go (C.AntiUInt v _) =
-        Just $ (con "C.IntConst") [wildP, unsigned, antiVarP v, wildP]
+        Just $ con "C.IntConst" [wildP, unsigned, antiVarP v, wildP]
     go (C.AntiLInt v _) =
-        Just $ (con "C.LongIntConst") [wildP, signed, antiVarP v, wildP]
+        Just $ con "C.LongIntConst" [wildP, signed, antiVarP v, wildP]
     go (C.AntiULInt v _) =
-        Just $ (con "C.LongIntConst") [wildP, unsigned, antiVarP v, wildP]
+        Just $ con "C.LongIntConst" [wildP, unsigned, antiVarP v, wildP]
     go (C.AntiFloat v _) =
-        Just $ (con "C.FloatConst") [wildP, antiVarP v, wildP]
+        Just $ con "C.FloatConst" [wildP, antiVarP v, wildP]
     go (C.AntiDouble v _) =
-        Just $ (con "C.DoubleConst") [wildP, antiVarP v, wildP]
+        Just $ con "C.DoubleConst" [wildP, antiVarP v, wildP]
     go (C.AntiLongDouble v _) =
-        Just $ (con "C.LongDoubleConst") [wildP, antiVarP v, wildP]
+        Just $ con "C.LongDoubleConst" [wildP, antiVarP v, wildP]
     go (C.AntiChar v _) =
-        Just $ (con "C.CharConst") [wildP, antiVarP v, wildP]
+        Just $ con "C.CharConst" [wildP, antiVarP v, wildP]
     go (C.AntiString v _) =
-        Just $ (con "C.StringConst") [wildP, antiVarP v, wildP]
+        Just $ con "C.StringConst" [wildP, antiVarP v, wildP]
     go _ =
         Nothing
 
@@ -704,9 +711,9 @@ qqBlockItemP _                     = Nothing
 
 qqBlockItemListP :: [C.BlockItem] -> Maybe (Q Pat)
 qqBlockItemListP [] = Just $ listP []
-qqBlockItemListP (C.BlockDecl (C.AntiDecls {}) : _) =
+qqBlockItemListP (C.BlockDecl C.AntiDecls{} : _) =
     error "Antiquoted list of declarations cannot appear in block"
-qqBlockItemListP (C.BlockStm (C.AntiStms {}) : _) =
+qqBlockItemListP (C.BlockStm C.AntiStms{} : _) =
     error "Antiquoted list of statements cannot appear in block"
 qqBlockItemListP [C.AntiBlockItems v _] = Just $ antiVarP v
 qqBlockItemListP (C.AntiBlockItems {} : _ : _) =
@@ -753,11 +760,9 @@ parse exts typenames p s = do
       Left err -> fail (show err)
       Right x  -> return x
   where
-    locToPos :: Language.Haskell.TH.Loc -> Pos
-    locToPos loc = Pos (loc_filename loc)
-                       ((fst . loc_start) loc)
-                       ((snd . loc_start) loc)
-                       0
+    locToPos :: TH.Loc -> Pos
+    locToPos TH.Loc{loc_filename, loc_start = (line, col)} =
+        Pos loc_filename line col 0
 
 quasiquote :: Data a
            => [C.Extensions]
