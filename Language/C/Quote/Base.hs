@@ -767,8 +767,8 @@ quasiquote :: Data a
 quasiquote exts typenames p =
     QuasiQuoter { quoteExp  = parse exts typenames p >=> dataToExpQ qqExp
                 , quotePat  = parse exts typenames p >=> dataToPatQ qqPat
-                , quoteType = fail "C type quasiquoter undefined"
-                , quoteDec  = fail "C declaration quasiquoter undefined"
+                , quoteType = error "C type quasiquoter undefined"
+                , quoteDec  = error "C declaration quasiquoter undefined"
                 }
 
 #if !MIN_VERSION_template_haskell(2,7,0)

@@ -167,9 +167,17 @@ instance Monad P where
 
     return a = P $ \s -> Right (a, s)
 
+#if !MIN_VERSION_base(4,13,0)
+    -- Monad(fail) was removed in GHC 8.8.1
     fail msg = do
         inp <- getInput
         throw $ ParserException (alexLoc inp inp) (text msg)
+#else
+instance MonadFail P where
+    fail msg = do
+        inp <- getInput
+        throw $ ParserException (alexLoc inp inp) (text msg)
+#endif
 
 instance MonadState PState P where
     get    = P $ \s -> Right (s, s)
