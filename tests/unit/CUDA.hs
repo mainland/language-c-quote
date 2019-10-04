@@ -10,17 +10,28 @@ import Language.C.Quote.CUDA
 import Language.C.Syntax
 import Data.Loc (noLoc)
 
+mkDeclarator :: [Param] -> Bool -> LambdaDeclarator
 mkDeclarator params mutability = LambdaDeclarator (Params params False noLoc) mutability Nothing noLoc
 
 mkIntroducer :: [CaptureListEntry] -> LambdaIntroducer
 mkIntroducer mode = (LambdaIntroducer mode noLoc)
 
+emptyLambda :: Exp
 emptyLambda = lambdaByCapture []
+
+lambdaByCapture :: [CaptureListEntry] -> Exp
 lambdaByCapture captureMode = Lambda (mkIntroducer captureMode) Nothing [] noLoc
+
+lambdaByCaptureBody :: [CaptureListEntry] -> [BlockItem] -> Exp
 lambdaByCaptureBody captureMode statements = Lambda (mkIntroducer captureMode) Nothing statements noLoc
+
+lambdaByCaptureParams :: [CaptureListEntry] -> [Param] -> Exp
 lambdaByCaptureParams captureMode params = Lambda (mkIntroducer captureMode) (Just $ mkDeclarator params False) [] noLoc
 
+lambdaByParams :: [Param] -> Exp
 lambdaByParams params = Lambda (mkIntroducer []) (Just $ mkDeclarator params False) [] noLoc
+
+mutableLambdaByParams :: [Param] -> Exp
 mutableLambdaByParams params = Lambda (mkIntroducer []) (Just $ mkDeclarator params True) [] noLoc
 
 cudaTests :: Test
@@ -33,11 +44,11 @@ cudaTests = testGroup "CUDA"
               , [cexp|[] {}|] @?= lambdaByCapture []
               , [cexp|[] {}|] @?= emptyLambda
               , [cexp|[] () {}|] @?= lambdaByParams []
-              , [cexp|[] (int i) {}|] @?= lambdaByParams [param_int_i] 
-              , [cexp|[] (int i, double j) {}|] @?= lambdaByParams [param_int_i, param_double_h] 
-              , [cexp|[] ($param:param_int_i) {}|] @?= lambdaByParams [param_int_i] 
-              , [cexp|[] (int i) mutable {}|] @?= mutableLambdaByParams [param_int_i]  
-              , [cexp|[&] (int i) {}|] @?= lambdaByCaptureParams [DefaultByReference] [param_int_i] 
+              , [cexp|[] (int i) {}|] @?= lambdaByParams [param_int_i]
+              , [cexp|[] (int i, double j) {}|] @?= lambdaByParams [param_int_i, param_double_h]
+              , [cexp|[] ($param:param_int_i) {}|] @?= lambdaByParams [param_int_i]
+              , [cexp|[] (int i) mutable {}|] @?= mutableLambdaByParams [param_int_i]
+              , [cexp|[&] (int i) {}|] @?= lambdaByCaptureParams [DefaultByReference] [param_int_i]
               , [cexp|[&] { $item:item_return_7 } |] @?= lambdaCapturingByRefAndReturning7
               , [cexp|[&] { return $exp:exp_7; } |] @?= lambdaCapturingByRefAndReturning7
               , [cexp|[]{}()|] @?= FnCall emptyLambda [] noLoc
