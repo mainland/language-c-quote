@@ -167,6 +167,9 @@ instance Monad P where
 
     return a = P $ \s -> Right (a, s)
 
+#if MIN_VERSION_base(4,13,0)
+instance MonadFail P where
+#endif
     fail msg = do
         inp <- getInput
         throw $ ParserException (alexLoc inp inp) (text msg)
