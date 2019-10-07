@@ -34,7 +34,7 @@ import Language.Haskell.Meta (parseExp,parsePat)
 #else
 import Language.Haskell.ParseExp (parseExp,parsePat)
 #endif
-import Language.Haskell.TH
+import Language.Haskell.TH as TH
 #if MIN_VERSION_template_haskell(2,7,0)
 import Language.Haskell.TH.Quote (QuasiQuoter(..),
                                   dataToQa,
@@ -393,7 +393,7 @@ qqExpE _                    = Nothing
 qqExpListE :: [C.Exp] -> Maybe (Q Exp)
 qqExpListE [] = Just [|[]|]
 qqExpListE (C.AntiArgs v loc : exps) =
-    Just [|map (uncurry toExp) ($(antiVarE v) `zip` repeat $(qqLocE loc)) ++
+    Just [|[toExp v $(qqLocE loc) | v <- $(antiVarE v)] ++
            $(dataToExpQ qqExp exps)|]
 qqExpListE (exp : exps) =
     Just [|$(dataToExpQ qqExp exp) : $(dataToExpQ qqExp exps)|]
@@ -449,14 +449,14 @@ qqObjCPropAttrE _                     = Nothing
 qqObjCPropAttrListE :: [C.ObjCPropAttr] -> Maybe (Q Exp)
 qqObjCPropAttrListE [] = Just [|[]|]
 qqObjCPropAttrListE (C.AntiObjCAttrs pa _:attrelems) =
-    Just $ [|$(antiVarE pa) ++ $(dataToExpQ qqExp attrelems)|]
+    Just [|$(antiVarE pa) ++ $(dataToExpQ qqExp attrelems)|]
 qqObjCPropAttrListE (pattr : pattrs) =
     Just [|$(dataToExpQ qqExp pattr) : $(dataToExpQ qqExp pattrs)|]
 
 qqObjCDictsE :: [C.ObjCDictElem] -> Maybe (Q Exp)
 qqObjCDictsE [] = Just [|[]|]
 qqObjCDictsE (C.AntiObjCDictElems e _:elems) =
-    Just $ [|$(antiVarE e) ++ $(dataToExpQ qqExp elems)|]
+    Just [|$(antiVarE e) ++ $(dataToExpQ qqExp elems)|]
 qqObjCDictsE (elem : elems) =
     Just [|$(dataToExpQ qqExp elem) : $(dataToExpQ qqExp elems)|]
 
@@ -467,7 +467,7 @@ qqObjCParamE _                     = Nothing
 qqObjCParamsE :: [C.ObjCParam] -> Maybe (Q Exp)
 qqObjCParamsE [] = Just [|[]|]
 qqObjCParamsE (C.AntiObjCParams p _: props) =
-    Just $ [|$(antiVarE p) ++ $(dataToExpQ qqExp props)|]
+    Just [|$(antiVarE p) ++ $(dataToExpQ qqExp props)|]
 qqObjCParamsE (param : params) =
     Just [|$(dataToExpQ qqExp param) : $(dataToExpQ qqExp params)|]
 
@@ -486,7 +486,7 @@ qqObjCArgE _                  = Nothing
 qqObjCArgsE :: [C.ObjCArg] -> Maybe (Q Exp)
 qqObjCArgsE [] = Just [|[]|]
 qqObjCArgsE (C.AntiObjCArgs a _: args) =
-    Just $ [|$(antiVarE a) ++ $(dataToExpQ qqExp args)|]
+    Just [|$(antiVarE a) ++ $(dataToExpQ qqExp args)|]
 qqObjCArgsE (arg : args) =
     Just [|$(dataToExpQ qqExp arg) : $(dataToExpQ qqExp args)|]
 
@@ -536,7 +536,7 @@ qqStringP :: String -> Maybe (Q Pat)
 qqStringP s = Just $ litP $ stringL s
 
 qqLocP :: Data.Loc.Loc -> Maybe (Q Pat)
-qqLocP _ = Just $ wildP
+qqLocP _ = Just wildP
 
 qqIdP :: C.Id -> Maybe (Q Pat)
 qqIdP (C.AntiId v _) = Just $ conP (mkName "C.Id") [antiVarP v, wildP]
@@ -544,12 +544,12 @@ qqIdP _              = Nothing
 
 qqDeclSpecP :: C.DeclSpec -> Maybe (Q Pat)
 qqDeclSpecP (C.AntiDeclSpec v _) = Just $ antiVarP v
-qqDeclSpecP (C.AntiTypeDeclSpec {}) =
+qqDeclSpecP C.AntiTypeDeclSpec{} =
     error "Illegal antiquoted type in pattern"
 qqDeclSpecP _ = Nothing
 
 qqDeclP :: C.Decl -> Maybe (Q Pat)
-qqDeclP (C.AntiTypeDecl {}) =
+qqDeclP C.AntiTypeDecl{} =
     error "Illegal antiquoted type in pattern"
 qqDeclP _ = Nothing
 
@@ -560,7 +560,7 @@ qqTypeQualP _                    = Nothing
 qqTypeQualListP :: [C.TypeQual] -> Maybe (Q Pat)
 qqTypeQualListP [] = Just $ listP []
 qqTypeQualListP [C.AntiTypeQuals v _] = Just $ antiVarP v
-qqTypeQualListP (C.AntiTypeQuals {} : _ : _) =
+qqTypeQualListP (C.AntiTypeQuals{} : _ : _) =
     error "Antiquoted list of type qualifiers must be last item in quoted list"
 qqTypeQualListP (arg : args) =
     Just $ conP (mkName ":") [dataToPatQ qqPat arg, dataToPatQ qqPat args]
@@ -576,7 +576,7 @@ qqInitializerP _                 = Nothing
 qqInitializerListP :: [C.Initializer] -> Maybe (Q Pat)
 qqInitializerListP [] = Just $ listP []
 qqInitializerListP [C.AntiInits v _] = Just $ antiVarP v
-qqInitializerListP (C.AntiInits {} : _ : _) =
+qqInitializerListP (C.AntiInits{} : _ : _) =
     error "Antiquoted list of initializers must be last item in quoted list"
 qqInitializerListP (ini : inis) =
     Just $ conP (mkName ":") [dataToPatQ qqPat ini,  dataToPatQ qqPat inis]
@@ -588,7 +588,7 @@ qqInitGroupP _                = Nothing
 qqInitGroupListP :: [C.InitGroup] -> Maybe (Q Pat)
 qqInitGroupListP [] = Just $ listP []
 qqInitGroupListP [C.AntiDecls v _] = Just $ antiVarP v
-qqInitGroupListP (C.AntiDecls {} : _ : _) =
+qqInitGroupListP (C.AntiDecls{} : _ : _) =
     error "Antiquoted list of initialization groups must be last item in quoted list"
 qqInitGroupListP (ini : inis) =
     Just $ conP (mkName ":") [dataToPatQ qqPat ini,  dataToPatQ qqPat inis]
@@ -600,7 +600,7 @@ qqFieldGroupP _                 = Nothing
 qqFieldGroupListP :: [C.FieldGroup] -> Maybe (Q Pat)
 qqFieldGroupListP [] = Just $ listP []
 qqFieldGroupListP [C.AntiSdecls v _] = Just $ antiVarP v
-qqFieldGroupListP (C.AntiSdecls {} : _ : _) =
+qqFieldGroupListP (C.AntiSdecls{} : _ : _) =
     error "Antiquoted list of struct/union fields must be last item in quoted list"
 qqFieldGroupListP (ini : inis) =
     Just $ conP (mkName ":") [dataToPatQ qqPat ini,  dataToPatQ qqPat inis]
@@ -612,7 +612,7 @@ qqCEnumP _                = Nothing
 qqCEnumListP :: [C.CEnum] -> Maybe (Q Pat)
 qqCEnumListP [] = Just $ listP []
 qqCEnumListP [C.AntiEnums v _] = Just $ antiVarP v
-qqCEnumListP (C.AntiEnums {} : _ : _) =
+qqCEnumListP (C.AntiEnums{} : _ : _) =
     error "Antiquoted list of enumerations must be last item in quoted list"
 qqCEnumListP (ini : inis) =
     Just $ conP (mkName ":") [dataToPatQ qqPat ini,  dataToPatQ qqPat inis]
@@ -624,7 +624,7 @@ qqParamP _                 = Nothing
 qqParamListP :: [C.Param] -> Maybe (Q Pat)
 qqParamListP [] = Just $ listP []
 qqParamListP [C.AntiParams v _] = Just $ antiVarP v
-qqParamListP (C.AntiParams {} : _ : _) =
+qqParamListP (C.AntiParams{} : _ : _) =
     error "Antiquoted list of parameters must be last item in quoted list"
 qqParamListP (arg : args) =
     Just $ conP (mkName ":") [dataToPatQ qqPat arg,  dataToPatQ qqPat args]
@@ -638,7 +638,7 @@ qqDefinitionP _                 = Nothing
 qqDefinitionListP :: [C.Definition] -> Maybe (Q Pat)
 qqDefinitionListP [] = Just $ listP []
 qqDefinitionListP [C.AntiEdecls v _] = Just $ antiVarP v
-qqDefinitionListP (C.AntiEdecls {} : _ : _) =
+qqDefinitionListP (C.AntiEdecls{} : _ : _) =
     error "Antiquoted list of definitions must be last item in quoted list"
 qqDefinitionListP (arg : args) =
     Just $ conP (mkName ":") [dataToPatQ qqPat arg,  dataToPatQ qqPat args]
@@ -647,23 +647,23 @@ qqConstP :: C.Const -> Maybe (Q Pat)
 qqConstP = go
   where
     go (C.AntiInt v _) =
-        Just $ (con "C.IntConst") [wildP, signed, antiVarP v, wildP]
+        Just $ con "C.IntConst" [wildP, signed, antiVarP v, wildP]
     go (C.AntiUInt v _) =
-        Just $ (con "C.IntConst") [wildP, unsigned, antiVarP v, wildP]
+        Just $ con "C.IntConst" [wildP, unsigned, antiVarP v, wildP]
     go (C.AntiLInt v _) =
-        Just $ (con "C.LongIntConst") [wildP, signed, antiVarP v, wildP]
+        Just $ con "C.LongIntConst" [wildP, signed, antiVarP v, wildP]
     go (C.AntiULInt v _) =
-        Just $ (con "C.LongIntConst") [wildP, unsigned, antiVarP v, wildP]
+        Just $ con "C.LongIntConst" [wildP, unsigned, antiVarP v, wildP]
     go (C.AntiFloat v _) =
-        Just $ (con "C.FloatConst") [wildP, antiVarP v, wildP]
+        Just $ con "C.FloatConst" [wildP, antiVarP v, wildP]
     go (C.AntiDouble v _) =
-        Just $ (con "C.DoubleConst") [wildP, antiVarP v, wildP]
+        Just $ con "C.DoubleConst" [wildP, antiVarP v, wildP]
     go (C.AntiLongDouble v _) =
-        Just $ (con "C.LongDoubleConst") [wildP, antiVarP v, wildP]
+        Just $ con "C.LongDoubleConst" [wildP, antiVarP v, wildP]
     go (C.AntiChar v _) =
-        Just $ (con "C.CharConst") [wildP, antiVarP v, wildP]
+        Just $ con "C.CharConst" [wildP, antiVarP v, wildP]
     go (C.AntiString v _) =
-        Just $ (con "C.StringConst") [wildP, antiVarP v, wildP]
+        Just $ con "C.StringConst" [wildP, antiVarP v, wildP]
     go _ =
         Nothing
 
@@ -680,7 +680,7 @@ qqExpP _                  = Nothing
 qqExpListP :: [C.Exp] -> Maybe (Q Pat)
 qqExpListP [] = Just $ listP []
 qqExpListP [C.AntiArgs v _] = Just $ antiVarP v
-qqExpListP (C.AntiArgs {} : _ : _) =
+qqExpListP (C.AntiArgs{} : _ : _) =
     error "Antiquoted list of arguments must be last item in quoted list"
 qqExpListP (arg : args) =
     Just $ conP (mkName ":") [dataToPatQ qqPat arg,  dataToPatQ qqPat args]
@@ -693,7 +693,7 @@ qqStmP _                  = Nothing
 qqStmListP :: [C.Stm] -> Maybe (Q Pat)
 qqStmListP [] = Just $ listP []
 qqStmListP [C.AntiStms v _] = Just $ antiVarP v
-qqStmListP (C.AntiStms {} : _ : _) =
+qqStmListP (C.AntiStms{} : _ : _) =
     error "Antiquoted list of statements must be last item in quoted list"
 qqStmListP (arg : args) =
     Just $ conP (mkName ":") [dataToPatQ qqPat arg,  dataToPatQ qqPat args]
@@ -704,12 +704,12 @@ qqBlockItemP _                     = Nothing
 
 qqBlockItemListP :: [C.BlockItem] -> Maybe (Q Pat)
 qqBlockItemListP [] = Just $ listP []
-qqBlockItemListP (C.BlockDecl (C.AntiDecls {}) : _) =
+qqBlockItemListP (C.BlockDecl C.AntiDecls{} : _) =
     error "Antiquoted list of declarations cannot appear in block"
-qqBlockItemListP (C.BlockStm (C.AntiStms {}) : _) =
+qqBlockItemListP (C.BlockStm C.AntiStms{} : _) =
     error "Antiquoted list of statements cannot appear in block"
 qqBlockItemListP [C.AntiBlockItems v _] = Just $ antiVarP v
-qqBlockItemListP (C.AntiBlockItems {} : _ : _) =
+qqBlockItemListP (C.AntiBlockItems{} : _ : _) =
     error "Antiquoted list of block items must be last item in quoted list"
 qqBlockItemListP (arg : args) =
     Just $ conP (mkName ":") [dataToPatQ qqPat arg,  dataToPatQ qqPat args]
@@ -753,11 +753,9 @@ parse exts typenames p s = do
       Left err -> fail (show err)
       Right x  -> return x
   where
-    locToPos :: Language.Haskell.TH.Loc -> Pos
-    locToPos loc = Pos (loc_filename loc)
-                       ((fst . loc_start) loc)
-                       ((snd . loc_start) loc)
-                       0
+    locToPos :: TH.Loc -> Pos
+    locToPos TH.Loc {loc_filename = filename, loc_start = (line, col)} =
+        Pos filename line col 0
 
 quasiquote :: Data a
            => [C.Extensions]
