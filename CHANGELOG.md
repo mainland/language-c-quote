@@ -1,3 +1,7 @@
+## [0.12.2.1] - 2019-10-04
+### Added
+ - Support for GHC 8.8.1.
+
 ## [0.12.2] - 2018-04-02
 ### Added
  - Support for GHC 8.4.1.
