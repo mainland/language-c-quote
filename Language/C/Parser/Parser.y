@@ -203,6 +203,9 @@ import qualified Language.C.Syntax as C
  '__typeof__'        { L _ T.Ttypeof }
  '__restrict'        { L _ T.T__restrict }
 
+ ANTI_ATTR        { L _ (T.Tanti_attr _) }
+ ANTI_ATTRS       { L _ (T.Tanti_attrs _) }
+
  --
  -- Clang blocks
  --
@@ -321,6 +324,8 @@ import qualified Language.C.Syntax as C
 
 %name parseUnit       translation_unit
 %name parseFunc       function_definition
+
+%name parseAttr       attrib
 
 --
 -- Objective-C
@@ -2327,6 +2332,8 @@ attribute_rlist :: { RevList Attr }
 attribute_rlist :
     attrib                     { rsingleton $1 }
   | attribute_rlist ',' attrib { rcons $3 $1 }
+  | ANTI_ATTRS
+     { rsingleton $ AntiAttrs (getANTI_ATTRS $1) (srclocOf $1) }
 
 attrib :: { Attr }
 attrib :
@@ -2334,6 +2341,8 @@ attrib :
       { Attr $1 [] (srclocOf $1)}
   | attrib_name '(' argument_expression_list ')'
       { Attr $1 $3 ($1 `srcspan` $4) }
+  | ANTI_ATTR
+     { AntiAttr (getANTI_ATTR $1) (srclocOf $1) }
 
 attrib_name :: { Id }
 attrib_name :
@@ -3391,6 +3400,8 @@ getANTI_PRAGMA      (L _ (T.Tanti_pragma v))      = v
 getANTI_COMMENT     (L _ (T.Tanti_comment v))     = v
 getANTI_INIT        (L _ (T.Tanti_init v))        = v
 getANTI_INITS       (L _ (T.Tanti_inits v))       = v
+getANTI_ATTR        (L _ (T.Tanti_attr v))        = v
+getANTI_ATTRS       (L _ (T.Tanti_attrs v))       = v
 
 --
 -- Objective-C

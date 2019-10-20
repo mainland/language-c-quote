@@ -195,6 +195,8 @@ data CEnum  =  CEnum Id (Maybe Exp) !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data Attr  =  Attr Id [Exp] !SrcLoc
+           | AntiAttr String !SrcLoc
+           | AntiAttrs String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data Param  =  Param (Maybe Id) DeclSpec Decl !SrcLoc

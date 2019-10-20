@@ -11,10 +11,12 @@ import Data.Char (isSpace)
 import Data.Loc (SrcLoc, noLoc, startPos)
 import Control.Exception (SomeException)
 import Language.C.Quote.C
+import qualified Language.C.Quote.GCC as GCC
 import qualified Language.C.Syntax as C
 import qualified Language.C.Parser as P
 import MainCPP
 import Numeric (showHex)
+import GCC (gccTests)
 import Objc (objcTests, objcRegressionTests)
 import CUDA (cudaTests)
 import Text.PrettyPrint.Mainland
@@ -30,6 +32,7 @@ tests = [ constantTests
         , cPatternAntiquotationTests
         , statementCommentTests
         , regressionTests
+        , gccTests
         , objcTests
         , objcRegressionTests
         , cudaTests

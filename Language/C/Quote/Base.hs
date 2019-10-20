@@ -276,6 +276,17 @@ qqInitGroupListE (C.AntiDecls v _ : inits) =
 qqInitGroupListE (ini : inis) =
     Just [|$(dataToExpQ qqExp ini) : $(dataToExpQ qqExp inis)|]
 
+qqAttrE :: C.Attr -> Maybe (Q Exp)
+qqAttrE (C.AntiAttr v _)  = Just $ antiVarE v
+qqAttrE _                 = Nothing
+
+qqAttrListE :: [C.Attr] -> Maybe (Q Exp)
+qqAttrListE [] = Just [|[]|]
+qqAttrListE (C.AntiAttrs v _ : attrs) =
+    Just [|$(antiVarE v) ++ $(dataToExpQ qqExp attrs)|]
+qqAttrListE (field : fields) =
+    Just [|$(dataToExpQ qqExp field) : $(dataToExpQ qqExp fields)|]
+
 qqFieldGroupE :: C.FieldGroup -> Maybe (Q Exp)
 qqFieldGroupE (C.AntiSdecl v _)  = Just $ antiVarE v
 qqFieldGroupE _                  = Nothing
@@ -502,6 +513,8 @@ qqExp = const Nothing  `extQ` qqStringE
                        `extQ` qqInitializerListE
                        `extQ` qqInitGroupE
                        `extQ` qqInitGroupListE
+                       `extQ` qqAttrE
+                       `extQ` qqAttrListE
                        `extQ` qqFieldGroupE
                        `extQ` qqFieldGroupListE
                        `extQ` qqCEnumE
@@ -591,6 +604,18 @@ qqInitGroupListP [C.AntiDecls v _] = Just $ antiVarP v
 qqInitGroupListP (C.AntiDecls{} : _ : _) =
     error "Antiquoted list of initialization groups must be last item in quoted list"
 qqInitGroupListP (ini : inis) =
+    Just $ conP (mkName ":") [dataToPatQ qqPat ini,  dataToPatQ qqPat inis]
+
+qqAttrP :: C.Attr -> Maybe (Q Pat)
+qqAttrP (C.AntiAttr v _)  = Just $ antiVarP v
+qqAttrP _                 = Nothing
+
+qqAttrListP :: [C.Attr] -> Maybe (Q Pat)
+qqAttrListP [] = Just $ listP []
+qqAttrListP [C.AntiAttrs v _] = Just $ antiVarP v
+qqAttrListP (C.AntiAttrs{} : _ : _) =
+   error "Antiquoted list of attrs must be last item in quoted list"
+qqAttrListP (ini : inis) =
     Just $ conP (mkName ":") [dataToPatQ qqPat ini,  dataToPatQ qqPat inis]
 
 qqFieldGroupP :: C.FieldGroup -> Maybe (Q Pat)
@@ -727,6 +752,8 @@ qqPat = const Nothing `extQ` qqStringP
                       `extQ` qqInitializerListP
                       `extQ` qqInitGroupP
                       `extQ` qqInitGroupListP
+                      `extQ` qqAttrP
+                      `extQ` qqAttrListP
                       `extQ` qqFieldGroupP
                       `extQ` qqCEnumP
                       `extQ` qqCEnumListP

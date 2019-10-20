@@ -124,6 +124,8 @@ c :-
  "$comment:" / { allowAnti } { lexAnti Tanti_comment }
  "$init:"    / { allowAnti } { lexAnti Tanti_init }
  "$inits:"   / { allowAnti } { lexAnti Tanti_inits }
+ "$attr:"    / { allowAnti } { lexAnti Tanti_attr }
+ "$attrs:"   / { allowAnti } { lexAnti Tanti_attrs }
  "$"         / { allowAnti } { lexAnti Tanti_exp }
 
  --
