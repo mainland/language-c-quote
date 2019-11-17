@@ -600,9 +600,15 @@ instance Pretty Stm where
         text "if" <+> parens (ppr test) <>
         pprThen then' (fmap pprElse maybe_else)
       where
+        isIf :: Stm -> Bool
+        isIf If{} = True
+        isIf (Comment _ stm _) = isIf stm
+        isIf _ = False
+
         pprThen :: Stm -> Maybe Doc -> Doc
         pprThen stm@(Block {}) rest        = space <> ppr stm <+> maybe empty id rest
-        pprThen stm@(If {})    rest        = space <> ppr [BlockStm stm] <+> maybe empty id rest
+        pprThen stm            rest
+          | isIf stm                       = space <> ppr [BlockStm stm] <+> maybe empty id rest
         pprThen stm            Nothing     = nest 4 (line <> ppr stm)
         pprThen stm            (Just rest) = nest 4 (line <> ppr stm) </> rest
 
