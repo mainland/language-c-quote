@@ -490,7 +490,8 @@ statementCommentTests = testGroup "Statement comments"
 
 regressionTests :: Test
 regressionTests = testGroup "Regressions"
-    [ issue68
+    [ issue81
+    , issue68
     , issue64
     , testCase "pragmas" test_pragmas
     , issue48
@@ -518,6 +519,12 @@ regressionTests = testGroup "Regressions"
                       ]
                       noLoc
             ]
+
+    issue81 :: Test
+    issue81 = testCase "Issue #81"$
+        showCompact [cstm|if (x > 1) { /* comment */ if (x > 2) x++; }|]
+        @?=
+        "if (x > 1) { /* comment */ if (x > 2) x++; }"
 
     issue68 :: Test
     issue68 = testCase "Issue #68"$
