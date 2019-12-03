@@ -166,6 +166,8 @@ data Token = Teof
            | Tanti_comment String
            | Tanti_init String
            | Tanti_inits String
+           | Tanti_attr String
+           | Tanti_attrs String
 
            -- C99
            | TBool
@@ -314,6 +316,8 @@ instance Show Token where
     show (Tanti_comment s)              = showAnti "comment"  s
     show (Tanti_init s)                 = showAnti "init"  s
     show (Tanti_inits s)                = showAnti "inits"  s
+    show (Tanti_attr s)                 = showAnti "attr"  s
+    show (Tanti_attrs s)                = showAnti "attrs"  s
 
     --
     -- Objective C

@@ -473,6 +473,9 @@ instance Pretty Attr where
     ppr (Attr ident args _) =
         ppr ident <> parens (commasep (map ppr args))
 
+    ppr (AntiAttr v _)   = pprAnti "attr" v
+    ppr (AntiAttrs v _)  = pprAnti "attrs" v
+
     pprList []    = empty
     pprList attrs = text "__attribute__" <>
                     parens (parens (commasep (map ppr attrs)))

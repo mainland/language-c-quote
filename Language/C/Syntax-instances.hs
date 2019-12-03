@@ -114,6 +114,8 @@ instance Located CEnum where
   locOf (AntiEnums _ l) = locOf l
 instance Located Attr where
   locOf (Attr _ _ l) = locOf l
+  locOf (AntiAttr _ l) = locOf l
+  locOf (AntiAttrs _ l) = locOf l
 instance Located Param where
   locOf (Param _ _ _ l) = locOf l
   locOf (AntiParam _ l) = locOf l
@@ -420,6 +422,8 @@ instance Relocatable CEnum where
   reloc l (AntiEnums x0 _) = (AntiEnums x0 (fromLoc l))
 instance Relocatable Attr where
   reloc l (Attr x0 x1 _) = (Attr x0 x1 (fromLoc l))
+  reloc l (AntiAttr x0 _) = (AntiAttr x0 (fromLoc l))
+  reloc l (AntiAttrs x0 _) = (AntiAttrs x0 (fromLoc l))
 instance Relocatable Param where
   reloc l (Param x0 x1 x2 _) = (Param x0 x1 x2 (fromLoc l))
   reloc l (AntiParam x0 _) = (AntiParam x0 (fromLoc l))

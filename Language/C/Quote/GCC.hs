@@ -25,7 +25,8 @@ module Language.C.Quote.GCC (
     citem,
     citems,
     cunit,
-    cfun
+    cfun,
+    cattr
   ) where
 
 import qualified Language.C.Parser as P
@@ -40,7 +41,7 @@ typenames :: [String]
 typenames = []
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, cparams, csdecl, cstm, cstms :: QuasiQuoter
-citem, citems, ctyquals, cty, cunit :: QuasiQuoter
+citem, citems, ctyquals, cty, cunit, cattr :: QuasiQuoter
 cdecl    = quasiquote exts typenames P.parseDecl
 cedecl   = quasiquote exts typenames P.parseEdecl
 cenum    = quasiquote exts typenames P.parseEnum
@@ -57,3 +58,4 @@ citems   = quasiquote exts typenames P.parseBlockItems
 ctyquals = quasiquote exts typenames P.parseTypeQuals
 cty      = quasiquote exts typenames P.parseType
 cunit    = quasiquote exts typenames P.parseUnit
+cattr    = quasiquote exts typenames P.parseAttr
