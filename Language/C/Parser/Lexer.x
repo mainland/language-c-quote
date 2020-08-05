@@ -319,7 +319,7 @@ lexAnti antiTok beg end = do
     s <- case c of
            '('                 -> lexExpression 0 ""
            _ | isIdStartChar c -> lexIdChars [c]
-             | otherwise       -> lexerError beg (text "illegal anitquotation")
+             | otherwise       -> lexerError beg (text "illegal antiquotation")
     return $ locateTok beg end (antiTok s)
   where
     lexIdChars :: String -> P String
