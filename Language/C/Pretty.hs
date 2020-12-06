@@ -585,6 +585,10 @@ instance Pretty Stm where
         srcloc sloc <>
         indent (-2) (line <> text "case" <+> ppr e <> colon) </> ppr stm
 
+    ppr (CaseRange e1 e2 stm sloc) =
+        srcloc sloc <>
+        indent (-2) (line <> text "case" <+> ppr e1 <+> text "..." <+> ppr e2 <> colon) </> ppr stm
+
     ppr (Default stm sloc) =
         srcloc sloc <>
         indent (-2) (line <> text "default" <> colon) </> ppr stm

@@ -238,6 +238,7 @@ data Definition  =  FuncDef    Func      !SrcLoc
 
 data Stm  = Label Id [Attr] Stm !SrcLoc
           | Case Exp Stm !SrcLoc
+          | CaseRange Exp Exp Stm !SrcLoc
           | Default Stm !SrcLoc
           | Exp (Maybe Exp) !SrcLoc
           | Block [BlockItem] !SrcLoc

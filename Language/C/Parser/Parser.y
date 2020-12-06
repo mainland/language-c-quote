@@ -2066,9 +2066,19 @@ labeled_statement :: { Stm }
 labeled_statement :
     identifier ':' error                      {% expected ["statement"] (Just "label") }
   | identifier ':' statement                  { Label $1 [] $3 ($1 `srcspan` $3) }
-  | 'case' constant_expression error          {% expected ["`:'"] Nothing }
+  | 'case' constant_expression error
+    {% do { gcc_enabled <- useGccExts
+          ; let options = if gcc_enabled then ["`:'", "`...'"] else ["`:'"]
+          ; expected options Nothing } }
   | 'case' constant_expression ':' error      {% expected ["statement"] Nothing }
   | 'case' constant_expression ':' statement  { Case $2 $4 ($1 `srcspan` $4) }
+  | 'case' constant_expression '...' constant_expression error
+    {% expected ["`:'"] Nothing }
+  | 'case' constant_expression '...' constant_expression ':' error
+    {% expected ["statement"] Nothing }
+  | 'case' constant_expression '...' constant_expression ':' statement
+    {% gccOnly "To use ranges in case statements, enable GCC extensions"
+        $ CaseRange $2 $4 $6 ($1 `srcspan` $6) }
   | 'default' error                           {% expected ["`:'"] (Just "`default'")}
   | 'default' ':' error                       {% expected ["statement"] Nothing }
   | 'default' ':' statement                   { Default $3 ($1 `srcspan` $3) }
@@ -4019,6 +4029,13 @@ assertCudaEnabled loc errMsg = do
  cuda_enabled <- useCUDAExts
  unless cuda_enabled $
   throw $ ParserException loc $ text errMsg
+
+gccOnly :: Located a => String -> a -> P a
+gccOnly errMsg x = do
+  gcc_enabled <- useGccExts
+  unless gcc_enabled $
+    throw $ ParserException (locOf x) $ text errMsg
+  pure x
 
 mkBlock :: [BlockItem] -> SrcLoc -> Stm
 mkBlock items@[BlockStm AntiStms{}] sloc = Block items sloc
