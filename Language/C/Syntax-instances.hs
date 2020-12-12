@@ -149,6 +149,7 @@ instance Located Definition where
 instance Located Stm where
   locOf (Label _ _ _ l) = locOf l
   locOf (Case _ _ l) = locOf l
+  locOf (CaseRange _ _ _ l) = locOf l
   locOf (Default _ l) = locOf l
   locOf (Exp _ l) = locOf l
   locOf (Block _ l) = locOf l
@@ -461,6 +462,7 @@ instance Relocatable Definition where
 instance Relocatable Stm where
   reloc l (Label x0 x1 x2 _) = (Label x0 x1 x2 (fromLoc l))
   reloc l (Case x0 x1 _) = (Case x0 x1 (fromLoc l))
+  reloc l (CaseRange x0 x1 x2 _) = (CaseRange x0 x1 x2 (fromLoc l))
   reloc l (Default x0 _) = (Default x0 (fromLoc l))
   reloc l (Exp x0 _) = (Exp x0 (fromLoc l))
   reloc l (Block x0 _) = (Block x0 (fromLoc l))
