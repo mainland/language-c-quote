@@ -58,10 +58,13 @@ library
     if impl(ghc < 7.8)
       build-depends: safe <= 0.3.9
 
-    if impl(ghc >= 7.6)
-      build-depends: haskell-src-meta >= 0.4 && < 0.9
+    if impl(ghc >= 8.0) && impl(ghc < 8.1)
+      build-depends: haskell-src-meta >= 0.4 && < 0.8.7
     else
-      build-depends: haskell-src-meta >= 0.4 && < 0.7
+      if impl(ghc >= 7.6)
+        build-depends: haskell-src-meta >= 0.4 && < 0.9
+      else
+        build-depends: haskell-src-meta >= 0.4 && < 0.7
   else
     build-depends: haskell-exp-parser >= 0.1 && < 0.2
 
