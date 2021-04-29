@@ -1,3 +1,12 @@
+## [0.13] - 2021-04-29
+### Added
+ - Add quotation support for attributes (Richard Marko)
+ - Add ranges to case labels as a GCC extension (Mark Barbone)
+### Fixed
+ - #81 Missing braces cause dangling-else
+### Changed
+ - Remove dependency on `symbol` package.
+ 
 ## [0.12.2.1] - 2019-10-04
 ### Added
  - Support for GHC 8.8.1.
@@ -101,6 +110,9 @@
 ### Changed
 - `Located` instances are also now automatically generated.
 
+[0.13]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.12.2.1...language-c-quote-0.13
+[0.12.2.1]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.12.2...language-c-quote-0.12.2.1
+[0.12.2]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.12.1...language-c-quote-0.12.2
 [0.12.1]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.12...language-c-quote-0.12.1
 [0.12]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.7.2...language-c-quote-0.12
 [0.11.7.3]: https://github.com/mainland/language-c-quote/compare/language-c-quote-0.11.7.2...language-c-quote-0.11.7.3
