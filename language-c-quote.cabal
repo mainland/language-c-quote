@@ -48,7 +48,7 @@ library
     filepath               >= 1.2   && < 1.5,
     mainland-pretty        >= 0.7   && < 0.8,
     mtl                    >= 2.0   && < 3,
-    srcloc                 >= 0.4   && < 0.6,
+    srcloc                 >= 0.4   && < 0.7,
     syb                    >= 0.3   && < 0.8,
     symbol                 >= 0.1   && < 0.3,
     template-haskell
@@ -117,7 +117,7 @@ test-suite unit
     bytestring           >= 0.9 && < 0.11,
     language-c-quote,
     mainland-pretty      >= 0.7 && < 0.8,
-    srcloc               >= 0.4 && < 0.6,
+    srcloc               >= 0.4 && < 0.7,
     symbol               >= 0.1 && < 0.3,
     test-framework       >= 0.8 && < 0.9,
     test-framework-hunit >= 0.3 && < 0.4
