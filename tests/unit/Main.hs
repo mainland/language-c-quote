@@ -494,6 +494,7 @@ statementCommentTests = testGroup "Statement comments"
 regressionTests :: Test
 regressionTests = testGroup "Regressions"
     [ issue81
+    , issue76
     , issue68
     , issue64
     , testCase "pragmas" test_pragmas
@@ -528,6 +529,22 @@ regressionTests = testGroup "Regressions"
         showCompact [cstm|if (x > 1) { /* comment */ if (x > 2) x++; }|]
         @?=
         "if (x > 1) { /* comment */ if (x > 2) x++; }"
+
+    issue76 :: Test
+    issue76 = testCase "Issue #76" $
+        [cunit|
+          /* AAA */
+          struct A { int foo; };
+          /* BBB */
+          struct B { int bar; };
+        |]
+        @?=
+        [cunit|
+          /* AAA */
+          struct A { int foo; };
+          $comment:(" BBB ")
+          struct B { int bar; };
+        |]
 
     issue68 :: Test
     issue68 = testCase "Issue #68"$
