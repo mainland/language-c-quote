@@ -16,7 +16,6 @@ module Derive (
 
 import Data.Generics
 import Data.Loc
-import Data.Symbol
 import Text.PrettyPrint.Mainland as PP
 
 deriveM :: (a -> Doc) -> a -> IO ()
@@ -112,7 +111,6 @@ empty' = Data.Generics.empty
   `extB` pos
   `extB` loc
   `extB` sloc
-  `extB` symbol
   where
     pos :: Pos
     pos = Pos "" 1 1 1
@@ -122,6 +120,3 @@ empty' = Data.Generics.empty
 
     sloc :: SrcLoc
     sloc = SrcLoc NoLoc
-
-    symbol :: Symbol
-    symbol = intern ""

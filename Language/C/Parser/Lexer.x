@@ -40,7 +40,6 @@ import Data.Loc
 import qualified Data.Map as Map
 import Data.Ratio ((%))
 import qualified Data.Set as Set
-import Data.Symbol
 import Data.Maybe (fromMaybe)
 import Text.PrettyPrint.Mainland
 
