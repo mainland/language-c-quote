@@ -559,7 +559,7 @@ qqStringP s = Just $ litP $ stringL s
 -- symbols will in general be interned to different identifiers on different
 -- runs, so we can't rely on the identifier created when the splice is run.
 qqSymbolP :: Symbol -> Maybe (Q Pat)
-qqSymbolP (Symbol _ s) = Just [p|Symbol _ $(litP (stringL s))|]
+qqSymbolP (Symbol _ s) = Just $ conP 'Symbol [wildP, litP (stringL s)]
 
 qqLocP :: Data.Loc.Loc -> Maybe (Q Pat)
 qqLocP _ = Just wildP
