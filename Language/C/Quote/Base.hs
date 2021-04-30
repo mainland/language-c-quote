@@ -28,7 +28,8 @@ import Data.Generics (extQ)
 import Data.Int
 import Data.Loc
 import Data.String (fromString)
-import Data.Symbol
+import Data.Symbol (intern)
+import Data.Symbol.Unsafe (Symbol(..))
 import Data.Typeable (Typeable(..))
 import Data.Word
 #ifdef FULL_HASKELL_ANTIQUOTES
@@ -218,6 +219,9 @@ qqLocE loc = dataToExpQ qqExp loc
 
 qqStringE :: String -> Maybe (Q Exp)
 qqStringE s = Just $ litE $ stringL s
+
+qqSymbolE :: Symbol -> Maybe (Q Exp)
+qqSymbolE (Symbol _ s) = Just [|intern $(litE (stringL s))|]
 
 qqIdE :: C.Id -> Maybe (Q Exp)
 qqIdE (C.AntiId v loc)  = Just [|toIdent $(antiVarE v) $(qqLocE loc)|]
@@ -505,6 +509,7 @@ qqObjCArgsE (arg : args) =
 
 qqExp :: Typeable a => a -> Maybe (Q Exp)
 qqExp = const Nothing  `extQ` qqStringE
+                       `extQ` qqSymbolE
                        `extQ` qqIdE
                        `extQ` qqDeclSpecE
                        `extQ` qqDeclE
@@ -549,6 +554,12 @@ antiVarP = either fail return . parsePat
 
 qqStringP :: String -> Maybe (Q Pat)
 qqStringP s = Just $ litP $ stringL s
+
+-- Force a comparison on the String portion of the Symbol. This is because
+-- symbols will in general be interned to different identifiers on different
+-- runs, so we can't rely on the identifier created when the splice is run.
+qqSymbolP :: Symbol -> Maybe (Q Pat)
+qqSymbolP (Symbol _ s) = Just [p|Symbol _ $(litP (stringL s))|]
 
 qqLocP :: Data.Loc.Loc -> Maybe (Q Pat)
 qqLocP _ = Just wildP
@@ -743,6 +754,7 @@ qqBlockItemListP (arg : args) =
 
 qqPat :: Typeable a => a -> Maybe (Q Pat)
 qqPat = const Nothing `extQ` qqStringP
+                      `extQ` qqSymbolP
                       `extQ` qqLocP
                       `extQ` qqIdP
                       `extQ` qqDeclSpecP
