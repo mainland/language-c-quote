@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- |
 -- Module      :  Language.C.Quote.ObjC
 -- Copyright   :  (c) 2006-2011 Harvard University
@@ -42,6 +44,8 @@ module Language.C.Quote.ObjC (
     objcarg
   ) where
 
+import Data.Symbol (Symbol)
+
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
 import Language.C.Quote.Base (ToIdent(..), ToConst(..), ToExp(..), quasiquote)
@@ -50,7 +54,7 @@ import Language.Haskell.TH.Quote (QuasiQuoter)
 exts :: [C.Extensions]
 exts = [C.ObjC, C.Blocks, C.Gcc]
 
-typenames :: [String]
+typenames :: [Symbol]
 typenames = ["id", "instancetype"]
 
 -- | A wrapper for a value indicating that it should be treated as an

@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- |
 -- Module      :  Language.C.Quote.OpenCL
 -- Copyright   :  (c) 2006-2011 Harvard University
@@ -28,6 +30,8 @@ module Language.C.Quote.OpenCL (
     cfun
   ) where
 
+import Data.Symbol (Symbol, intern)
+
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
 import Language.C.Quote.Base (ToIdent(..), ToConst(..), ToExp(..), quasiquote)
@@ -36,7 +40,7 @@ import Language.Haskell.TH.Quote (QuasiQuoter)
 exts :: [C.Extensions]
 exts = [C.OpenCL]
 
-typenames :: [String]
+typenames :: [Symbol]
 typenames =
     ["bool", "char", "uchar", "short", "ushort", "int", "uint",
      "long" , "ulong", "float", "half"]
@@ -49,8 +53,8 @@ typenames =
     ++ concatMap typeN ["double"]
     ++ ["image2d_array_t", "image1d_t", "image1d_buffer_t", "image1d_array_t"]
 
-typeN :: String -> [String]
-typeN typename = [typename ++ show n | n <- [2, 3, 4, 8, 16 :: Integer]]
+typeN :: String -> [Symbol]
+typeN typename = [intern $ typename ++ show n | n <- [2, 3, 4, 8, 16 :: Integer]]
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, cparams, csdecl, cstm, cstms :: QuasiQuoter
 citem, citems, ctyquals, cty, cunit :: QuasiQuoter

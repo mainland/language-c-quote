@@ -28,6 +28,8 @@ module Language.C.Quote.C (
     cfun
   ) where
 
+import Data.Symbol (Symbol)
+
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
 import Language.C.Quote.Base (ToIdent(..), ToConst(..), ToExp(..), quasiquote)
@@ -36,7 +38,7 @@ import Language.Haskell.TH.Quote (QuasiQuoter)
 exts :: [C.Extensions]
 exts = []
 
-typenames :: [String]
+typenames :: [Symbol]
 typenames = []
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, cparams, csdecl, cstm, cstms :: QuasiQuoter

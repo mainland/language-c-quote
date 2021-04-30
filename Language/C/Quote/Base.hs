@@ -27,6 +27,8 @@ import Data.Data (Data(..))
 import Data.Generics (extQ)
 import Data.Int
 import Data.Loc
+import Data.String (fromString)
+import Data.Symbol
 import Data.Typeable (Typeable(..))
 import Data.Word
 #ifdef FULL_HASKELL_ANTIQUOTES
@@ -62,7 +64,7 @@ instance ToIdent (SrcLoc -> C.Id) where
     toIdent ident = ident
 
 instance ToIdent String where
-    toIdent s loc = C.Id s loc
+    toIdent s loc = C.Id (fromString s) loc
 
 -- | An instance of 'ToConst' can be converted to a 'C.Const'.
 class ToConst a where
@@ -770,7 +772,7 @@ qqPat = const Nothing `extQ` qqStringP
                       `extQ` qqBlockItemListP
 
 parse :: [C.Extensions]
-      -> [String]
+      -> [Symbol]
       -> P.P a
       -> String
       -> Q a
@@ -786,7 +788,7 @@ parse exts typenames p s = do
 
 quasiquote :: Data a
            => [C.Extensions]
-           -> [String]
+           -> [Symbol]
            -> P.P a
            -> QuasiQuoter
 quasiquote exts typenames p =

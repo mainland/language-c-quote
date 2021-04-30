@@ -3,7 +3,7 @@
 -- Copyright   :  (c) 2006-2011 Harvard University
 --                (c) 2011-2013 Geoffrey Mainland
 --                (c) 2013 Manuel M T Chakravarty
---             :  (c) 2013-2016 Drexel University
+--             :  (c) 2013-2021 Drexel University
 -- License     :  BSD-style
 -- Maintainer  :  mainland@drexel.edu
 
@@ -16,6 +16,7 @@ module Language.C.Syntax where
 import Data.Data (Data(..))
 import Data.Loc
 import Data.String (IsString(..))
+import Data.Symbol (Symbol)
 import Data.Typeable (Typeable)
 
 data Extensions = Antiquotation
@@ -28,7 +29,7 @@ data Extensions = Antiquotation
                 | OpenCL
   deriving (Eq, Ord, Enum, Show)
 
-data Id = Id     String !SrcLoc
+data Id = Id     Symbol !SrcLoc
         | AntiId String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
@@ -366,7 +367,7 @@ data Exp = Var Id !SrcLoc
          | ObjCLitBoxed Exp !SrcLoc
          | ObjCEncode Type !SrcLoc
          | ObjCProtocol Id !SrcLoc
-         | ObjCSelector String !SrcLoc
+         | ObjCSelector Symbol !SrcLoc
 
          -- CUDA: C++11 lambda-expression
          | Lambda LambdaIntroducer (Maybe LambdaDeclarator) [BlockItem] !SrcLoc
@@ -550,7 +551,7 @@ data ExeConfig = ExeConfig
  ------------------------------------------------------------------------------}
 
 instance IsString Id where
-    fromString s = Id s noLoc
+    fromString s = Id (fromString s) noLoc
 
 instance IsString StringLit where
     fromString s = StringLit [s] s noLoc

@@ -15,6 +15,7 @@ import Control.Exception
 
 import qualified Data.ByteString.Char8 as B
 import Data.Loc
+import Data.Symbol
 
 import Language.C.Parser.Lexer
 import Language.C.Parser.Parser
@@ -22,7 +23,7 @@ import Language.C.Parser.Monad
 import Language.C.Syntax
 
 parse :: [Extensions]
-      -> [String]
+      -> [Symbol]
       -> P a
       -> B.ByteString
       -> Maybe Pos

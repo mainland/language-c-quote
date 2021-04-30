@@ -284,8 +284,8 @@ identifier beg end =
       Just (tok, Just i)  -> do  isKw <- useExts i
                                  if isKw then keyword tok else nonKeyword
   where
-    ident :: String
-    ident = inputString beg end
+    ident :: Symbol
+    ident = intern (inputString beg end)
 
       -- NB: Due to the format of the keyword table, the lexer can't currently produce different
       --     keyword tokens for the same lexeme in dependence on the active language extension.

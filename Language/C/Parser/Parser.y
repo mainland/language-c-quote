@@ -1,6 +1,7 @@
 -- -*- mode: literate-haskell -*-
 
 {
+{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS -w #-}
 
 -- |
@@ -28,6 +29,7 @@ import Data.Monoid (Monoid(..), (<>))
 #if MIN_VERSION_base(4,9,0) && !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup (Semigroup(..))
 #endif
+import Data.Symbol
 import Text.PrettyPrint.Mainland
 import Text.PrettyPrint.Mainland.Class
 
@@ -2782,14 +2784,14 @@ objc_at_expression :
   | '@' 'protocol' '(' identifier ')'
       { ObjCProtocol $4 ($1 `srcspan` $5) }
   | '@' 'selector' '(' objc_selector ')'
-      { let Id str _ = $4
+      { let Id sym _ = $4
         in
-          ObjCSelector str ($1 `srcspan` $5)
+          ObjCSelector sym ($1 `srcspan` $5)
       }
   | '@' 'selector' '(' objc_selector_rlist ')'
-      { let str = concat [s ++ ":" | Id s _ <- rev $4]
+      { let sym = intern $ concat [unintern s ++ ":" | Id s _ <- rev $4]
         in
-          ObjCSelector str ($1 `srcspan` $5)
+          ObjCSelector sym ($1 `srcspan` $5)
       }
 
 -- Objective-C extension: class declaration

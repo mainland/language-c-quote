@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- |
 -- Module      :  Language.C.Quote.CUDA
 -- Copyright   :  (c) 2006-2011 Harvard University
@@ -46,6 +48,8 @@ module Language.C.Quote.CUDA (
     cfun
   ) where
 
+import Data.Symbol (Symbol, intern)
+
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
 import Language.C.Quote.Base (ToIdent(..), ToConst(..), ToExp(..), quasiquote)
@@ -54,7 +58,7 @@ import Language.Haskell.TH.Quote (QuasiQuoter)
 exts :: [C.Extensions]
 exts = [C.CUDA]
 
-typenames :: [String]
+typenames :: [Symbol]
 typenames =
   concatMap (typeN 4) ["char", "uchar", "short", "ushort",
                        "int",  "uint",  "long",  "ulong",
@@ -62,8 +66,8 @@ typenames =
                        "float", "double"] ++
   ["dim3"]
 
-typeN :: Int -> String -> [String]
-typeN k typename = [typename ++ show n | n <- [1..k]]
+typeN :: Int -> String -> [Symbol]
+typeN k typename = [intern $ typename ++ show n | n <- [1..k]]
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, cparams, csdecl, cstm, cstms :: QuasiQuoter
 citem, citems, ctyquals, cty, cunit :: QuasiQuoter

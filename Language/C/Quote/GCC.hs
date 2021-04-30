@@ -29,6 +29,8 @@ module Language.C.Quote.GCC (
     cattr
   ) where
 
+import Data.Symbol (Symbol)
+
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
 import Language.C.Quote.Base (ToIdent(..), ToConst(..), ToExp(..), quasiquote)
@@ -37,7 +39,7 @@ import Language.Haskell.TH.Quote (QuasiQuoter)
 exts :: [C.Extensions]
 exts = [C.Gcc]
 
-typenames :: [String]
+typenames :: [Symbol]
 typenames = []
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, cparams, csdecl, cstm, cstms :: QuasiQuoter

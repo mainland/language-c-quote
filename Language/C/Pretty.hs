@@ -6,7 +6,7 @@
 -- Module      :  Language.C.Pretty
 -- Copyright   :  (c) 2006-2011 Harvard University
 --                (c) 2011-2013 Geoffrey Mainland
---             :  (c) 2013-2016 Drexel University
+--             :  (c) 2013-2021 Drexel University
 -- License     :  BSD-style
 -- Maintainer  :  mainland@drexel.edu
 
@@ -22,6 +22,7 @@ import Data.Monoid (Monoid(..), (<>))
 #if MIN_VERSION_base(4,9,0) && !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup (Semigroup(..))
 #endif
+import Data.Symbol (unintern)
 
 import Language.C.Syntax
 import Text.PrettyPrint.Mainland
@@ -202,7 +203,7 @@ instance CFixity UnOp where
     fixity _ = infixr_ unopPrec
 
 instance Pretty Id where
-    ppr (Id ident _)  = text ident
+    ppr (Id ident _)  = text (unintern ident)
     ppr (AntiId v _)  = pprAnti "id" v
 
 instance Pretty StringLit where
@@ -1009,7 +1010,7 @@ instance Pretty Exp where
 
     pprPrec _ (ObjCSelector sel loc) =
         srcloc loc <>
-        text "@selector" <> parens (text sel)
+        text "@selector" <> parens (text (unintern sel))
 
     pprPrec _ (Lambda captureList decl blockItems loc) =
         srcloc loc <>

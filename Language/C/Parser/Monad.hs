@@ -104,6 +104,7 @@ import Data.Semigroup (Semigroup(..))
 import qualified Data.Set as Set
 import Data.Typeable (Typeable)
 import Data.Word
+import Data.Symbol
 import Text.PrettyPrint.Mainland
 import Text.PrettyPrint.Mainland.Class
 
@@ -116,13 +117,13 @@ data PState = PState
     , curToken   :: L Token
     , lexState   :: ![Int]
     , extensions :: !ExtensionsInt
-    , typedefs   :: !(Set.Set String)
-    , classdefs  :: !(Set.Set String)
-    , scopes     :: [(Set.Set String, Set.Set String)]
+    , typedefs   :: !(Set.Set Symbol)
+    , classdefs  :: !(Set.Set Symbol)
+    , scopes     :: [(Set.Set Symbol, Set.Set Symbol)]
     }
 
 emptyPState :: [Extensions]
-            -> [String]
+            -> [Symbol]
             -> B.ByteString
             -> Maybe Pos
             -> PState
@@ -235,25 +236,25 @@ getCurToken = gets curToken
 setCurToken :: L Token -> P ()
 setCurToken tok = modify $ \s -> s { curToken = tok }
 
-addTypedef :: String -> P ()
+addTypedef :: Symbol -> P ()
 addTypedef ident = modify $ \s ->
     s { typedefs = Set.insert ident (typedefs s) }
 
-addClassdef :: String -> P ()
+addClassdef :: Symbol -> P ()
 addClassdef ident = modify $ \s ->
     s { classdefs = Set.insert ident (classdefs s) }
 
-addVariable :: String -> P ()
+addVariable :: Symbol -> P ()
 addVariable ident = modify $ \s ->
     s { typedefs  = Set.delete ident (typedefs s)
       , classdefs = Set.delete ident (classdefs s)
       }
 
-isTypedef :: String -> P Bool
+isTypedef :: Symbol -> P Bool
 isTypedef ident = gets $ \s ->
     Set.member ident (typedefs s)
 
-isClassdef :: String -> P Bool
+isClassdef :: Symbol -> P Bool
 isClassdef ident = gets $ \s ->
     Set.member ident (classdefs s)
 

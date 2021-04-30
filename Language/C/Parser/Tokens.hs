@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- |
 -- Module      :  Language.C.Parser.Tokens
 -- Copyright   :  (c) 2006-2011 Harvard University
@@ -20,6 +22,7 @@ import Data.Char (isAlphaNum,
 import Data.List (foldl')
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
+import Data.Symbol
 import Data.Word
 import Text.PrettyPrint.Mainland
 import Text.PrettyPrint.Mainland.Class
@@ -38,8 +41,8 @@ data Token = Teof
            | TlongDoubleConst (String, Double)
            | TcharConst (String, Char)
            | TstringConst (String, String)
-           | Tidentifier String
-           | Tnamed String
+           | Tidentifier Symbol
+           | Tnamed Symbol
            | Tlparen
            | Trparen
            | Tlbrack
@@ -210,7 +213,7 @@ data Token = Teof
            | T__block
 
            -- Objective-C
-           | TObjCnamed String
+           | TObjCnamed Symbol
            | TObjCat
            | TObjCautoreleasepool
            | TObjCcatch
@@ -273,8 +276,8 @@ instance Show Token where
     show (TlongDoubleConst (s, _))      = s
     show (TcharConst (s, _))            = s
     show (TstringConst (s, _))          = s
-    show (Tidentifier s)                = s
-    show (Tnamed s)                     = s
+    show (Tidentifier s)                = unintern s
+    show (Tnamed s)                     = unintern s
 
     show (Tanti_id s)                   = showAnti "id"  s
     show (Tanti_const s)                = showAnti "const"  s
@@ -322,7 +325,7 @@ instance Show Token where
     --
     -- Objective C
     --
-    show (TObjCnamed s)              = s
+    show (TObjCnamed s)              = unintern s
 
     show (Tanti_objc_ifdecl s)       = showAnti "ifdecl" s
     show (Tanti_objc_ifdecls s)      = showAnti "ifdecls" s
@@ -525,7 +528,7 @@ tokenStrings = [(Tlparen,     "("),
                 (TCLkernel,    "__kernel")
                 ]
 
-keywords :: [(String,      Token,      Maybe [Extensions])]
+keywords :: [(Symbol,      Token,      Maybe [Extensions])]
 keywords = [("auto",       Tauto,      Nothing),
             ("break",      Tbreak,     Nothing),
             ("case",       Tcase,      Nothing),
@@ -658,11 +661,11 @@ keywords = [("auto",       Tauto,      Nothing),
 
 type ExtensionsInt = Word32
 
-keywordMap :: Map.Map String (Token, Maybe ExtensionsInt)
+keywordMap :: Map.Map Symbol (Token, Maybe ExtensionsInt)
 keywordMap = Map.fromList (map f keywords)
   where
-    f  ::  (String, Token, Maybe [Extensions])
-       ->  (String, (Token, Maybe ExtensionsInt))
+    f  ::  (Symbol, Token, Maybe [Extensions])
+       ->  (Symbol, (Token, Maybe ExtensionsInt))
     f (s, t, Nothing)    = (s, (t, Nothing))
     f (s, t, Just exts)  = (s, (t, Just i))
       where
