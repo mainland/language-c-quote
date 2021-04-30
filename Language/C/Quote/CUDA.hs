@@ -7,7 +7,7 @@
 -- Maintainer  :  mainland@drexel.edu
 -- The quasiquoters exposed by this module support the CUDA extensions, including CUDA-specific declaration specifiers and @\<\<\<…>>>@ kernel invocation syntax.
 --
--- It includees partial support for C++11 lambda expressions syntax.
+-- It includes partial support for C++11 lambda expressions syntax.
 --
 -- Support for lambda-expressions has the following limitations:
 --
