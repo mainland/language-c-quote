@@ -18,6 +18,7 @@
 -- imports to any module using the quasiquoters provided by this package:
 --
 -- > import qualified Data.Loc
+-- > import qualified Data.Symbol
 -- > import qualified Language.C.Syntax
 --
 -- These modules may also be imported unqualified, of course. The quasiquoters
