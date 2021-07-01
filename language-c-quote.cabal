@@ -1,6 +1,6 @@
 name:          language-c-quote
 version:       0.13
-cabal-version: >= 1.10
+cabal-version: 2.0
 license:       BSD3
 license-file:  LICENSE
 copyright:     (c) 2006-2011 Harvard University
@@ -68,14 +68,14 @@ library
     build-depends: haskell-exp-parser >= 0.1 && < 0.2
 
   if impl(ghc < 7.4)
-    build-tools:
-      alex,
-      happy
+    build-tool-depends:
+      alex:alex,
+      happy:happy
 
   if impl(ghc >= 7.4)
-    build-tools:
-      alex >=3,
-      happy
+    build-tool-depends:
+      alex:alex >=3,
+      happy:happy
 
   exposed-modules:
     Language.C
