@@ -251,6 +251,9 @@ instance Pretty TypeQual where
     ppr (TCLwriteonly _)    = text "write_only"
     ppr (TCLkernel _)       = text "__kernel"
 
+    ppr (TISPCuniform _)    = text "uniform"
+    ppr (TISPCvarying _)    = text "varying"
+
 instance Pretty Sign where
     ppr (Tsigned _)    = text "signed"
     ppr (Tunsigned _)  = text "unsigned"

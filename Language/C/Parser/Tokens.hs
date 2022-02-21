@@ -206,6 +206,10 @@ data Token = Teof
            | TCLwriteonly
            | TCLkernel
 
+           -- ISPC
+           | TISPCuniform
+           | TISPCvarying
+
            -- Clang (currently active is Objective-C is active)
            | T__block
 
@@ -522,7 +526,13 @@ tokenStrings = [(Tlparen,     "("),
                 (TCLconstant,  "__constant"),
                 (TCLreadonly,  "read_only"),
                 (TCLwriteonly, "write_only"),
-                (TCLkernel,    "__kernel")
+                (TCLkernel,    "__kernel"),
+
+                --
+                -- ISPC extensions
+                --
+                (TISPCuniform, "uniform"),
+                (TISPCvarying, "varying")
                 ]
 
 keywords :: [(String,      Token,      Maybe [Extensions])]
@@ -653,7 +663,13 @@ keywords = [("auto",       Tauto,      Nothing),
             ("write_only",   TCLwriteonly, Just [OpenCL]),
             ("__write_only", TCLwriteonly, Just [OpenCL]),
             ("kernel",       TCLkernel,    Just [OpenCL]),
-            ("__kernel",     TCLkernel,    Just [OpenCL])
+            ("__kernel",     TCLkernel,    Just [OpenCL]),
+
+            --
+            -- ISPC
+            --
+            ("uniform",      TISPCuniform, Just [ISPC]),
+            ("varying",      TISPCvarying, Just [ISPC])
            ]
 
 type ExtensionsInt = Word32

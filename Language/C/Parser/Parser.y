@@ -293,6 +293,12 @@ import qualified Language.C.Syntax as C
  'kernel'       { L _ T.TCLkernel }
  '__kernel'     { L _ T.TCLkernel }
 
+ --
+ -- ISPC
+ --
+ 'uniform'     { L _ T.TISPCuniform }
+ 'varying'     { L _ T.TISPCvarying }    
+
 -- Three shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
 -- (2) Objective-C exception syntax (would need lookahead of 2 to disambiguate properly)
@@ -1525,6 +1531,9 @@ type_qualifier :
   | '__write_only' { TSCLwriteonly (srclocOf $1) }
   | 'kernel'       { TSCLkernel (srclocOf $1) }
   | '__kernel'     { TSCLkernel (srclocOf $1) }
+
+  | 'uniform'      { TSISPCuniform (srclocOf $1) }
+  | 'varying'      { TSISPCvarying (srclocOf $1) }
 
 -- Consider the following C program:
 --
@@ -3508,6 +3517,10 @@ data TySpec = TSauto !SrcLoc
             | TSCLreadonly !SrcLoc
             | TSCLwriteonly !SrcLoc
             | TSCLkernel !SrcLoc
+
+            -- ISPC
+            | TSISPCuniform !SrcLoc
+            | TSISPCvarying !SrcLoc
   deriving (Eq, Ord, Show)
 
 instance Located TySpec where
@@ -3573,6 +3586,9 @@ instance Located TySpec where
     locOf (TSCLreadonly loc)      = locOf loc
     locOf (TSCLwriteonly loc)     = locOf loc
     locOf (TSCLkernel loc)        = locOf loc
+
+    locOf (TSISPCuniform loc)     = locOf loc
+    locOf (TSISPCvarying loc)     = locOf loc
 
 instance Pretty TySpec where
     ppr (TSauto _)                    = text "auto"
@@ -3642,6 +3658,9 @@ instance Pretty TySpec where
     ppr (TSCLwriteonly _)   = text "write_only"
     ppr (TSCLkernel _)      = text "__kernel"
 
+    ppr (TSISPCuniform _)      = text "uniform"
+    ppr (TSISPCvarying _)      = text "varying"
+
 isStorage :: TySpec -> Bool
 isStorage (TSauto _)                    = True
 isStorage (TSregister _)                = True
@@ -3692,6 +3711,8 @@ isTypeQual (TSCLconstant _)     = True
 isTypeQual (TSCLreadonly _)     = True
 isTypeQual (TSCLwriteonly _)    = True
 isTypeQual (TSCLkernel _)       = True
+isTypeQual (TSISPCuniform _)    = True
+isTypeQual (TSISPCvarying _)    = True
 isTypeQual _                    = False
 
 mkTypeQuals :: [TySpec] -> [TypeQual]
@@ -3720,6 +3741,8 @@ mkTypeQuals specs = map mk (filter isTypeQual specs)
       mk (TSCLreadonly loc)      = TCLreadonly loc
       mk (TSCLwriteonly loc)     = TCLwriteonly loc
       mk (TSCLkernel loc)        = TCLkernel loc
+      mk (TSISPCuniform loc)     = TISPCuniform loc
+      mk (TSISPCvarying loc)     = TISPCvarying loc
       mk _                       = error "internal error in mkTypeQual"
 
 isSign :: TySpec -> Bool

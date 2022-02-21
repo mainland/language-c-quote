@@ -26,6 +26,7 @@ data Extensions = Antiquotation
                 | ObjC
                 | CUDA
                 | OpenCL
+                | ISPC
   deriving (Eq, Ord, Enum, Show)
 
 data Id = Id     String !SrcLoc
@@ -85,6 +86,10 @@ data TypeQual = Tconst    !SrcLoc
               | TCLreadonly  !SrcLoc
               | TCLwriteonly !SrcLoc
               | TCLkernel    !SrcLoc
+
+              -- ISPC
+              | TISPCuniform !SrcLoc
+              | TISPCvarying !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data Sign = Tsigned   !SrcLoc

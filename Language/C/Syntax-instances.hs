@@ -37,6 +37,8 @@ instance Located TypeQual where
   locOf (TCLreadonly l) = locOf l
   locOf (TCLwriteonly l) = locOf l
   locOf (TCLkernel l) = locOf l
+  locOf (TISPCuniform l) = locOf l
+  locOf (TISPCvarying l) = locOf l
 instance Located Sign where
   locOf (Tsigned l) = locOf l
   locOf (Tunsigned l) = locOf l
@@ -345,6 +347,8 @@ instance Relocatable TypeQual where
   reloc l (TCLreadonly _) = (TCLreadonly (fromLoc l))
   reloc l (TCLwriteonly _) = (TCLwriteonly (fromLoc l))
   reloc l (TCLkernel _) = (TCLkernel (fromLoc l))
+  reloc l (TISPCuniform _) = (TISPCuniform (fromLoc l))
+  reloc l (TISPCvarying _) = (TISPCvarying (fromLoc l))
 instance Relocatable Sign where
   reloc l (Tsigned _) = (Tsigned (fromLoc l))
   reloc l (Tunsigned _) = (Tunsigned (fromLoc l))
