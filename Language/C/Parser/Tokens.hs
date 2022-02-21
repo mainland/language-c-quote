@@ -210,6 +210,7 @@ data Token = Teof
            | TISPCuniform
            | TISPCvarying
            | TISPCforeach
+           | TISPCexport
 
            -- Clang (currently active is Objective-C is active)
            | T__block
@@ -534,7 +535,8 @@ tokenStrings = [(Tlparen,     "("),
                 --
                 (TISPCuniform, "uniform"),
                 (TISPCvarying, "varying"),
-                (TISPCforeach, "foreach")
+                (TISPCforeach, "foreach"),
+                (TISPCexport,  "export")
                 ]
 
 keywords :: [(String,      Token,      Maybe [Extensions])]
@@ -672,7 +674,8 @@ keywords = [("auto",       Tauto,      Nothing),
             --
             ("uniform",      TISPCuniform, Just [ISPC]),
             ("varying",      TISPCvarying, Just [ISPC]),
-            ("foreach",      TISPCforeach, Just [ISPC])
+            ("foreach",      TISPCforeach, Just [ISPC]),
+            ("export",       TISPCexport,  Just [ISPC])
            ]
 
 type ExtensionsInt = Word32

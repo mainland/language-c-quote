@@ -51,6 +51,9 @@ data Storage = Tauto                   !SrcLoc
              | TObjC__weak              !SrcLoc
              | TObjC__strong            !SrcLoc
              | TObjC__unsafe_unretained !SrcLoc
+
+             -- ISPC
+            | TISPCexport !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data TypeQual = Tconst    !SrcLoc

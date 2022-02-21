@@ -13,6 +13,7 @@ instance Located Storage where
   locOf (TObjC__weak l) = locOf l
   locOf (TObjC__strong l) = locOf l
   locOf (TObjC__unsafe_unretained l) = locOf l
+  locOf (TISPCexport l) = locOf l
 instance Located TypeQual where
   locOf (Tconst l) = locOf l
   locOf (Tvolatile l) = locOf l
@@ -324,6 +325,7 @@ instance Relocatable Storage where
   reloc l (TObjC__weak _) = (TObjC__weak (fromLoc l))
   reloc l (TObjC__strong _) = (TObjC__strong (fromLoc l))
   reloc l (TObjC__unsafe_unretained _) = (TObjC__unsafe_unretained (fromLoc l))
+  reloc l (TISPCexport _) = (TISPCexport (fromLoc l))
 instance Relocatable TypeQual where
   reloc l (Tconst _) = (Tconst (fromLoc l))
   reloc l (Tvolatile _) = (Tvolatile (fromLoc l))

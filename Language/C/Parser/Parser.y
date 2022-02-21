@@ -298,7 +298,8 @@ import qualified Language.C.Syntax as C
  --
  'uniform'     { L _ T.TISPCuniform }
  'varying'     { L _ T.TISPCvarying }
- 'foreach'     { L _ T.TISPCforeach }    
+ 'foreach'     { L _ T.TISPCforeach }
+ 'export'      { L _ T.TISPCexport }    
 
 -- Three shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
@@ -1312,6 +1313,9 @@ storage_class_specifier :
   | '__weak'                { TSObjC__weak (srclocOf $1) }
   | '__strong'              { TSObjC__strong (srclocOf $1) }
   | '__unsafe_unretained'   { TSObjC__unsafe_unretained (srclocOf $1) }
+
+  -- ISPC
+  | 'export'                { TSISPCexport (srclocOf $1) }
 
 type_specifier :: { TySpec }
 type_specifier :
@@ -3526,6 +3530,7 @@ data TySpec = TSauto !SrcLoc
             -- ISPC
             | TSISPCuniform !SrcLoc
             | TSISPCvarying !SrcLoc
+            | TSISPCexport !SrcLoc
   deriving (Eq, Ord, Show)
 
 instance Located TySpec where
@@ -3594,6 +3599,7 @@ instance Located TySpec where
 
     locOf (TSISPCuniform loc)     = locOf loc
     locOf (TSISPCvarying loc)     = locOf loc
+    locOf (TSISPCexport loc)      = locOf loc
 
 instance Pretty TySpec where
     ppr (TSauto _)                    = text "auto"
@@ -3665,6 +3671,7 @@ instance Pretty TySpec where
 
     ppr (TSISPCuniform _)      = text "uniform"
     ppr (TSISPCvarying _)      = text "varying"
+    ppr (TSISPCexport _)       = text "export"
 
 isStorage :: TySpec -> Bool
 isStorage (TSauto _)                    = True
@@ -3676,6 +3683,7 @@ isStorage (TS__block _)                 = True
 isStorage (TSObjC__weak _)              = True
 isStorage (TSObjC__strong _)            = True
 isStorage (TSObjC__unsafe_unretained _) = True
+isStorage (TSISPCexport _)              = True
 isStorage _                             = False
 
 mkStorage :: [TySpec] -> [Storage]
@@ -3691,6 +3699,7 @@ mkStorage specs = map mk (filter isStorage specs)
       mk (TSObjC__weak loc)              = TObjC__weak loc
       mk (TSObjC__strong loc)            = TObjC__strong loc
       mk (TSObjC__unsafe_unretained loc) = TObjC__unsafe_unretained loc
+      mk (TSISPCexport loc)              = TISPCexport loc
       mk _                               = error "internal error in mkStorage"
 
 isTypeQual :: TySpec -> Bool

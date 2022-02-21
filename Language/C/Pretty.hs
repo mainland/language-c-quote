@@ -219,6 +219,7 @@ instance Pretty Storage where
     ppr (TObjC__weak _)              = text "__weak"
     ppr (TObjC__strong _)            = text "__strong"
     ppr (TObjC__unsafe_unretained _) = text "__unsafe_unretained"
+    ppr (TISPCexport _)              = text "export"
 
 instance Pretty TypeQual where
     ppr (Tconst _)          = text "const"
