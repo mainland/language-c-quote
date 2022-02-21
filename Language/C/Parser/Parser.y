@@ -297,7 +297,8 @@ import qualified Language.C.Syntax as C
  -- ISPC
  --
  'uniform'     { L _ T.TISPCuniform }
- 'varying'     { L _ T.TISPCvarying }    
+ 'varying'     { L _ T.TISPCvarying }
+ 'foreach'     { L _ T.TISPCforeach }    
 
 -- Three shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
@@ -2185,6 +2186,10 @@ iteration_statement :
       { For (Right $3) $5 (Just $7) $9 ($1 `srcspan` $9) }
   | 'for' '(' maybe_expression_nlt semi maybe_expression semi expression error
       {% unclosed ($2 <--> $7) "(" }
+
+  -- ISPC
+  | 'foreach' '(' identifier '=' expression '...' expression ')' statement
+      { ForEach ($3) ($5) ($7) ($9) ($1 `srcspan` $9) }
 
 jump_statement :: { Stm }
 jump_statement :

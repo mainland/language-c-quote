@@ -287,6 +287,9 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
           | ObjCThrow (Maybe Exp) !SrcLoc
           | ObjCSynchronized Exp [BlockItem] !SrcLoc
           | ObjCAutoreleasepool [BlockItem] !SrcLoc
+
+          -- ISPC
+          | ForEach Id Exp Exp Stm !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data BlockItem = BlockDecl InitGroup

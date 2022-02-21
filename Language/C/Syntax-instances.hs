@@ -178,6 +178,7 @@ instance Located Stm where
   locOf (ObjCThrow _ l) = locOf l
   locOf (ObjCSynchronized _ _ l) = locOf l
   locOf (ObjCAutoreleasepool _ l) = locOf l
+  locOf (ForEach _ _ _ _ l) = locOf l
 instance Located BlockItem where
   locOf (BlockDecl _) = noLoc
   locOf (BlockStm _) = noLoc
@@ -494,6 +495,7 @@ instance Relocatable Stm where
   reloc l (ObjCThrow x0 _) = (ObjCThrow x0 (fromLoc l))
   reloc l (ObjCSynchronized x0 x1 _) = (ObjCSynchronized x0 x1 (fromLoc l))
   reloc l (ObjCAutoreleasepool x0 _) = (ObjCAutoreleasepool x0 (fromLoc l))
+  reloc l (ForEach x0 x1 x2 x3 _) = (ForEach x0 x1 x2 x3 (fromLoc l))
 instance Relocatable BlockItem where
   reloc _ (BlockDecl x0) = (BlockDecl x0)
   reloc _ (BlockStm x0) = (BlockStm x0)

@@ -745,6 +745,12 @@ instance Pretty Stm where
         <>  text "@autoreleasepool"
         </> ppr block
 
+    ppr (ForEach var ini to stm sloc) =
+        srcloc sloc <>
+        text "foreach" <+>
+        parens (ppr var <> text " = " <> ppr ini <> text " ... " <> ppr to) <>
+        pprBlock stm
+
 pprBlock :: Stm -> Doc
 pprBlock stm@(Block {}) = space <> ppr stm
 pprBlock stm@(If {})    = space <> ppr [BlockStm stm]
