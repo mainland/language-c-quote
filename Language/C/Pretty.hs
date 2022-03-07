@@ -220,6 +220,7 @@ instance Pretty Storage where
     ppr (TObjC__strong _)            = text "__strong"
     ppr (TObjC__unsafe_unretained _) = text "__unsafe_unretained"
     ppr (TISPCexport _)              = text "export"
+    ppr (TISPCunmasked _)            = text "unmasked"
 
 instance Pretty TypeQual where
     ppr (Tconst _)          = text "const"
@@ -751,6 +752,20 @@ instance Pretty Stm where
         text "foreach" <+>
         parens (ppr var <> text " = " <> ppr ini <> text " ... " <> ppr to) <>
         pprBlock stm
+    ppr (ForEachTiled var ini to stm sloc) =
+        srcloc sloc <>
+        text "foreach_tiled" <+>
+        parens (ppr var <> text " = " <> ppr ini <> text " ... " <> ppr to) <>
+        pprBlock stm
+    ppr (ForEachActive var stm sloc) =
+        srcloc sloc <>
+        text "foreach_active" <+>
+        parens (ppr var) <>
+        pprBlock stm
+    -- TODO ppr (Unmasked stm sloc) =
+    --    srcloc sloc <>
+    --    text "unmasked" <+>
+    --    pprBlock stm
 
 pprBlock :: Stm -> Doc
 pprBlock stm@(Block {}) = space <> ppr stm

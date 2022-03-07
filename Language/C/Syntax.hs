@@ -53,7 +53,8 @@ data Storage = Tauto                   !SrcLoc
              | TObjC__unsafe_unretained !SrcLoc
 
              -- ISPC
-            | TISPCexport !SrcLoc
+            | TISPCexport    !SrcLoc
+            | TISPCunmasked  !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data TypeQual = Tconst    !SrcLoc
@@ -293,6 +294,10 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
 
           -- ISPC
           | ForEach Id Exp Exp Stm !SrcLoc
+          | ForEachActive Id Stm !SrcLoc
+          | ForEachTiled Id Exp Exp Stm !SrcLoc
+          -- TODO | Unmasked Stm !SrcLoc
+
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data BlockItem = BlockDecl InitGroup

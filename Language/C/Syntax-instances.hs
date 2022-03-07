@@ -14,6 +14,7 @@ instance Located Storage where
   locOf (TObjC__strong l) = locOf l
   locOf (TObjC__unsafe_unretained l) = locOf l
   locOf (TISPCexport l) = locOf l
+  locOf (TISPCunmasked l) = locOf l
 instance Located TypeQual where
   locOf (Tconst l) = locOf l
   locOf (Tvolatile l) = locOf l
@@ -180,6 +181,9 @@ instance Located Stm where
   locOf (ObjCSynchronized _ _ l) = locOf l
   locOf (ObjCAutoreleasepool _ l) = locOf l
   locOf (ForEach _ _ _ _ l) = locOf l
+  locOf (ForEachTiled _ _ _ _ l) = locOf l
+  locOf (ForEachActive _ _ l) = locOf l
+  -- locOf (Unmasked _ l) = locOf l
 instance Located BlockItem where
   locOf (BlockDecl _) = noLoc
   locOf (BlockStm _) = noLoc
@@ -326,6 +330,7 @@ instance Relocatable Storage where
   reloc l (TObjC__strong _) = (TObjC__strong (fromLoc l))
   reloc l (TObjC__unsafe_unretained _) = (TObjC__unsafe_unretained (fromLoc l))
   reloc l (TISPCexport _) = (TISPCexport (fromLoc l))
+  reloc l (TISPCunmasked _) = (TISPCunmasked (fromLoc l))
 instance Relocatable TypeQual where
   reloc l (Tconst _) = (Tconst (fromLoc l))
   reloc l (Tvolatile _) = (Tvolatile (fromLoc l))
@@ -498,6 +503,9 @@ instance Relocatable Stm where
   reloc l (ObjCSynchronized x0 x1 _) = (ObjCSynchronized x0 x1 (fromLoc l))
   reloc l (ObjCAutoreleasepool x0 _) = (ObjCAutoreleasepool x0 (fromLoc l))
   reloc l (ForEach x0 x1 x2 x3 _) = (ForEach x0 x1 x2 x3 (fromLoc l))
+  reloc l (ForEachTiled x0 x1 x2 x3 _) = (ForEachTiled x0 x1 x2 x3 (fromLoc l))
+  reloc l (ForEachActive x0 x1 _) = (ForEachActive x0 x1 (fromLoc l))
+  -- TODO reloc l (Unmasked x0 _) = (Unmasked x0 (fromLoc l))
 instance Relocatable BlockItem where
   reloc _ (BlockDecl x0) = (BlockDecl x0)
   reloc _ (BlockStm x0) = (BlockStm x0)

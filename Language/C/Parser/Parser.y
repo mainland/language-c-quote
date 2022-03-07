@@ -299,7 +299,10 @@ import qualified Language.C.Syntax as C
  'uniform'     { L _ T.TISPCuniform }
  'varying'     { L _ T.TISPCvarying }
  'foreach'     { L _ T.TISPCforeach }
- 'export'      { L _ T.TISPCexport }    
+ 'export'      { L _ T.TISPCexport }  
+ 'foreach_active' { L _ T.TISPCactive }
+ 'foreach_tiled' { L _ T.TISPCtiled }
+ 'unmasked' { L _ T.TISPCunmasked }
 
 -- Three shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
@@ -1316,6 +1319,7 @@ storage_class_specifier :
 
   -- ISPC
   | 'export'                { TSISPCexport (srclocOf $1) }
+  | 'unmasked'              { TSISPCunmasked (srclocOf $1) }
 
 type_specifier :: { TySpec }
 type_specifier :
@@ -2194,6 +2198,13 @@ iteration_statement :
   -- ISPC
   | 'foreach' '(' identifier '=' expression '...' expression ')' statement
       { ForEach ($3) ($5) ($7) ($9) ($1 `srcspan` $9) }
+  | 'foreach_active' '(' identifier ')' statement
+      { ForEachActive ($3) ($5) ($1 `srcspan` $5) }
+  | 'foreach_tiled' '(' identifier '=' expression '...' expression ')' statement
+      { ForEachTiled ($3) ($5) ($7) ($9) ($1 `srcspan` $9) }
+  -- TODO | 'unmasked' statement
+  --    { Unmasked ($2) ($1 `srcspan` $2) }
+
 
 jump_statement :: { Stm }
 jump_statement :
@@ -3531,6 +3542,7 @@ data TySpec = TSauto !SrcLoc
             | TSISPCuniform !SrcLoc
             | TSISPCvarying !SrcLoc
             | TSISPCexport !SrcLoc
+            | TSISPCunmasked !SrcLoc
   deriving (Eq, Ord, Show)
 
 instance Located TySpec where
@@ -3600,6 +3612,7 @@ instance Located TySpec where
     locOf (TSISPCuniform loc)     = locOf loc
     locOf (TSISPCvarying loc)     = locOf loc
     locOf (TSISPCexport loc)      = locOf loc
+    locOf (TSISPCunmasked loc)    = locOf loc
 
 instance Pretty TySpec where
     ppr (TSauto _)                    = text "auto"
@@ -3672,6 +3685,7 @@ instance Pretty TySpec where
     ppr (TSISPCuniform _)      = text "uniform"
     ppr (TSISPCvarying _)      = text "varying"
     ppr (TSISPCexport _)       = text "export"
+    ppr (TSISPCunmasked _)     = text "unmasked"
 
 isStorage :: TySpec -> Bool
 isStorage (TSauto _)                    = True
@@ -3684,6 +3698,7 @@ isStorage (TSObjC__weak _)              = True
 isStorage (TSObjC__strong _)            = True
 isStorage (TSObjC__unsafe_unretained _) = True
 isStorage (TSISPCexport _)              = True
+isStorage (TSISPCunmasked _)            = True
 isStorage _                             = False
 
 mkStorage :: [TySpec] -> [Storage]
@@ -3700,6 +3715,7 @@ mkStorage specs = map mk (filter isStorage specs)
       mk (TSObjC__strong loc)            = TObjC__strong loc
       mk (TSObjC__unsafe_unretained loc) = TObjC__unsafe_unretained loc
       mk (TSISPCexport loc)              = TISPCexport loc
+      mk (TSISPCunmasked loc)            = TISPCunmasked loc
       mk _                               = error "internal error in mkStorage"
 
 isTypeQual :: TySpec -> Bool
