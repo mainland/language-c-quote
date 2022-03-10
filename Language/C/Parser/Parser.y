@@ -353,7 +353,6 @@ import qualified Language.C.Syntax as C
 %name parseObjCKeywordArg  objc_keywordarg
 
 %right NAMED OBJCNAMED
-
 %%
 
 {------------------------------------------------------------------------------

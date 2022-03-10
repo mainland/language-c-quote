@@ -211,7 +211,6 @@ data Token = Teof
            | TISPCvarying
            | TISPCforeach
            | TISPCexport
-           -- | TISPCextern
            | TISPCactive
            | TISPCtiled
            | TISPCunmasked

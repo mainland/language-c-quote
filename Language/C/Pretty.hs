@@ -762,10 +762,10 @@ instance Pretty Stm where
         text "foreach_active" <+>
         parens (ppr var) <>
         pprBlock stm
-    -- TODO ppr (Unmasked stm sloc) =
-    --    srcloc sloc <>
-    --    text "unmasked" <+>
-    --    pprBlock stm
+    ppr (Unmasked stm sloc) =
+        srcloc sloc <>
+        text "unmasked" <+>
+        pprBlock stm
 
 pprBlock :: Stm -> Doc
 pprBlock stm@(Block {}) = space <> ppr stm

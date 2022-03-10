@@ -183,7 +183,7 @@ instance Located Stm where
   locOf (ForEach _ _ _ _ l) = locOf l
   locOf (ForEachTiled _ _ _ _ l) = locOf l
   locOf (ForEachActive _ _ l) = locOf l
-  -- locOf (Unmasked _ l) = locOf l
+  locOf (Unmasked _ l) = locOf l
 instance Located BlockItem where
   locOf (BlockDecl _) = noLoc
   locOf (BlockStm _) = noLoc
@@ -505,7 +505,7 @@ instance Relocatable Stm where
   reloc l (ForEach x0 x1 x2 x3 _) = (ForEach x0 x1 x2 x3 (fromLoc l))
   reloc l (ForEachTiled x0 x1 x2 x3 _) = (ForEachTiled x0 x1 x2 x3 (fromLoc l))
   reloc l (ForEachActive x0 x1 _) = (ForEachActive x0 x1 (fromLoc l))
-  -- TODO reloc l (Unmasked x0 _) = (Unmasked x0 (fromLoc l))
+  reloc l (Unmasked x0 _) = (Unmasked x0 (fromLoc l))
 instance Relocatable BlockItem where
   reloc _ (BlockDecl x0) = (BlockDecl x0)
   reloc _ (BlockStm x0) = (BlockStm x0)

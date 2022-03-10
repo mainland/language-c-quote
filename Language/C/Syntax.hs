@@ -296,7 +296,7 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
           | ForEach Id Exp Exp Stm !SrcLoc
           | ForEachActive Id Stm !SrcLoc
           | ForEachTiled Id Exp Exp Stm !SrcLoc
-          -- TODO | Unmasked Stm !SrcLoc
+          | Unmasked Stm !SrcLoc
 
     deriving (Eq, Ord, Show, Data, Typeable)
 
