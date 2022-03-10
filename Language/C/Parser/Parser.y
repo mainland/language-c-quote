@@ -19,6 +19,8 @@ import Control.Monad (forM_,
                       unless,
                       liftM)
 import Control.Monad.Exception
+import Debug.Trace
+import System.IO.Unsafe
 import Data.List (intersperse, sort)
 import Data.Loc
 import Data.Maybe (fromMaybe, catMaybes)
@@ -2201,8 +2203,9 @@ iteration_statement :
       { ForEachActive ($3) ($5) ($1 `srcspan` $5) }
   | 'foreach_tiled' '(' identifier '=' expression '...' expression ')' statement
       { ForEachTiled ($3) ($5) ($7) ($9) ($1 `srcspan` $9) }
-  -- TODO | 'unmasked' statement
-  --    { Unmasked ($2) ($1 `srcspan` $2) }
+  -- | 'unmasked' statement
+  --     { Unmasked ($2) ($1 `srcspan` $2) }
+
 
 
 jump_statement :: { Stm }
