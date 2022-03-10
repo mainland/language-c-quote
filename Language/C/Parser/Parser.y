@@ -2113,7 +2113,6 @@ compound_statement:
       { mkBlock $3 ($1 `srcspan` $5) }
   | '{' begin_scope error
       {% unclosed (locOf $3) "{" }
-
 block_item_list :: { [BlockItem] }
 block_item_list :
      block_item_rlist         { rev $1 }
@@ -2203,10 +2202,6 @@ iteration_statement :
       { ForEachActive ($3) ($5) ($1 `srcspan` $5) }
   | 'foreach_tiled' '(' identifier '=' expression '...' expression ')' statement
       { ForEachTiled ($3) ($5) ($7) ($9) ($1 `srcspan` $9) }
-  -- | 'unmasked' statement
-  --     { Unmasked ($2) ($1 `srcspan` $2) }
-
-
 
 jump_statement :: { Stm }
 jump_statement :
