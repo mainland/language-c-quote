@@ -546,7 +546,11 @@ tokenStrings = [(Tlparen,     "("),
                 (TISPCexport,  "export"),
                 (TISPCactive, "foreach_active"),
                 (TISPCtiled, "foreach_tiled"),
-                (TISPCunmasked, "unmasked")
+                (TISPCunmasked, "unmasked"),
+                (TISPCcif, "cif"),
+                (TISPCcwhile, "cwhile"),
+                (TISPCcdo, "cdo"),
+                (TISPCcfor, "cfor")
                 ]
 
 keywords :: [(String,      Token,      Maybe [Extensions])]
@@ -688,7 +692,11 @@ keywords = [("auto",       Tauto,      Nothing),
             ("export",       TISPCexport,  Just [ISPC]),
             ("foreach_tiled",TISPCtiled,   Just [ISPC]),
             ("foreach_active",TISPCactive, Just [ISPC]),
-            ("unmasked",    TISPCunmasked, Just [ISPC])
+            ("unmasked",    TISPCunmasked, Just [ISPC]),
+            ("cif",          TISPCcif,     Just [ISPC]),
+            ("cwhile",       TISPCcwhile,  Just [ISPC]),
+            ("cdo",          TISPCcdo,     Just [ISPC]),
+            ("cfor",         TISPCcfor,    Just [ISPC])
            ]
 
 type ExtensionsInt = Word32
