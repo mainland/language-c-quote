@@ -184,6 +184,11 @@ instance Located Stm where
   locOf (ForEachTiled _ _ _ _ l) = locOf l
   locOf (ForEachActive _ _ l) = locOf l
   locOf (Unmasked _ l) = locOf l
+  locOf (CIf _ _ _ l) = locOf l
+  locOf (CWhile _ _ l) = locOf l
+  locOf (CFor _ _ _ _ l) = locOf l
+  locOf (CDo _ _ l) = locOf l
+
 instance Located BlockItem where
   locOf (BlockDecl _) = noLoc
   locOf (BlockStm _) = noLoc
@@ -506,6 +511,10 @@ instance Relocatable Stm where
   reloc l (ForEachTiled x0 x1 x2 x3 _) = (ForEachTiled x0 x1 x2 x3 (fromLoc l))
   reloc l (ForEachActive x0 x1 _) = (ForEachActive x0 x1 (fromLoc l))
   reloc l (Unmasked x0 _) = (Unmasked x0 (fromLoc l))
+  reloc l (CIf x0 x1 x2 _) = (CIf x0 x1 x2 (fromLoc l))
+  reloc l (CWhile x0 x1 _) = (CWhile x0 x1 (fromLoc l))
+  reloc l (CFor x0 x1 x2 x3 _) = (CFor x0 x1 x2 x3 (fromLoc l))
+  reloc l (CDo x0 x1 _) = (CDo x0 x1 (fromLoc l))
 instance Relocatable BlockItem where
   reloc _ (BlockDecl x0) = (BlockDecl x0)
   reloc _ (BlockStm x0) = (BlockStm x0)

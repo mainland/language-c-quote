@@ -305,6 +305,10 @@ import qualified Language.C.Syntax as C
  'foreach_active' { L _ T.TISPCactive }
  'foreach_tiled' { L _ T.TISPCtiled }
  'unmasked' { L _ T.TISPCunmasked }
+ 'cif'         { L _ T.TISPCcif }
+ 'cwhile'      { L _ T.TISPCcwhile }
+ 'cdo'         { L _ T.TISPCcdo }
+ 'cfor'        { L _ T.TISPCcfor }
 
 -- Three shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'

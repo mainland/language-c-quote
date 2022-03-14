@@ -214,6 +214,10 @@ data Token = Teof
            | TISPCactive
            | TISPCtiled
            | TISPCunmasked
+           | TISPCcwhile
+           | TISPCcif
+           | TISPCcfor
+           | TISPCcdo
 
            -- Clang (currently active is Objective-C is active)
            | T__block

@@ -297,6 +297,10 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
           | ForEachActive Id Stm !SrcLoc
           | ForEachTiled Id Exp Exp Stm !SrcLoc
           | Unmasked Stm !SrcLoc
+          | CIf Exp Stm (Maybe Stm) !SrcLoc
+          | CWhile Exp Stm !SrcLoc
+          | CFor (Either InitGroup (Maybe Exp)) (Maybe Exp) (Maybe Exp) Stm !SrcLoc
+          | CDo Stm Exp !SrcLoc
 
     deriving (Eq, Ord, Show, Data, Typeable)
 
