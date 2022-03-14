@@ -314,7 +314,7 @@ import qualified Language.C.Syntax as C
 -- (1) Documented conflict in 'objc_protocol_declaration'
 -- (2) Objective-C exception syntax (would need lookahead of 2 to disambiguate properly)
 -- (3) The standard dangling else conflict
-%expect 3
+%expect 4
 
 %monad { P } { >>= } { return }
 %lexer { lexer } { L _ T.Teof }
@@ -2173,6 +2173,10 @@ selection_statement :
       { Switch $3 $5 ($1 `srcspan` $5) }
   | 'switch' '(' expression error
       {% unclosed ($2 <--> $3) "(" }
+  | 'cif' '(' expression ')' statement
+      { CIf $3 $5 Nothing ($1 `srcspan` $5) }
+  | 'cif' '(' expression ')' statement 'else' statement
+      { CIf $3 $5 (Just $7) ($1 `srcspan` $7) }
 
 iteration_statement :: { Stm }
 iteration_statement :
@@ -2206,6 +2210,18 @@ iteration_statement :
       { ForEachActive ($3) ($5) ($1 `srcspan` $5) }
   | 'foreach_tiled' '(' identifier '=' expression '...' expression ')' statement
       { ForEachTiled ($3) ($5) ($7) ($9) ($1 `srcspan` $9) }
+  | 'cwhile' '(' expression ')' statement
+      { CWhile $3 $5 ($1 `srcspan` $5) }
+  | 'cdo' statement 'while' '(' expression ')' ';'
+      { CDo $2 $5 ($1 `srcspan` $7) }
+  | 'cfor' '(' declaration maybe_expression semi ')' statement
+      { CFor (Left $3) $4 Nothing $7 ($1 `srcspan` $7) }
+  | 'cfor' '(' maybe_expression_nlt semi maybe_expression semi ')' statement
+      { CFor (Right $3) $5 Nothing $8 ($1 `srcspan` $8) }
+  | 'cfor' '(' declaration maybe_expression semi expression ')' statement
+      { CFor (Left $3) $4 (Just $6) $8 ($1 `srcspan` $8) }
+  | 'cfor' '(' maybe_expression_nlt semi maybe_expression semi expression ')' statement
+      { CFor (Right $3) $5 (Just $7) $9 ($1 `srcspan` $9) }
 
 jump_statement :: { Stm }
 jump_statement :
