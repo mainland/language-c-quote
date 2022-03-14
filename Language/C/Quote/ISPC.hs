@@ -40,10 +40,11 @@ exts = [C.ISPC]
 
 typenames :: [String]
 typenames =
-  concatMap (typeN 4) ["int", "uint"] ++ ["float", "double"]
+  concatMap (typeN 4) ["int", "uint"]
+                      ++ ["float","float16", "double"]
 
 typeN :: Int -> String -> [String]
-typeN k typename = [typename ++ show (n*8) | n <- [1..k]]
+typeN k typename = [typename ++ show (2^n) | n <- [3..k+2]]
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, cparams, csdecl, cstm, cstms :: QuasiQuoter
 citem, citems, ctyquals, cty, cunit :: QuasiQuoter

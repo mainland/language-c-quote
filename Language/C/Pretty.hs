@@ -762,6 +762,12 @@ instance Pretty Stm where
         text "foreach_active" <+>
         parens (ppr var) <>
         pprBlock stm
+
+    ppr (ForEachUnique ini var stm sloc) =
+        srcloc sloc <>
+        text "foreach_unique" <+>
+        parens (ppr ini <> (text " in ") <> ppr var) <>
+        pprBlock stm
     ppr (Unmasked stm sloc) =
         srcloc sloc <>
         text "unmasked" <+>

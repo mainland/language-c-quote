@@ -243,6 +243,10 @@ c :-
 
  ">>>" / { ifExtension cudaExts }
          { token TCUDA3gt }
+ --
+ -- ISPC
+ -- 
+ "in"  { token TISPCin }
 }
 
 {

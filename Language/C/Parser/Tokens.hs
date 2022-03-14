@@ -214,6 +214,8 @@ data Token = Teof
            | TISPCactive
            | TISPCtiled
            | TISPCunmasked
+           | TISPCunique
+           | TISPCin
 
            -- Clang (currently active is Objective-C is active)
            | T__block
@@ -542,7 +544,9 @@ tokenStrings = [(Tlparen,     "("),
                 (TISPCexport,  "export"),
                 (TISPCactive, "foreach_active"),
                 (TISPCtiled, "foreach_tiled"),
-                (TISPCunmasked, "unmasked")
+                (TISPCunmasked, "unmasked"),
+                (TISPCunique,   "unique"),
+                (TISPCin  ,   "in")
                 ]
 
 keywords :: [(String,      Token,      Maybe [Extensions])]
@@ -684,7 +688,9 @@ keywords = [("auto",       Tauto,      Nothing),
             ("export",       TISPCexport,  Just [ISPC]),
             ("foreach_tiled",TISPCtiled,   Just [ISPC]),
             ("foreach_active",TISPCactive, Just [ISPC]),
-            ("unmasked",    TISPCunmasked, Just [ISPC])
+            ("unmasked",    TISPCunmasked, Just [ISPC]),
+            ("foreach_unique",TISPCunique, Just [ISPC]),
+            ("in"            ,TISPCin    , Just [ISPC])
            ]
 
 type ExtensionsInt = Word32

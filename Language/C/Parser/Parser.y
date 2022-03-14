@@ -305,6 +305,8 @@ import qualified Language.C.Syntax as C
  'foreach_active' { L _ T.TISPCactive }
  'foreach_tiled' { L _ T.TISPCtiled }
  'unmasked' { L _ T.TISPCunmasked }
+ 'foreach_unique' { L _ T.TISPCunique }
+ 'in'   { L _ T.TISPCin }
 
 -- Three shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
@@ -2202,6 +2204,8 @@ iteration_statement :
       { ForEachActive ($3) ($5) ($1 `srcspan` $5) }
   | 'foreach_tiled' '(' identifier '=' expression '...' expression ')' statement
       { ForEachTiled ($3) ($5) ($7) ($9) ($1 `srcspan` $9) }
+  | 'foreach_unique' '(' identifier 'in' expression ')' statement
+      { ForEachUnique ($3) ($5) ($7) ($1 `srcspan` $7) }
 
 jump_statement :: { Stm }
 jump_statement :

@@ -30,6 +30,7 @@ ispcTests = testGroup "ISPC land"
     ,testCase "ispc varying" test_varying
     ,testCase "ispc export" test_export
     ,testCase "ispc extern" test_extern
+    ,testCase "ispc foreach_unique" test_foreach_unique
     --, testCase "attrs antiquote" test_attrs
     --, testCase "attrs antiquote pretty" test_attr_p
     --, testCase "case ranges quote" test_case_ranges
@@ -52,6 +53,11 @@ test_foreach_tiled :: Assertion
 test_foreach_tiled = pretty 80 (ppr decl) @?= expected
   where decl =  [ISPC.cstm|foreach_tiled(a = 1 ...n){int a = 10;}|]
         expected = "foreach_tiled (a = 1 ... n) {\n    int a = 10;\n}"
+
+test_foreach_unique :: Assertion
+test_foreach_unique = pretty 80 (ppr decl) @?= expected
+  where decl =  [ISPC.cstm|foreach_unique(y in x){int a = 10;}|]
+        expected = "foreach_unique (y in x) {\n    int a = 10;\n}"
 
 test_unmasked_qualifier :: Assertion
 test_unmasked_qualifier = pretty 80 (ppr decl) @?= expected
