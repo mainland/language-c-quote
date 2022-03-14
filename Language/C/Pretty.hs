@@ -772,6 +772,45 @@ instance Pretty Stm where
         srcloc sloc <>
         text "unmasked" <+>
         pprBlock stm
+ -- TODO do, while, for
+    ppr (CIf test then' maybe_else sloc) =
+        srcloc sloc <>
+        text "cif" <+> parens (ppr test) <>
+        pprThen then' (fmap pprElse maybe_else)
+      where
+        isIf :: Stm -> Bool
+        isIf If{} = True
+        isIf (Comment _ stm _) = isIf stm
+        isIf _ = False
+
+        pprThen :: Stm -> Maybe Doc -> Doc
+        pprThen stm@(Block {}) rest        = space <> ppr stm <+> maybe empty id rest
+        pprThen stm            rest
+          | isIf stm                       = space <> ppr [BlockStm stm] <+> maybe empty id rest
+        pprThen stm            Nothing     = nest 4 (line <> ppr stm)
+        pprThen stm            (Just rest) = nest 4 (line <> ppr stm) </> rest
+
+        pprElse :: Stm -> Doc
+        pprElse stm =
+            text "else" <> go stm
+          where
+            go :: Stm -> Doc
+            go (Block {}) = space <> ppr stm
+            go (If {})    = space <> ppr stm
+            go _stm       = nest 4 (line <> ppr stm)
+    ppr (CWhile e stm sloc) =
+        srcloc sloc <>
+        text "cwhile" <+> parens (ppr e) <> pprBlock stm
+
+    ppr (CDo stm e sloc) =
+        srcloc sloc <>
+        text "cdo" <> pprBlock stm <+/> text "while" <> parens (ppr e) <> semi
+
+    ppr (CFor ini test post stm sloc) =
+        srcloc sloc <>
+        text "cfor" <+>
+        (parens . semisep) [either ppr ppr ini, ppr test, ppr post] <>
+        pprBlock stm
 
 pprBlock :: Stm -> Doc
 pprBlock stm@(Block {}) = space <> ppr stm
