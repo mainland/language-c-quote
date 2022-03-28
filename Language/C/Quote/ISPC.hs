@@ -27,7 +27,8 @@ module Language.C.Quote.ISPC (
     citem,
     citems,
     cunit,
-    cfun
+    cfun,
+    ispcforeachiters
   ) where
 
 import qualified Language.C.Parser as P
@@ -64,3 +65,6 @@ citems   = quasiquote exts typenames P.parseBlockItems
 ctyquals = quasiquote exts typenames P.parseTypeQuals
 cty      = quasiquote exts typenames P.parseType
 cunit    = quasiquote exts typenames P.parseUnit
+
+ispcforeachiters :: QuasiQuoter
+ispcforeachiters = quasiquote exts typenames P.parseISPCForEachIters

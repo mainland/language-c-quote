@@ -220,6 +220,7 @@ data Token = Teof
            | TISPCcif
            | TISPCcfor
            | TISPCcdo
+           | Tanti_foreach_iters String
 
            -- Clang (currently active is Objective-C is active)
            | T__block
@@ -354,6 +355,11 @@ instance Show Token where
     show (Tanti_objc_recv s)         = showAnti "recv" s
     show (Tanti_objc_arg s)          = showAnti "kwarg" s
     show (Tanti_objc_args s)         = showAnti "kwargs" s
+
+    --
+    -- ISPC
+    --
+    show (Tanti_foreach_iters s)     = showAnti "foreachiters" s
 
     show t = fromMaybe (error "language-c-quote: internal error: unknown token")
                        (lookup t tokenStrings)

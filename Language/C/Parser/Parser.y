@@ -298,19 +298,20 @@ import qualified Language.C.Syntax as C
  --
  -- ISPC
  --
- 'uniform'     { L _ T.TISPCuniform }
- 'varying'     { L _ T.TISPCvarying }
- 'foreach'     { L _ T.TISPCforeach }
- 'export'      { L _ T.TISPCexport }  
- 'foreach_active' { L _ T.TISPCactive }
- 'foreach_tiled' { L _ T.TISPCtiled }
- 'unmasked' { L _ T.TISPCunmasked }
- 'foreach_unique' { L _ T.TISPCunique }
- 'in'   { L _ T.TISPCin }
- 'cif'         { L _ T.TISPCcif }
- 'cwhile'      { L _ T.TISPCcwhile }
- 'cdo'         { L _ T.TISPCcdo }
- 'cfor'        { L _ T.TISPCcfor }
+ 'uniform'            { L _ T.TISPCuniform }
+ 'varying'            { L _ T.TISPCvarying }
+ 'foreach'            { L _ T.TISPCforeach }
+ 'export'             { L _ T.TISPCexport }  
+ 'foreach_active'     { L _ T.TISPCactive }
+ 'foreach_tiled'      { L _ T.TISPCtiled }
+ 'unmasked'           { L _ T.TISPCunmasked }
+ 'foreach_unique'     { L _ T.TISPCunique }
+ 'in'                 { L _ T.TISPCin }
+ 'cif'                { L _ T.TISPCcif }
+ 'cwhile'             { L _ T.TISPCcwhile }
+ 'cdo'                { L _ T.TISPCcdo }
+ 'cfor'               { L _ T.TISPCcfor }
+  ANTI_FOREACH_ITERS  { L _ (T.Tanti_foreach_iters _) }
 
 -- Three shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
@@ -359,6 +360,11 @@ import qualified Language.C.Syntax as C
 %name parseObjCMethodDef   objc_method_definition
 %name parseObjCMethodRecv  objc_receiver
 %name parseObjCKeywordArg  objc_keywordarg
+
+--
+-- ISPC
+--
+%name parseISPCForEachIters ispc_foreach_iter_list
 
 %right NAMED OBJCNAMED
 %%
@@ -2206,12 +2212,12 @@ iteration_statement :
       {% unclosed ($2 <--> $7) "(" }
 
   -- ISPC
-  | 'foreach' '(' identifier '=' expression '...' expression ')' statement
-      { ForEach ($3) ($5) ($7) ($9) ($1 `srcspan` $9) }
+  | 'foreach' '(' ispc_foreach_iter_list ')' statement
+      { ForEach ($3) ($5) ($1 `srcspan` $5) }
   | 'foreach_active' '(' identifier ')' statement
       { ForEachActive ($3) ($5) ($1 `srcspan` $5) }
-  | 'foreach_tiled' '(' identifier '=' expression '...' expression ')' statement
-      { ForEachTiled ($3) ($5) ($7) ($9) ($1 `srcspan` $9) }
+  | 'foreach_tiled' '(' ispc_foreach_iter_list ')' statement
+      { ForEachTiled ($3) ($5) ($1 `srcspan` $5) }
   | 'foreach_unique' '(' identifier 'in' expression ')' statement
       { ForEachUnique ($3) ($5) ($7) ($1 `srcspan` $7) }
   | 'cwhile' '(' expression ')' statement
@@ -2240,6 +2246,25 @@ jump_statement :
   | 'return' error             {% expected ["';'", "expression"] Nothing }
   | 'return' expression ';'    { Return (Just $2) ($1 `srcspan` $3) }
   | 'return' expression error  {% expected ["';'"] Nothing }
+
+ispc_foreach_iter :: { ForEachIter }
+ispc_foreach_iter :
+    identifier '=' assignment_expression '...' assignment_expression { ForEachIter ($1) ($3) ($5) ($1 `srcspan` $5) }
+
+ispc_foreach_iter_list :: { [ForEachIter] }
+ispc_foreach_iter_list :
+    ispc_foreach_iter_rlist { rev $1 }
+
+ispc_foreach_iter_rlist :: { RevList ForEachIter }
+ispc_foreach_iter_rlist :
+    ispc_foreach_iter
+      { rsingleton $1 }
+  | ANTI_FOREACH_ITERS
+      { rsingleton (AntiForEachIters (getANTI_FOREACH_ITERS $1) (srclocOf $1)) }
+  | ispc_foreach_iter_rlist ',' ispc_foreach_iter
+      { rcons $3 $1}
+  | ispc_foreach_iter_rlist ',' ANTI_ARGS
+      { rcons (AntiForEachIters (getANTI_FOREACH_ITERS $3) (srclocOf $3)) $1 }
 
 {------------------------------------------------------------------------------
  -
@@ -3481,6 +3506,11 @@ getANTI_OBJC_METHOD_DEFS  (L _ (T.Tanti_objc_method_defs v))  = v
 getANTI_OBJC_RECV         (L _ (T.Tanti_objc_recv v))         = v
 getANTI_OBJC_ARG          (L _ (T.Tanti_objc_arg v))          = v
 getANTI_OBJC_ARGS         (L _ (T.Tanti_objc_args v))         = v
+
+--
+-- ISPC
+--
+getANTI_FOREACH_ITERS     (L _ (T.Tanti_foreach_iters v))     = v
 
 lexer :: (L T.Token -> P a) -> P a
 lexer cont = do

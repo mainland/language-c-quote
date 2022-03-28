@@ -180,8 +180,8 @@ instance Located Stm where
   locOf (ObjCThrow _ l) = locOf l
   locOf (ObjCSynchronized _ _ l) = locOf l
   locOf (ObjCAutoreleasepool _ l) = locOf l
-  locOf (ForEach _ _ _ _ l) = locOf l
-  locOf (ForEachTiled _ _ _ _ l) = locOf l
+  locOf (ForEach _ _ l) = locOf l
+  locOf (ForEachTiled _ _ l) = locOf l
   locOf (ForEachActive _ _ l) = locOf l
   locOf (ForEachUnique _ _ _ l) = locOf l
   locOf (Unmasked _ l) = locOf l
@@ -320,6 +320,9 @@ instance Located ObjCArg where
 instance Located ObjCDictElem where
   locOf (ObjCDictElem _ _ l) = locOf l
   locOf (AntiObjCDictElems _ l) = locOf l
+instance Located ForEachIter where
+  locOf (ForEachIter _ _ _ l) = locOf l
+  locOf (AntiForEachIters _ l) = locOf l
 instance Relocatable Id where
   reloc l (Id x0 _) = (Id x0 (fromLoc l))
   reloc l (AntiId x0 _) = (AntiId x0 (fromLoc l))
@@ -508,8 +511,8 @@ instance Relocatable Stm where
   reloc l (ObjCThrow x0 _) = (ObjCThrow x0 (fromLoc l))
   reloc l (ObjCSynchronized x0 x1 _) = (ObjCSynchronized x0 x1 (fromLoc l))
   reloc l (ObjCAutoreleasepool x0 _) = (ObjCAutoreleasepool x0 (fromLoc l))
-  reloc l (ForEach x0 x1 x2 x3 _) = (ForEach x0 x1 x2 x3 (fromLoc l))
-  reloc l (ForEachTiled x0 x1 x2 x3 _) = (ForEachTiled x0 x1 x2 x3 (fromLoc l))
+  reloc l (ForEach x0 x1 _) = (ForEach x0 x1 (fromLoc l))
+  reloc l (ForEachTiled x0 x1 _) = (ForEachTiled x0 x1 (fromLoc l))
   reloc l (ForEachActive x0 x1 _) = (ForEachActive x0 x1 (fromLoc l))
   reloc l (ForEachUnique x0 x1 x2 _) = (ForEachUnique x0 x1 x2 (fromLoc l))
   reloc l (Unmasked x0 _) = (Unmasked x0 (fromLoc l))
@@ -650,3 +653,6 @@ instance Relocatable ObjCArg where
 instance Relocatable ObjCDictElem where
   reloc l (ObjCDictElem x0 x1 _) = (ObjCDictElem x0 x1 (fromLoc l))
   reloc l (AntiObjCDictElems x0 _) = (AntiObjCDictElems x0 (fromLoc l))
+instance Relocatable ForEachIter where
+  reloc l (ForEachIter x0 x1 x2 _) = (ForEachIter x0 x1 x2 (fromLoc l))
+  reloc l (AntiForEachIters x0 _) = (AntiForEachIters x0 (fromLoc l))

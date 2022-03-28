@@ -145,6 +145,11 @@ c :-
  "$recv:"       / { allowAnti } { lexAnti Tanti_objc_recv }
  "$kwarg:"      / { allowAnti } { lexAnti Tanti_objc_arg }
  "$kwargs:"     / { allowAnti } { lexAnti Tanti_objc_args }
+
+ --
+ -- ISPC
+ --
+ "$foreachiters:" / { allowAnti } { lexAnti Tanti_foreach_iters }
 }
 
 <0> {

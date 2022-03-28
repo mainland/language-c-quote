@@ -747,15 +747,15 @@ instance Pretty Stm where
         <>  text "@autoreleasepool"
         </> ppr block
 
-    ppr (ForEach var ini to stm sloc) =
+    ppr (ForEach inis stm sloc) =
         srcloc sloc <>
         text "foreach" <+>
-        parens (ppr var <> text " = " <> ppr ini <> text " ... " <> ppr to) <>
+        parens (commasep $ map ppr inis) <>
         pprBlock stm
-    ppr (ForEachTiled var ini to stm sloc) =
+    ppr (ForEachTiled inis stm sloc) =
         srcloc sloc <>
         text "foreach_tiled" <+>
-        parens (ppr var <> text " = " <> ppr ini <> text " ... " <> ppr to) <>
+        parens (commasep $ map ppr inis) <>
         pprBlock stm
     ppr (ForEachActive var stm sloc) =
         srcloc sloc <>
@@ -1264,3 +1264,8 @@ instance Pretty ObjCRecv where
     ppr (ObjCRecvSuper loc) = pprLoc loc $ text "super"
     ppr (ObjCRecvExp e loc) = pprLoc loc $ ppr e
     ppr (AntiObjCRecv v _)  = pprAnti "recv" v
+
+instance Pretty ForEachIter where
+    ppr (ForEachIter ident from to loc) =
+        pprLoc loc $ ppr ident <+> text "=" <+> ppr from <+> text "..." <+> ppr to
+    ppr (AntiForEachIters v _) = pprAnti "foreachiters" v

@@ -293,9 +293,9 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
           | ObjCAutoreleasepool [BlockItem] !SrcLoc
 
           -- ISPC
-          | ForEach Id Exp Exp Stm !SrcLoc
+          | ForEach [ForEachIter] Stm !SrcLoc
           | ForEachActive Id Stm !SrcLoc
-          | ForEachTiled Id Exp Exp Stm !SrcLoc
+          | ForEachTiled [ForEachIter] Stm !SrcLoc
           | ForEachUnique Id Exp Stm !SrcLoc
           | Unmasked Stm !SrcLoc
           | CIf Exp Stm (Maybe Stm) !SrcLoc
@@ -562,6 +562,17 @@ data ExeConfig = ExeConfig
     ,  exeStream     :: Maybe Exp
     ,  exeLoc        :: !SrcLoc
     }
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+{------------------------------------------------------------------------------
+ -
+ - ISPC
+ -
+ ------------------------------------------------------------------------------}
+
+data ForEachIter =
+      ForEachIter Id Exp Exp !SrcLoc
+    | AntiForEachIters String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 {------------------------------------------------------------------------------

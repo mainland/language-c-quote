@@ -501,6 +501,13 @@ qqObjCArgsE (C.AntiObjCArgs a _: args) =
 qqObjCArgsE (arg : args) =
     Just [|$(dataToExpQ qqExp arg) : $(dataToExpQ qqExp args)|]
 
+qqForEachItersE :: [C.ForEachIter] -> Maybe (Q Exp)
+qqForEachItersE [] = Just [|[]|]
+qqForEachItersE (C.AntiForEachIters e _:elems) =
+    Just [|$(antiVarE e) ++ $(dataToExpQ qqExp elems)|]
+qqForEachItersE (elem : elems) =
+    Just [|$(dataToExpQ qqExp elem) : $(dataToExpQ qqExp elems)|]
+
 qqExp :: Typeable a => a -> Maybe (Q Exp)
 qqExp = const Nothing  `extQ` qqStringE
                        `extQ` qqIdE
@@ -541,6 +548,7 @@ qqExp = const Nothing  `extQ` qqStringE
                        `extQ` qqObjCRecvE
                        `extQ` qqObjCArgE
                        `extQ` qqObjCArgsE
+                       `extQ` qqForEachItersE
 
 antiVarP :: String -> PatQ
 antiVarP = either fail return . parsePat
