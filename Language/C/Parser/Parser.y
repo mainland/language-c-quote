@@ -315,7 +315,7 @@ import qualified Language.C.Syntax as C
 -- (1) Documented conflict in 'objc_protocol_declaration'
 -- (2) Objective-C exception syntax (would need lookahead of 2 to disambiguate properly)
 -- (3) The standard dangling else conflict
--- (4) ISPC syntax for 'unmasked' keyword, it is both a control flow structure and a type qualifier.
+-- (4) Ambiguity in ISPC syntax.
 %expect 4
 
 %monad { P } { >>= } { return }

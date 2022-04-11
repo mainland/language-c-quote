@@ -111,6 +111,7 @@ test-suite unit
     CUDA
     GCC
     Objc
+    ISPC
     MainCPP
 
   default-language: Haskell2010
