@@ -53,8 +53,8 @@ data Storage = Tauto                   !SrcLoc
              | TObjC__unsafe_unretained !SrcLoc
 
              -- ISPC
-            | TISPCexport    !SrcLoc
-            | TISPCunmasked  !SrcLoc
+             | TISPCexport    !SrcLoc
+             | TISPCunmasked  !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data TypeQual = Tconst    !SrcLoc

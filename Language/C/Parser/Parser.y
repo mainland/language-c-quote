@@ -19,8 +19,6 @@ import Control.Monad (forM_,
                       unless,
                       liftM)
 import Control.Monad.Exception
-import Debug.Trace
-import System.IO.Unsafe
 import Data.List (intersperse, sort)
 import Data.Loc
 import Data.Maybe (fromMaybe, catMaybes)
@@ -362,12 +360,13 @@ import qualified Language.C.Syntax as C
 %name parseObjCMethodRecv  objc_receiver
 %name parseObjCKeywordArg  objc_keywordarg
 
+%right NAMED OBJCNAMED
+
 --
 -- ISPC
 --
 %name parseISPCForEachIters ispc_foreach_iter_list
 
-%right NAMED OBJCNAMED
 %%
 
 {------------------------------------------------------------------------------
@@ -2126,6 +2125,7 @@ compound_statement:
       { mkBlock $3 ($1 `srcspan` $5) }
   | '{' begin_scope error
       {% unclosed (locOf $3) "{" }
+
 block_item_list :: { [BlockItem] }
 block_item_list :
      block_item_rlist         { rev $1 }
@@ -2182,6 +2182,8 @@ selection_statement :
       { Switch $3 $5 ($1 `srcspan` $5) }
   | 'switch' '(' expression error
       {% unclosed ($2 <--> $3) "(" }
+    
+  -- ISPC
   | 'cif' '(' expression ')' statement
       { CIf $3 $5 Nothing ($1 `srcspan` $5) }
   | 'cif' '(' expression ')' statement 'else' statement
