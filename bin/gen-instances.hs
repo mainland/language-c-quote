@@ -57,6 +57,7 @@ main = do
     DERIVE(ObjCRecv)
     DERIVE(ObjCArg)
     DERIVE(ObjCDictElem)
+    DERIVE(ForEachIter)
 
 #undef DERIVE
 #define DERIVE(a) deriveM deriveRelocatable (undefined::a)
@@ -103,3 +104,4 @@ main = do
     DERIVE(ObjCRecv)
     DERIVE(ObjCArg)
     DERIVE(ObjCDictElem)
+    DERIVE(ForEachIter)

@@ -12,7 +12,6 @@ import qualified Data.ByteString.Char8 as B
 import Data.Char (isSpace)
 import Data.Loc (SrcLoc, noLoc, startPos)
 import Control.Exception (SomeException)
-import Language.C.Quote.ISPC as ISPC
 import Language.C.Smart ()
 import qualified Language.C.Syntax as C
 import qualified Language.C.Parser as P
@@ -40,36 +39,35 @@ ispcTests = testGroup "ISPC land"
 test_foreach :: Assertion
 test_foreach = pretty 80 (ppr decl) @?= expected
   where
-    decl = [ISPC.cstm|foreach(a = 1 ... n){int a = 10;}|]
+    decl = [handleErrorcstm|foreach(a = 1 ... n){int a = 10;}|]
     expected = "foreach (a = 1 ... n) {\n    int a = 10;\n}"
            
 test_foreach_active :: Assertion
 test_foreach_active = pretty 80 (ppr decl) @?= expected
   where
-    decl = [ISPC.cstm|foreach_active(index){int a = 10;}|]
+    decl = [handleErrorcstm|foreach_active(index){int a = 10;}|]
     expected = "foreach_active (index) {\n    int a = 10;\n}"
 
 test_foreach_tiled :: Assertion
 test_foreach_tiled = pretty 80 (ppr decl) @?= expected
-  where decl =  [ISPC.cstm|foreach_tiled(a = 1 ...n){int a = 10;}|]
+  where decl =  [handleErrorcstm|foreach_tiled(a = 1 ...n){int a = 10;}|]
         expected = "foreach_tiled (a = 1 ... n) {\n    int a = 10;\n}"
 
 test_foreach_unique :: Assertion
 test_foreach_unique = pretty 80 (ppr decl) @?= expected
-  where decl =  [ISPC.cstm|foreach_unique(y in x){int a = 10;}|]
+  where decl =  [handleErrorcstm|foreach_unique(y in x){int a = 10;}|]
         expected = "foreach_unique (y in x) {\n    int a = 10;\n}"
 
 test_unmasked_qualifier :: Assertion
 test_unmasked_qualifier = pretty 80 (ppr decl) @?= expected
   where
-    decl = [ISPC.cedecl|extern "C" unmasked void func(int * uniform b, float c);|]
+    decl = [handleErrorcedecl|extern "C" unmasked void func(int * uniform b, float c);|]
     expected = "extern \"C\" unmasked void func(int *uniform b, float c);" 
-
 
 test_unmasked_qualifier_wvars :: Assertion
 test_unmasked_qualifier_wvars = pretty 80 (ppr decl) @?= expected
   where
-    decl = [ISPC.cedecl|extern "C" unmasked void $id:a(int * uniform $id:b, float $id:c);|]
+    decl = [handleErrorcedecl|extern "C" unmasked void $id:a(int * uniform $id:b, float $id:c);|]
       where
         a = "func"
         b = "b"
@@ -79,25 +77,25 @@ test_unmasked_qualifier_wvars = pretty 80 (ppr decl) @?= expected
 test_uniform :: Assertion
 test_uniform = pretty 80 (ppr decl) @?= expected
   where
-    decl = [ISPC.cedecl|uniform int a = 10;|]
+    decl = [handleErrorcedecl|uniform int a = 10;|]
     expected = "uniform int a = 10;"
 
 test_varying :: Assertion
 test_varying = pretty 80 (ppr decl) @?= expected
   where
-    decl = [ISPC.cedecl|varying int a = 5;|]
+    decl = [handleErrorcedecl|varying int a = 5;|]
     expected = "varying int a = 5;"
 
 test_export :: Assertion
 test_export = pretty 80 (ppr decl) @?= expected
   where
-    decl = [ISPC.cedecl|export int func(int a, float b){int c = 10;}|]
+    decl = [handleErrorcedecl|export int func(int a, float b){int c = 10;}|]
     expected = "export int func(int a, float b)\n{\n    int c = 10;\n}"
 
 test_extern :: Assertion
 test_extern = pretty 80 (ppr decl) @?= expected
   where
-    decl = [ISPC.cedecl|extern "C" void func(int a, float b);|]
+    decl = [handleErrorcedecl|extern "C" void func(int a, float b);|]
     expected = "extern \"C\" void func(int a, float b);"
 
 --  where

@@ -41,11 +41,12 @@ exts = [C.ISPC]
 
 typenames :: [String]
 typenames =
-  concatMap (typeN 4) ["int", "uint"]
-                      ++ ["float","float16", "double"]
+  concatMap (typeN 6) ["int", "uint"]
+  ++ ["float", "float16", "double", "bool", "void"]
+  ++ ["size_t", "ptrdiff_t", "intptr_t", "uintptr_t"]
 
 typeN :: Int -> String -> [String]
-typeN k typename = [typename ++ show (2^n) | n <- [3..k+2]]
+typeN k typename = [typename ++ show (2^n :: Integer) | n <- [3..k]]
 
 cdecl, cedecl, cenum, cexp, cfun, cinit, cparam, cparams, csdecl, cstm, cstms :: QuasiQuoter
 citem, citems, ctyquals, cty, cunit :: QuasiQuoter
