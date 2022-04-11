@@ -313,10 +313,11 @@ import qualified Language.C.Syntax as C
  'cfor'               { L _ T.TISPCcfor }
   ANTI_FOREACH_ITERS  { L _ (T.Tanti_foreach_iters _) }
 
--- Three shift-reduce conflicts:
+-- Four shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
 -- (2) Objective-C exception syntax (would need lookahead of 2 to disambiguate properly)
 -- (3) The standard dangling else conflict
+-- (4) ISPC syntax for 'unmasked' keyword, it is both a control flow structure and a type qualifier.
 %expect 4
 
 %monad { P } { >>= } { return }
