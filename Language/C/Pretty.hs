@@ -762,17 +762,17 @@ instance Pretty Stm where
         text "foreach_active" <+>
         parens (ppr var) <>
         pprBlock stm
-
     ppr (ForEachUnique ini var stm sloc) =
         srcloc sloc <>
         text "foreach_unique" <+>
         parens (ppr ini <> (text " in ") <> ppr var) <>
         pprBlock stm
+
     ppr (Unmasked stm sloc) =
         srcloc sloc <>
         text "unmasked" <+>
         pprBlock stm
- -- TODO do, while, for
+
     ppr (CIf test then' maybe_else sloc) =
         srcloc sloc <>
         text "cif" <+> parens (ppr test) <>
@@ -801,11 +801,9 @@ instance Pretty Stm where
     ppr (CWhile e stm sloc) =
         srcloc sloc <>
         text "cwhile" <+> parens (ppr e) <> pprBlock stm
-
     ppr (CDo stm e sloc) =
         srcloc sloc <>
         text "cdo" <> pprBlock stm <+/> text "while" <> parens (ppr e) <> semi
-
     ppr (CFor ini test post stm sloc) =
         srcloc sloc <>
         text "cfor" <+>
