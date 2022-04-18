@@ -923,6 +923,11 @@ instance Pretty Exp where
         parensIf (p > unopPrec) $
         ppr op <> pprPrec unopPrec1 e
 
+    pprPrec p (UnOp op@Deref e loc) =
+        pprLoc loc $
+        parensIf (p > unopPrec) $
+        ppr op <> pprPrec unopPrec1 e
+
     pprPrec p (UnOp op e loc) =
         pprLoc loc $
         prefixop p op e
