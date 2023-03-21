@@ -18,7 +18,6 @@ module Language.C.Parser.Lexer (
 
 import Control.Applicative
 import Control.Monad (when)
-import Control.Monad.Error
 import Control.Monad.Exception
 import Control.Monad.Identity
 import Control.Monad.State
