@@ -16,13 +16,11 @@ module Language.C.Parser.Lexer (
     lexToken
   ) where
 
+#if !MIN_VERSION_base(4,8,0)
 import Control.Applicative
+#endif /*!MIN_VERSION_base(4,8,0) */
 import Control.Monad (when)
-import Control.Monad.Error
-import Control.Monad.Exception
-import Control.Monad.Identity
 import Control.Monad.State
-import Control.Monad.Trans
 import qualified Data.ByteString.Char8 as B
 import Data.Char (isAlphaNum,
                   isDigit,
