@@ -88,7 +88,6 @@ module Language.C.Parser.Monad (
 import Control.Applicative (Applicative(..))
 #endif /* !MIN_VERSION_base(4,8,0) */
 import Control.Monad.Exception
-import Control.Monad.Identity
 import Control.Monad.State
 import Data.Bits
 import qualified Data.ByteString.Char8 as B

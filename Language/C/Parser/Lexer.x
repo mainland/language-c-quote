@@ -16,13 +16,8 @@ module Language.C.Parser.Lexer (
     lexToken
   ) where
 
-import Control.Applicative
 import Control.Monad (when)
-import Control.Monad.Error
-import Control.Monad.Exception
-import Control.Monad.Identity
 import Control.Monad.State
-import Control.Monad.Trans
 import qualified Data.ByteString.Char8 as B
 import Data.Char (isAlphaNum,
                   isDigit,
