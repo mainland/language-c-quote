@@ -16,6 +16,9 @@ module Language.C.Parser.Lexer (
     lexToken
   ) where
 
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative
+#endif /*!MIN_VERSION_base(4,8,0) */
 import Control.Monad (when)
 import Control.Monad.State
 import qualified Data.ByteString.Char8 as B
