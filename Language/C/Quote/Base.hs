@@ -224,19 +224,30 @@ qqIdE _                 = Nothing
 qqDeclSpecE :: C.DeclSpec -> Maybe (Q Exp)
 qqDeclSpecE (C.AntiDeclSpec v _) = Just $ antiVarE v
 qqDeclSpecE (C.AntiTypeDeclSpec extraStorage extraTypeQuals v _) =
-    Just [|let C.Type (C.DeclSpec storage typeQuals typeSpec loc) _ _
-                   = $(antiVarE v)
-           in
-             C.DeclSpec (storage ++ $(dataToExpQ qqExp extraStorage))
-                        (typeQuals ++ $(dataToExpQ qqExp extraTypeQuals))
-                        typeSpec
-                        loc
+    Just [|
+        case $(antiVarE v) of
+            C.Type (C.DeclSpec storage typeQuals typeSpec loc) _ _ ->
+                 C.DeclSpec
+                     (storage ++ $(dataToExpQ qqExp extraStorage))
+                     (typeQuals ++ $(dataToExpQ qqExp extraTypeQuals))
+                     typeSpec
+                     loc
+
+            x -> error
+                   $ "Impossible happened, expected C.Type (C.DeclSpec {}) but got "
+                   ++ show x
          |]
 qqDeclSpecE _ = Nothing
 
 qqDeclE :: C.Decl -> Maybe (Q Exp)
 qqDeclE (C.AntiTypeDecl v _) =
-    Just [|let C.Type _ decl _ = $(antiVarE v) in decl|]
+    Just [|
+        case $(antiVarE v) of
+            C.Type _ decl _ -> decl
+            x -> error
+                   $ "Impossible happened, expected C.Type but got "
+                   ++ show x
+    |]
 qqDeclE _ = Nothing
 
 qqTypeQualE :: C.TypeQual -> Maybe (Q Exp)
