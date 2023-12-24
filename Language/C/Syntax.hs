@@ -26,6 +26,7 @@ data Extensions = Antiquotation
                 | ObjC
                 | CUDA
                 | OpenCL
+                | ISPC
   deriving (Eq, Ord, Enum, Show)
 
 data Id = Id     String !SrcLoc
@@ -50,6 +51,10 @@ data Storage = Tauto                   !SrcLoc
              | TObjC__weak              !SrcLoc
              | TObjC__strong            !SrcLoc
              | TObjC__unsafe_unretained !SrcLoc
+
+             -- ISPC
+             | TISPCexport    !SrcLoc
+             | TISPCunmasked  !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data TypeQual = Tconst    !SrcLoc
@@ -85,6 +90,10 @@ data TypeQual = Tconst    !SrcLoc
               | TCLreadonly  !SrcLoc
               | TCLwriteonly !SrcLoc
               | TCLkernel    !SrcLoc
+
+              -- ISPC
+              | TISPCuniform !SrcLoc
+              | TISPCvarying !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data Sign = Tsigned   !SrcLoc
@@ -282,6 +291,18 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
           | ObjCThrow (Maybe Exp) !SrcLoc
           | ObjCSynchronized Exp [BlockItem] !SrcLoc
           | ObjCAutoreleasepool [BlockItem] !SrcLoc
+
+          -- ISPC
+          | ForEach [ForEachIter] Stm !SrcLoc
+          | ForEachActive Id Stm !SrcLoc
+          | ForEachTiled [ForEachIter] Stm !SrcLoc
+          | ForEachUnique Id Exp Stm !SrcLoc
+          | Unmasked Stm !SrcLoc
+          | CIf Exp Stm (Maybe Stm) !SrcLoc
+          | CWhile Exp Stm !SrcLoc
+          | CFor (Either InitGroup (Maybe Exp)) (Maybe Exp) (Maybe Exp) Stm !SrcLoc
+          | CDo Stm Exp !SrcLoc
+
     deriving (Eq, Ord, Show, Data, Typeable)
 
 data BlockItem = BlockDecl InitGroup
@@ -541,6 +562,17 @@ data ExeConfig = ExeConfig
     ,  exeStream     :: Maybe Exp
     ,  exeLoc        :: !SrcLoc
     }
+    deriving (Eq, Ord, Show, Data, Typeable)
+
+{------------------------------------------------------------------------------
+ -
+ - ISPC
+ -
+ ------------------------------------------------------------------------------}
+
+data ForEachIter =
+      ForEachIter Id Exp Exp !SrcLoc
+    | AntiForEachIters String !SrcLoc
     deriving (Eq, Ord, Show, Data, Typeable)
 
 {------------------------------------------------------------------------------

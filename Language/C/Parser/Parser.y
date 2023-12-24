@@ -293,11 +293,30 @@ import qualified Language.C.Syntax as C
  'kernel'       { L _ T.TCLkernel }
  '__kernel'     { L _ T.TCLkernel }
 
--- Three shift-reduce conflicts:
+ --
+ -- ISPC
+ --
+ 'uniform'            { L _ T.TISPCuniform }
+ 'varying'            { L _ T.TISPCvarying }
+ 'foreach'            { L _ T.TISPCforeach }
+ 'export'             { L _ T.TISPCexport }  
+ 'foreach_active'     { L _ T.TISPCactive }
+ 'foreach_tiled'      { L _ T.TISPCtiled }
+ 'unmasked'           { L _ T.TISPCunmasked }
+ 'foreach_unique'     { L _ T.TISPCunique }
+ 'in'                 { L _ T.TISPCin }
+ 'cif'                { L _ T.TISPCcif }
+ 'cwhile'             { L _ T.TISPCcwhile }
+ 'cdo'                { L _ T.TISPCcdo }
+ 'cfor'               { L _ T.TISPCcfor }
+  ANTI_FOREACH_ITERS  { L _ (T.Tanti_foreach_iters _) }
+
+-- Four shift-reduce conflicts:
 -- (1) Documented conflict in 'objc_protocol_declaration'
 -- (2) Objective-C exception syntax (would need lookahead of 2 to disambiguate properly)
 -- (3) The standard dangling else conflict
-%expect 3
+-- (4) The dangling else conflict, but for the 'cif' construct in ISPC.
+%expect 4
 
 %monad { P } { >>= } { return }
 %lexer { lexer } { L _ T.Teof }
@@ -342,6 +361,11 @@ import qualified Language.C.Syntax as C
 %name parseObjCKeywordArg  objc_keywordarg
 
 %right NAMED OBJCNAMED
+
+--
+-- ISPC
+--
+%name parseISPCForEachIters ispc_foreach_iter_list
 
 %%
 
@@ -1306,6 +1330,10 @@ storage_class_specifier :
   | '__strong'              { TSObjC__strong (srclocOf $1) }
   | '__unsafe_unretained'   { TSObjC__unsafe_unretained (srclocOf $1) }
 
+  -- ISPC
+  | 'export'                { TSISPCexport (srclocOf $1) }
+  | 'unmasked'              { TSISPCunmasked (srclocOf $1) }
+
 type_specifier :: { TySpec }
 type_specifier :
     'void'                    { TSvoid (srclocOf $1) }
@@ -1525,6 +1553,9 @@ type_qualifier :
   | '__write_only' { TSCLwriteonly (srclocOf $1) }
   | 'kernel'       { TSCLkernel (srclocOf $1) }
   | '__kernel'     { TSCLkernel (srclocOf $1) }
+
+  | 'uniform'      { TSISPCuniform (srclocOf $1) }
+  | 'varying'      { TSISPCvarying (srclocOf $1) }
 
 -- Consider the following C program:
 --
@@ -2151,6 +2182,12 @@ selection_statement :
       { Switch $3 $5 ($1 `srcspan` $5) }
   | 'switch' '(' expression error
       {% unclosed ($2 <--> $3) "(" }
+    
+  -- ISPC
+  | 'cif' '(' expression ')' statement
+      { CIf $3 $5 Nothing ($1 `srcspan` $5) }
+  | 'cif' '(' expression ')' statement 'else' statement
+      { CIf $3 $5 (Just $7) ($1 `srcspan` $7) }
 
 iteration_statement :: { Stm }
 iteration_statement :
@@ -2177,6 +2214,28 @@ iteration_statement :
   | 'for' '(' maybe_expression_nlt semi maybe_expression semi expression error
       {% unclosed ($2 <--> $7) "(" }
 
+  -- ISPC
+  | 'foreach' '(' ispc_foreach_iter_list ')' statement
+      { ForEach ($3) ($5) ($1 `srcspan` $5) }
+  | 'foreach_active' '(' identifier ')' statement
+      { ForEachActive ($3) ($5) ($1 `srcspan` $5) }
+  | 'foreach_tiled' '(' ispc_foreach_iter_list ')' statement
+      { ForEachTiled ($3) ($5) ($1 `srcspan` $5) }
+  | 'foreach_unique' '(' identifier 'in' expression ')' statement
+      { ForEachUnique ($3) ($5) ($7) ($1 `srcspan` $7) }
+  | 'cwhile' '(' expression ')' statement
+      { CWhile $3 $5 ($1 `srcspan` $5) }
+  | 'cdo' statement 'while' '(' expression ')' ';'
+      { CDo $2 $5 ($1 `srcspan` $7) }
+  | 'cfor' '(' declaration maybe_expression semi ')' statement
+      { CFor (Left $3) $4 Nothing $7 ($1 `srcspan` $7) }
+  | 'cfor' '(' maybe_expression_nlt semi maybe_expression semi ')' statement
+      { CFor (Right $3) $5 Nothing $8 ($1 `srcspan` $8) }
+  | 'cfor' '(' declaration maybe_expression semi expression ')' statement
+      { CFor (Left $3) $4 (Just $6) $8 ($1 `srcspan` $8) }
+  | 'cfor' '(' maybe_expression_nlt semi maybe_expression semi expression ')' statement
+      { CFor (Right $3) $5 (Just $7) $9 ($1 `srcspan` $9) }
+
 jump_statement :: { Stm }
 jump_statement :
     'goto' identifier ';'      { Goto $2 ($1 `srcspan` $3) }
@@ -2190,6 +2249,25 @@ jump_statement :
   | 'return' error             {% expected ["';'", "expression"] Nothing }
   | 'return' expression ';'    { Return (Just $2) ($1 `srcspan` $3) }
   | 'return' expression error  {% expected ["';'"] Nothing }
+
+ispc_foreach_iter :: { ForEachIter }
+ispc_foreach_iter :
+    identifier '=' assignment_expression '...' assignment_expression { ForEachIter ($1) ($3) ($5) ($1 `srcspan` $5) }
+
+ispc_foreach_iter_list :: { [ForEachIter] }
+ispc_foreach_iter_list :
+    ispc_foreach_iter_rlist { rev $1 }
+
+ispc_foreach_iter_rlist :: { RevList ForEachIter }
+ispc_foreach_iter_rlist :
+    ispc_foreach_iter
+      { rsingleton $1 }
+  | ANTI_FOREACH_ITERS
+      { rsingleton (AntiForEachIters (getANTI_FOREACH_ITERS $1) (srclocOf $1)) }
+  | ispc_foreach_iter_rlist ',' ispc_foreach_iter
+      { rcons $3 $1}
+  | ispc_foreach_iter_rlist ',' ANTI_ARGS
+      { rcons (AntiForEachIters (getANTI_FOREACH_ITERS $3) (srclocOf $3)) $1 }
 
 {------------------------------------------------------------------------------
  -
@@ -3432,6 +3510,11 @@ getANTI_OBJC_RECV         (L _ (T.Tanti_objc_recv v))         = v
 getANTI_OBJC_ARG          (L _ (T.Tanti_objc_arg v))          = v
 getANTI_OBJC_ARGS         (L _ (T.Tanti_objc_args v))         = v
 
+--
+-- ISPC
+--
+getANTI_FOREACH_ITERS     (L _ (T.Tanti_foreach_iters v))     = v
+
 lexer :: (L T.Token -> P a) -> P a
 lexer cont = do
     t <- lexToken
@@ -3508,6 +3591,12 @@ data TySpec = TSauto !SrcLoc
             | TSCLreadonly !SrcLoc
             | TSCLwriteonly !SrcLoc
             | TSCLkernel !SrcLoc
+
+            -- ISPC
+            | TSISPCuniform !SrcLoc
+            | TSISPCvarying !SrcLoc
+            | TSISPCexport !SrcLoc
+            | TSISPCunmasked !SrcLoc
   deriving (Eq, Ord, Show)
 
 instance Located TySpec where
@@ -3573,6 +3662,11 @@ instance Located TySpec where
     locOf (TSCLreadonly loc)      = locOf loc
     locOf (TSCLwriteonly loc)     = locOf loc
     locOf (TSCLkernel loc)        = locOf loc
+
+    locOf (TSISPCuniform loc)     = locOf loc
+    locOf (TSISPCvarying loc)     = locOf loc
+    locOf (TSISPCexport loc)      = locOf loc
+    locOf (TSISPCunmasked loc)    = locOf loc
 
 instance Pretty TySpec where
     ppr (TSauto _)                    = text "auto"
@@ -3642,6 +3736,11 @@ instance Pretty TySpec where
     ppr (TSCLwriteonly _)   = text "write_only"
     ppr (TSCLkernel _)      = text "__kernel"
 
+    ppr (TSISPCuniform _)      = text "uniform"
+    ppr (TSISPCvarying _)      = text "varying"
+    ppr (TSISPCexport _)       = text "export"
+    ppr (TSISPCunmasked _)     = text "unmasked"
+
 isStorage :: TySpec -> Bool
 isStorage (TSauto _)                    = True
 isStorage (TSregister _)                = True
@@ -3652,6 +3751,8 @@ isStorage (TS__block _)                 = True
 isStorage (TSObjC__weak _)              = True
 isStorage (TSObjC__strong _)            = True
 isStorage (TSObjC__unsafe_unretained _) = True
+isStorage (TSISPCexport _)              = True
+isStorage (TSISPCunmasked _)            = True
 isStorage _                             = False
 
 mkStorage :: [TySpec] -> [Storage]
@@ -3667,6 +3768,8 @@ mkStorage specs = map mk (filter isStorage specs)
       mk (TSObjC__weak loc)              = TObjC__weak loc
       mk (TSObjC__strong loc)            = TObjC__strong loc
       mk (TSObjC__unsafe_unretained loc) = TObjC__unsafe_unretained loc
+      mk (TSISPCexport loc)              = TISPCexport loc
+      mk (TSISPCunmasked loc)            = TISPCunmasked loc
       mk _                               = error "internal error in mkStorage"
 
 isTypeQual :: TySpec -> Bool
@@ -3692,6 +3795,8 @@ isTypeQual (TSCLconstant _)     = True
 isTypeQual (TSCLreadonly _)     = True
 isTypeQual (TSCLwriteonly _)    = True
 isTypeQual (TSCLkernel _)       = True
+isTypeQual (TSISPCuniform _)    = True
+isTypeQual (TSISPCvarying _)    = True
 isTypeQual _                    = False
 
 mkTypeQuals :: [TySpec] -> [TypeQual]
@@ -3720,6 +3825,8 @@ mkTypeQuals specs = map mk (filter isTypeQual specs)
       mk (TSCLreadonly loc)      = TCLreadonly loc
       mk (TSCLwriteonly loc)     = TCLwriteonly loc
       mk (TSCLkernel loc)        = TCLkernel loc
+      mk (TSISPCuniform loc)     = TISPCuniform loc
+      mk (TSISPCvarying loc)     = TISPCvarying loc
       mk _                       = error "internal error in mkTypeQual"
 
 isSign :: TySpec -> Bool

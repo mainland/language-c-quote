@@ -19,6 +19,7 @@ import Numeric (showHex)
 import GCC (gccTests)
 import Objc (objcTests, objcRegressionTests)
 import CUDA (cudaTests)
+import ISPC (ispcTests)
 import Text.PrettyPrint.Mainland
 import Text.PrettyPrint.Mainland.Class
 
@@ -36,6 +37,7 @@ tests = [ constantTests
         , objcTests
         , objcRegressionTests
         , cudaTests
+        , ispcTests
         ]
 
 constantTests :: Test

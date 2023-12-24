@@ -206,6 +206,22 @@ data Token = Teof
            | TCLwriteonly
            | TCLkernel
 
+           -- ISPC
+           | TISPCuniform
+           | TISPCvarying
+           | TISPCforeach
+           | TISPCexport
+           | TISPCactive
+           | TISPCtiled
+           | TISPCunmasked
+           | TISPCunique
+           | TISPCin
+           | TISPCcwhile
+           | TISPCcif
+           | TISPCcfor
+           | TISPCcdo
+           | Tanti_foreach_iters String
+
            -- Clang (currently active is Objective-C is active)
            | T__block
 
@@ -339,6 +355,11 @@ instance Show Token where
     show (Tanti_objc_recv s)         = showAnti "recv" s
     show (Tanti_objc_arg s)          = showAnti "kwarg" s
     show (Tanti_objc_args s)         = showAnti "kwargs" s
+
+    --
+    -- ISPC
+    --
+    show (Tanti_foreach_iters s)     = showAnti "foreachiters" s
 
     show t = fromMaybe (error "language-c-quote: internal error: unknown token")
                        (lookup t tokenStrings)
@@ -522,7 +543,24 @@ tokenStrings = [(Tlparen,     "("),
                 (TCLconstant,  "__constant"),
                 (TCLreadonly,  "read_only"),
                 (TCLwriteonly, "write_only"),
-                (TCLkernel,    "__kernel")
+                (TCLkernel,    "__kernel"),
+
+                --
+                -- ISPC extensions
+                --
+                (TISPCuniform, "uniform"),
+                (TISPCvarying, "varying"),
+                (TISPCforeach, "foreach"),
+                (TISPCexport,  "export"),
+                (TISPCactive, "foreach_active"),
+                (TISPCtiled, "foreach_tiled"),
+                (TISPCunmasked, "unmasked"),
+                (TISPCunique,   "unique"),
+                (TISPCin  ,   "in"),
+                (TISPCcif, "cif"),
+                (TISPCcwhile, "cwhile"),
+                (TISPCcdo, "cdo"),
+                (TISPCcfor, "cfor")
                 ]
 
 keywords :: [(String,      Token,      Maybe [Extensions])]
@@ -653,7 +691,24 @@ keywords = [("auto",       Tauto,      Nothing),
             ("write_only",   TCLwriteonly, Just [OpenCL]),
             ("__write_only", TCLwriteonly, Just [OpenCL]),
             ("kernel",       TCLkernel,    Just [OpenCL]),
-            ("__kernel",     TCLkernel,    Just [OpenCL])
+            ("__kernel",     TCLkernel,    Just [OpenCL]),
+
+            --
+            -- ISPC
+            --
+            ("uniform",      TISPCuniform, Just [ISPC]),
+            ("varying",      TISPCvarying, Just [ISPC]),
+            ("foreach",      TISPCforeach, Just [ISPC]),
+            ("export",       TISPCexport,  Just [ISPC]),
+            ("foreach_tiled",TISPCtiled,   Just [ISPC]),
+            ("foreach_active",TISPCactive, Just [ISPC]),
+            ("unmasked",    TISPCunmasked, Just [ISPC]),
+            ("foreach_unique",TISPCunique, Just [ISPC]),
+            ("in"            ,TISPCin    , Just [ISPC]),
+            ("cif",          TISPCcif,     Just [ISPC]),
+            ("cwhile",       TISPCcwhile,  Just [ISPC]),
+            ("cdo",          TISPCcdo,     Just [ISPC]),
+            ("cfor",         TISPCcfor,    Just [ISPC])
            ]
 
 type ExtensionsInt = Word32

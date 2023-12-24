@@ -219,6 +219,8 @@ instance Pretty Storage where
     ppr (TObjC__weak _)              = text "__weak"
     ppr (TObjC__strong _)            = text "__strong"
     ppr (TObjC__unsafe_unretained _) = text "__unsafe_unretained"
+    ppr (TISPCexport _)              = text "export"
+    ppr (TISPCunmasked _)            = text "unmasked"
 
 instance Pretty TypeQual where
     ppr (Tconst _)          = text "const"
@@ -250,6 +252,9 @@ instance Pretty TypeQual where
     ppr (TCLreadonly _)     = text "read_only"
     ppr (TCLwriteonly _)    = text "write_only"
     ppr (TCLkernel _)       = text "__kernel"
+
+    ppr (TISPCuniform _)    = text "uniform"
+    ppr (TISPCvarying _)    = text "varying"
 
 instance Pretty Sign where
     ppr (Tsigned _)    = text "signed"
@@ -742,6 +747,69 @@ instance Pretty Stm where
         <>  text "@autoreleasepool"
         </> ppr block
 
+    ppr (ForEach inis stm sloc) =
+        srcloc sloc <>
+        text "foreach" <+>
+        parens (commasep $ map ppr inis) <>
+        pprBlock stm
+    ppr (ForEachTiled inis stm sloc) =
+        srcloc sloc <>
+        text "foreach_tiled" <+>
+        parens (commasep $ map ppr inis) <>
+        pprBlock stm
+    ppr (ForEachActive var stm sloc) =
+        srcloc sloc <>
+        text "foreach_active" <+>
+        parens (ppr var) <>
+        pprBlock stm
+    ppr (ForEachUnique ini var stm sloc) =
+        srcloc sloc <>
+        text "foreach_unique" <+>
+        parens (ppr ini <> (text " in ") <> ppr var) <>
+        pprBlock stm
+
+    ppr (Unmasked stm sloc) =
+        srcloc sloc <>
+        text "unmasked" <+>
+        pprBlock stm
+
+    ppr (CIf test then' maybe_else sloc) =
+        srcloc sloc <>
+        text "cif" <+> parens (ppr test) <>
+        pprThen then' (fmap pprElse maybe_else)
+      where
+        isIf :: Stm -> Bool
+        isIf If{} = True
+        isIf (Comment _ stm _) = isIf stm
+        isIf _ = False
+
+        pprThen :: Stm -> Maybe Doc -> Doc
+        pprThen stm@(Block {}) rest        = space <> ppr stm <+> maybe empty id rest
+        pprThen stm            rest
+          | isIf stm                       = space <> ppr [BlockStm stm] <+> maybe empty id rest
+        pprThen stm            Nothing     = nest 4 (line <> ppr stm)
+        pprThen stm            (Just rest) = nest 4 (line <> ppr stm) </> rest
+
+        pprElse :: Stm -> Doc
+        pprElse stm =
+            text "else" <> go stm
+          where
+            go :: Stm -> Doc
+            go (Block {}) = space <> ppr stm
+            go (If {})    = space <> ppr stm
+            go _stm       = nest 4 (line <> ppr stm)
+    ppr (CWhile e stm sloc) =
+        srcloc sloc <>
+        text "cwhile" <+> parens (ppr e) <> pprBlock stm
+    ppr (CDo stm e sloc) =
+        srcloc sloc <>
+        text "cdo" <> pprBlock stm <+/> text "while" <> parens (ppr e) <> semi
+    ppr (CFor ini test post stm sloc) =
+        srcloc sloc <>
+        text "cfor" <+>
+        (parens . semisep) [either ppr ppr ini, ppr test, ppr post] <>
+        pprBlock stm
+
 pprBlock :: Stm -> Doc
 pprBlock stm@(Block {}) = space <> ppr stm
 pprBlock stm@(If {})    = space <> ppr [BlockStm stm]
@@ -851,6 +919,11 @@ instance Pretty Exp where
         ppr op <> pprPrec unopPrec1 e
 
     pprPrec p (UnOp op@Negate e loc) =
+        pprLoc loc $
+        parensIf (p > unopPrec) $
+        ppr op <> pprPrec unopPrec1 e
+
+    pprPrec p (UnOp op@Deref e loc) =
         pprLoc loc $
         parensIf (p > unopPrec) $
         ppr op <> pprPrec unopPrec1 e
@@ -1194,3 +1267,8 @@ instance Pretty ObjCRecv where
     ppr (ObjCRecvSuper loc) = pprLoc loc $ text "super"
     ppr (ObjCRecvExp e loc) = pprLoc loc $ ppr e
     ppr (AntiObjCRecv v _)  = pprAnti "recv" v
+
+instance Pretty ForEachIter where
+    ppr (ForEachIter ident from to loc) =
+        pprLoc loc $ ppr ident <+> text "=" <+> ppr from <+> text "..." <+> ppr to
+    ppr (AntiForEachIters v _) = pprAnti "foreachiters" v
