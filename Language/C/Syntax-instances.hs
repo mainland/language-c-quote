@@ -13,6 +13,8 @@ instance Located Storage where
   locOf (TObjC__weak l) = locOf l
   locOf (TObjC__strong l) = locOf l
   locOf (TObjC__unsafe_unretained l) = locOf l
+  locOf (TISPCexport l) = locOf l
+  locOf (TISPCunmasked l) = locOf l
 instance Located TypeQual where
   locOf (Tconst l) = locOf l
   locOf (Tvolatile l) = locOf l
@@ -37,6 +39,8 @@ instance Located TypeQual where
   locOf (TCLreadonly l) = locOf l
   locOf (TCLwriteonly l) = locOf l
   locOf (TCLkernel l) = locOf l
+  locOf (TISPCuniform l) = locOf l
+  locOf (TISPCvarying l) = locOf l
 instance Located Sign where
   locOf (Tsigned l) = locOf l
   locOf (Tunsigned l) = locOf l
@@ -176,6 +180,16 @@ instance Located Stm where
   locOf (ObjCThrow _ l) = locOf l
   locOf (ObjCSynchronized _ _ l) = locOf l
   locOf (ObjCAutoreleasepool _ l) = locOf l
+  locOf (ForEach _ _ l) = locOf l
+  locOf (ForEachTiled _ _ l) = locOf l
+  locOf (ForEachActive _ _ l) = locOf l
+  locOf (ForEachUnique _ _ _ l) = locOf l
+  locOf (Unmasked _ l) = locOf l
+  locOf (CIf _ _ _ l) = locOf l
+  locOf (CWhile _ _ l) = locOf l
+  locOf (CFor _ _ _ _ l) = locOf l
+  locOf (CDo _ _ l) = locOf l
+
 instance Located BlockItem where
   locOf (BlockDecl _) = noLoc
   locOf (BlockStm _) = noLoc
@@ -306,6 +320,9 @@ instance Located ObjCArg where
 instance Located ObjCDictElem where
   locOf (ObjCDictElem _ _ l) = locOf l
   locOf (AntiObjCDictElems _ l) = locOf l
+instance Located ForEachIter where
+  locOf (ForEachIter _ _ _ l) = locOf l
+  locOf (AntiForEachIters _ l) = locOf l
 instance Relocatable Id where
   reloc l (Id x0 _) = (Id x0 (fromLoc l))
   reloc l (AntiId x0 _) = (AntiId x0 (fromLoc l))
@@ -321,6 +338,8 @@ instance Relocatable Storage where
   reloc l (TObjC__weak _) = (TObjC__weak (fromLoc l))
   reloc l (TObjC__strong _) = (TObjC__strong (fromLoc l))
   reloc l (TObjC__unsafe_unretained _) = (TObjC__unsafe_unretained (fromLoc l))
+  reloc l (TISPCexport _) = (TISPCexport (fromLoc l))
+  reloc l (TISPCunmasked _) = (TISPCunmasked (fromLoc l))
 instance Relocatable TypeQual where
   reloc l (Tconst _) = (Tconst (fromLoc l))
   reloc l (Tvolatile _) = (Tvolatile (fromLoc l))
@@ -345,6 +364,8 @@ instance Relocatable TypeQual where
   reloc l (TCLreadonly _) = (TCLreadonly (fromLoc l))
   reloc l (TCLwriteonly _) = (TCLwriteonly (fromLoc l))
   reloc l (TCLkernel _) = (TCLkernel (fromLoc l))
+  reloc l (TISPCuniform _) = (TISPCuniform (fromLoc l))
+  reloc l (TISPCvarying _) = (TISPCvarying (fromLoc l))
 instance Relocatable Sign where
   reloc l (Tsigned _) = (Tsigned (fromLoc l))
   reloc l (Tunsigned _) = (Tunsigned (fromLoc l))
@@ -490,6 +511,15 @@ instance Relocatable Stm where
   reloc l (ObjCThrow x0 _) = (ObjCThrow x0 (fromLoc l))
   reloc l (ObjCSynchronized x0 x1 _) = (ObjCSynchronized x0 x1 (fromLoc l))
   reloc l (ObjCAutoreleasepool x0 _) = (ObjCAutoreleasepool x0 (fromLoc l))
+  reloc l (ForEach x0 x1 _) = (ForEach x0 x1 (fromLoc l))
+  reloc l (ForEachTiled x0 x1 _) = (ForEachTiled x0 x1 (fromLoc l))
+  reloc l (ForEachActive x0 x1 _) = (ForEachActive x0 x1 (fromLoc l))
+  reloc l (ForEachUnique x0 x1 x2 _) = (ForEachUnique x0 x1 x2 (fromLoc l))
+  reloc l (Unmasked x0 _) = (Unmasked x0 (fromLoc l))
+  reloc l (CIf x0 x1 x2 _) = (CIf x0 x1 x2 (fromLoc l))
+  reloc l (CWhile x0 x1 _) = (CWhile x0 x1 (fromLoc l))
+  reloc l (CFor x0 x1 x2 x3 _) = (CFor x0 x1 x2 x3 (fromLoc l))
+  reloc l (CDo x0 x1 _) = (CDo x0 x1 (fromLoc l))
 instance Relocatable BlockItem where
   reloc _ (BlockDecl x0) = (BlockDecl x0)
   reloc _ (BlockStm x0) = (BlockStm x0)
@@ -623,3 +653,6 @@ instance Relocatable ObjCArg where
 instance Relocatable ObjCDictElem where
   reloc l (ObjCDictElem x0 x1 _) = (ObjCDictElem x0 x1 (fromLoc l))
   reloc l (AntiObjCDictElems x0 _) = (AntiObjCDictElems x0 (fromLoc l))
+instance Relocatable ForEachIter where
+  reloc l (ForEachIter x0 x1 x2 _) = (ForEachIter x0 x1 x2 (fromLoc l))
+  reloc l (AntiForEachIters x0 _) = (AntiForEachIters x0 (fromLoc l))
