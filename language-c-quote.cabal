@@ -35,7 +35,7 @@ description:
 build-type: Simple
 
 extra-source-files:
-  Language/C/Syntax-instances.hs
+  src/Language/C/Syntax-instances.hs
   CHANGELOG.md
 
 flag full-haskell-antiquotes
@@ -46,6 +46,8 @@ flag full-haskell-antiquotes
   manual:      True
 
 library
+  hs-source-dirs: src
+
   default-language: Haskell2010
 
   build-depends:
@@ -104,7 +106,7 @@ library
     Language.C.Smart
     Language.C.Syntax
 
-  include-dirs: .
+  include-dirs: src
 
   ghc-options: -Wall
 

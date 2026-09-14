@@ -13,7 +13,7 @@ APRUTIL_VERSION=1.5.4
 GHCFLAGS = -Wall -O
 
 # So we can use MIN_VERSION macros
-GHCFLAGS += -DFULL_HASKELL_ANTIQUOTES -I../.. -optP-include -optPdist/build/autogen/cabal_macros.h
+GHCFLAGS += -DFULL_HASKELL_ANTIQUOTES -I../../src -optP-include -optPdist/build/autogen/cabal_macros.h
 
 #
 # To support cabal sandbox
@@ -25,7 +25,7 @@ GHCFLAGS += \
 endif
 
 SOURCE = Main.hs Opts.hs \
-	$(shell find ../../Language -name .svn -prune -o -type f | grep -v .svn) \
+	$(shell find ../../src/Language -name .svn -prune -o -type f | grep -v .svn) \
 	../../dist/build/Language/C/Parser/Lexer.hs \
 	../../dist/build/Language/C/Parser/Parser.hs
 
@@ -38,16 +38,16 @@ clean :
 	../../dist/build/Language/C/Parser/Lexer.hs \
 	../../dist/build/Language/C/Parser/Parser.hs
 
-../../dist/build/Language/C/Parser/Parser.hs : ../../Language/C/Parser/Parser.y
+../../dist/build/Language/C/Parser/Parser.hs : ../../src/Language/C/Parser/Parser.y
 	$(HAPPY) $(HAPPY_ARGS) -o $@ $<
 
-../../dist/build/Language/C/Parser/Lexer.hs : ../../Language/C/Parser/Lexer.x
+../../dist/build/Language/C/Parser/Lexer.hs : ../../src/Language/C/Parser/Lexer.x
 	$(ALEX) $(ALEX_ARGS) -o $@ $<
 
 parse : $(SOURCE)
 	@mkdir -p obj
 	$(GHC) $(GHCFLAGS) --make Main.hs -odir obj -hidir obj \
-		-i../.. -i../../dist/build \
+		-i../../src -i../../dist/build \
 		-o $@
 
 .PHONY : apache-code

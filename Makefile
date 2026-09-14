@@ -10,7 +10,7 @@ HAPPYFLAGS=-agci
 ALEX=alex 
 ALEXFLAGS=-gi
 
-LIBSRC = $(shell find Language -type f) \
+LIBSRC = $(shell find src/Language -type f) \
 	dist/build/Language/C/Parser/Lexer.hs \
 	dist/build/Language/C/Parser/Parser.hs
 
@@ -30,10 +30,10 @@ endif
 #
 # Support Cabal's MIN_VERSION
 #
-GHCFLAGS += -DFULL_HASKELL_ANTIQUOTES -I. -optP-include -optPdist/build/autogen/cabal_macros.h
+GHCFLAGS += -DFULL_HASKELL_ANTIQUOTES -Isrc -optP-include -optPdist/build/autogen/cabal_macros.h
 
 .PHONY : all
-all : Language/C/Syntax-instances.hs
+all : src/Language/C/Syntax-instances.hs
 
 .PHONY : clean
 clean :
@@ -44,23 +44,23 @@ clean :
 dist/build/autogen/cabal_macros.h :
 	cabal build
 
-dist/build/Language/C/Parser/Parser.hs : Language/C/Parser/Parser.y dist/build/autogen/cabal_macros.h
+dist/build/Language/C/Parser/Parser.hs : src/Language/C/Parser/Parser.y dist/build/autogen/cabal_macros.h
 	$(HAPPY) $(HAPPYFLAGS) -o $@ $<
 
-dist/build/Language/C/Parser/Lexer.hs : Language/C/Parser/Lexer.x dist/build/autogen/cabal_macros.h
+dist/build/Language/C/Parser/Lexer.hs : src/Language/C/Parser/Lexer.x dist/build/autogen/cabal_macros.h
 	$(ALEX) $(ALEXFLAGS) -o $@ $<
 
-Language/C/Syntax-instances.hs : bin/gen-instances.hs bin/Derive.hs
-	$(RUNGHC) $(RUNGHCFLAGS) -ibin -DONLY_TYPEDEFS $< > $@ || rm -f $@
+src/Language/C/Syntax-instances.hs : bin/gen-instances.hs bin/Derive.hs
+	$(RUNGHC) $(RUNGHCFLAGS) -isrc -ibin -DONLY_TYPEDEFS $< > $@ || rm -f $@
 
 test : Test.hs $(LIBSRC)
 	@mkdir -p obj
 	$(GHC) $(GHCFLAGS) --make $< -odir obj -hidir obj \
-		-i. -idist/build \
+		-isrc -idist/build \
 		-o $@
 
 neg : Neg.hs $(LIBSRC)
 	@mkdir -p obj
 	$(GHC) $(GHCFLAGS) --make $< -odir obj -hidir obj \
-		-i. -idist/build \
+		-isrc -idist/build \
 		-o $@
