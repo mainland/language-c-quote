@@ -189,4 +189,4 @@ test-suite unit
 
 source-repository head
   type:     git
-  location: git://github.com/mainland/language-c-quote.git
+  location: https://github.com/mainland/language-c-quote.git
