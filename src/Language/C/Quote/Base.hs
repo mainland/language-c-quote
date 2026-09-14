@@ -45,7 +45,8 @@ import qualified Language.C.Syntax          as C
 
 newtype LongDouble = LongDouble Double
 
--- | An instance of 'ToIndent' can be converted to a 'C.Id'.
+-- | A value with a 'ToIdent' instance can be converted to an
+-- @<Language-C-Syntax.html#t:Id Id>@.
 class ToIdent a where
     toIdent :: a -> SrcLoc -> C.Id
 
@@ -58,7 +59,8 @@ instance ToIdent (SrcLoc -> C.Id) where
 instance ToIdent String where
     toIdent s loc = C.Id s loc
 
--- | An instance of 'ToConst' can be converted to a 'C.Const'.
+-- | A value with a 'ToConst' instance can be converted to a
+-- @<Language-C-Syntax.html#t:Const Const>@.
 class ToConst a where
     toConst :: a -> SrcLoc -> C.Const
 
@@ -147,7 +149,8 @@ instance ToConst Char where
 instance ToConst String where
     toConst s loc = C.StringConst [show s] s loc
 
--- | An instance of 'ToExp' can be converted to a 'C.Exp'.
+-- | A value with a 'ToExp' instance can be converted to an
+-- @<Language-C-Syntax.html#t:Exp Exp>@.
 class ToExp a where
     toExp :: a -> SrcLoc -> C.Exp
 
