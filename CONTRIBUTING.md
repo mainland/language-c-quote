@@ -39,6 +39,9 @@ The generated GitHub Actions workflow checks the default configuration and the
 The constraint set in `cabal.haskell-ci` disables full Haskell antiquotes and
 enables both building and running the tests.
 
+The `development-tools` constraint set builds the optional instance generator
+and example parser from the source archive across the same compiler matrix.
+
 CI lets Cabal select `containers`, `binary`, and `text` instead of requiring
 the copies bundled with GHC. This lets newer compilers build with published
 pretty-printer versions whose dependency bounds require older `containers`.

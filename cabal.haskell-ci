@@ -6,3 +6,8 @@ constraint-set simple-haskell-antiquotes
   constraints: language-c-quote -full-haskell-antiquotes
   tests: True
   run-tests: True
+
+constraint-set development-tools
+  constraints: language-c-quote +development-tools
+  tests: False
+  run-tests: False
