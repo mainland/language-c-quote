@@ -95,9 +95,12 @@ constantAntiquotationsTests = testGroup "Constant antiquotations" $
 
     test_hexconst :: Assertion
     test_hexconst =
-        [cexp|$const:(hexconst (10 :: Integer))|]
+        [cexp|$const:(hexconst ten)|]
           @?= C.Const (C.IntConst "0xa" C.Signed 10 noLoc) noLoc
       where
+        ten :: Integer
+        ten = 10
+
         hexconst :: Integral a => a -> C.Const
         hexconst i = C.IntConst ("0x" ++ showHex x "") C.Signed x noLoc
           where
@@ -106,9 +109,12 @@ constantAntiquotationsTests = testGroup "Constant antiquotations" $
 
     test_hexconst_u :: Assertion
     test_hexconst_u =
-        [cexp|$const:(hexconst_u (10 :: Integer))|]
+        [cexp|$const:(hexconst_u ten)|]
           @?= C.Const (C.IntConst "0xa" C.Unsigned 10 noLoc) noLoc
       where
+        ten :: Integer
+        ten = 10
+
         hexconst_u :: Integral a => a -> C.Const
         hexconst_u i = C.IntConst ("0x" ++ showHex x "") C.Unsigned x noLoc
           where

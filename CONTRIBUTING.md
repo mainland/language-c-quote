@@ -11,6 +11,19 @@ Supported compilers start at GHC 8.0. The tested versions are listed in
 `language-c-quote.cabal`. Use Cabal's `-w` option to select another compiler.
 Cabal manages dependencies and generates the lexer and parser with Alex and Happy.
 
+Test both antiquote parsers when changing quotation support or its tests:
+
+```sh
+cabal test all -ffull-haskell-antiquotes --test-show-details=direct
+cabal test all -f-full-haskell-antiquotes --test-show-details=direct
+```
+
+The default enables full Haskell expressions and patterns through
+`haskell-src-meta`. Disabling the flag uses the simpler `haskell-exp-parser`.
+Keep shared tests within the simpler parser's syntax, with type annotations in
+ordinary Haskell bindings. Put tests requiring full Haskell syntax in
+`tests/unit/MainCPP.hs`, guarded by `FULL_HASKELL_ANTIQUOTES`.
+
 ## Formatting
 
 Format hand-written Haskell modules with Stylish Haskell:
