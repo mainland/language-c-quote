@@ -10,20 +10,25 @@
 -- variant. 'Language.C.Quote.C' parses C99, 'Language.C.Quote.GCC' parses C99
 -- plus GNU extensions, 'Language.C.Quote.CUDA' parses C99 plus GNU and CUDA
 -- extensions, 'Language.C.Quote.OpenCL' parses C99 plus GNU and OpenCL
--- extensions and, 'Language.C.Quote.ObjC' parses C99 plus a subset of Objective-C
+-- extensions, and 'Language.C.Quote.ObjC' parses C99 with GNU extensions,
+-- blocks, and a subset of Objective-C.
 --
--- For version of GHC prior to 7.4, the quasiquoters generate Template Haskell
--- expressions that use data constructors that must be in scope where the
--- quasiquoted expression occurs. You will be safe if you add the following
--- imports to any module using the quasiquoters provided by this package:
+-- Enable @QuasiQuotes@ and import the quasiquoters for the desired dialect.
+-- They construct or match C syntax trees in Haskell expressions and patterns:
 --
--- > import qualified Data.Loc
--- > import qualified Language.C.Syntax
+-- > {-# LANGUAGE QuasiQuotes #-}
+-- > import Language.C.Quote.C (cexp)
+-- > import qualified Language.C.Syntax as C
 --
--- These modules may also be imported unqualified, of course. The quasiquoters
--- also use some constructors defined in the standard Prelude, so if it is not
--- imported by default, it must be imported qualified. On GHC 7.4 and above, you
--- can use the quasiquoters without worrying about what names are in scope.
+-- > addOne :: C.Exp -> C.Exp
+-- > addOne x = [cexp| $exp:x + 1 |]
+-- >
+-- > integerValue :: C.Exp -> Maybe Integer
+-- > integerValue [cexp| $int:n |] = Just n
+-- > integerValue _ = Nothing
+--
+-- The qualified syntax import also supplies constructor names used by some
+-- pattern antiquotes.
 --
 -- The following quasiquoters are defined:
 --
@@ -43,7 +48,7 @@
 -- [@citem@] Block item, of type @'BlockItem'@. A block item is either a
 -- declaration or a statement.
 --
--- [@citems@] A list of block items, of type @['BlockItem'].
+-- [@citems@] A list of block items, of type @['BlockItem']@.
 --
 -- [@cfun@] Function definition, of type @'Func'@.
 --
@@ -55,11 +60,14 @@
 --
 -- [@csdecl@] Declaration of a struct member, of type @'FieldGroup'@.
 --
--- [@ctyquals@] A list of type qualifiers, of type @['TyQual']@.
+-- [@ctyquals@] A list of type qualifiers, of type @['TypeQual']@.
 --
 -- [@cty@] A C type, of type @'Type'@.
 --
 -- [@cunit@] A compilation unit, of type @['Definition']@.
+--
+-- 'Language.C.Quote.GCC' additionally provides @cattr@ for a GNU attribute,
+-- of type @'Attr'@.
 --
 -- In addition, Objective-C support defines the following quasiquoters:
 --
@@ -79,21 +87,27 @@
 --
 -- [@objcmethdef@] Method definition, of type @'Definition'@
 --
--- [@objcrecv@] Receiver, of type @'ObjCRecv'@
+-- [@objcmethrecv@] Receiver, of type @'ObjCRecv'@
 --
 -- [@objcarg@] Keyword argument, of type @'ObjCArg'@
 --
 --
 -- Antiquotations allow splicing in subterms during quotation. These subterms
--- may bound to a Haskell variable or may be the value of a Haskell
+-- may be bound to a Haskell variable or may be the value of a Haskell
 -- expression. Antiquotations appear in a quasiquotation in the form
 -- @$ANTI:VARID@, where @ANTI@ is a valid antiquote specifier and @VARID@ is a
 -- Haskell variable identifier, or in the form @$ANTI:(EXP)@, where @EXP@ is a
--- Haskell expressions (the parentheses must appear in this case). The Haskell
+-- Haskell expression (the parentheses must appear in this case). The Haskell
 -- expression may itself contain a quasiquote, but in that case the final @|]@
 -- must be escaped as @\\|\\]@. Additionally, @$VARID@ is shorthand for
 -- @$exp:VARID@ and @$(EXP)@ is shorthand for @$exp:(EXP)@, i.e., @exp@ is the
 -- default antiquote specifier.
+--
+-- The Cabal flag @full-haskell-antiquotes@ is enabled by default and uses
+-- @haskell-src-meta@ to parse Haskell expressions and patterns. Disabling it
+-- uses @haskell-exp-parser@, which supports a smaller syntax. For portable
+-- antiquotes, put computations and type annotations in ordinary Haskell
+-- bindings and splice the resulting variables.
 --
 -- It is often useful to use typedefs that aren't in scope when quasiquoting,
 -- e.g., @[cdecl|uint32_t foo;|]@. The quasiquoter will complain when it sees
@@ -135,7 +149,7 @@
 -- [@double@] A @double@ constant. The argument must be an instance of
 -- @'Fractional'@.
 --
--- [@long double@] A @long double@ constant. The argument must be an instance
+-- [@ldouble@] A @long double@ constant. The argument must be an instance
 -- of @'Fractional'@.
 --
 -- [@char@] A @char@ constant. The argument must have type @'Char'@.
@@ -162,7 +176,7 @@
 --
 -- [@enum@] An enum member. The argument must have type @'CEnum'@.
 --
--- [@enums@] An list of enum members. The argument must have type @['CEnum']@.
+-- [@enums@] A list of enum members. The argument must have type @['CEnum']@.
 --
 -- [@esc@] An arbitrary top-level C "definition," such as an @#include@ or a
 -- @#define@. The argument must have type @'String'@.  Also: an uninterpreted,
@@ -174,22 +188,22 @@
 --
 -- [@edecl@] An external definition. The argument must have type @'Definition'@.
 --
--- [@edecls@] An list of external definitions. The argument must have type
+-- [@edecls@] A list of external definitions. The argument must have type
 -- @['Definition']@.
 --
 -- [@item@] A statement block item. The argument must have type @'BlockItem'@.
 --
--- [@items@] A list of statement block item. The argument must have type
+-- [@items@] A list of statement block items. The argument must have type
 -- @['BlockItem']@.
 --
 -- [@stm@] A statement. The argument must have type @'Stm'@.
 --
 -- [@stms@] A list of statements. The argument must have type @['Stm']@.
 --
--- [@tyqual@] A type qualifier. The argument must have type @'TyQual'@.
+-- [@tyqual@] A type qualifier. The argument must have type @'TypeQual'@.
 --
 -- [@tyquals@] A list of type qualifiers. The argument must have type
--- @['TyQual']@.
+-- @['TypeQual']@.
 --
 -- [@ty@] A C type. The argument must have type @'Type'@.
 --
@@ -207,12 +221,16 @@
 -- [@inits@] A list of initializers. The argument must have type
 -- @['Initializer']@.
 --
+-- [@attr@] A GNU attribute. The argument must have type @'Attr'@.
+--
+-- [@attrs@] A list of GNU attributes. The argument must have type @['Attr']@.
+--
 -- In addition, Objective-C code can use these antiquote specifiers:
 --
 -- [@ifdecl@] A class interface declaration. The argument must have type
 -- @'ObjCIfaceDecl'@.
 --
--- [@ifdecls@] A list of class interface declaration. The argument must have
+-- [@ifdecls@] A list of class interface declarations. The argument must have
 -- type @['ObjCIfaceDecl']@.
 --
 -- [@prop@] A property declaration. The argument must have type
@@ -227,7 +245,7 @@
 -- [@propattrs@] A list of property attribute. The argument must have type
 -- @['ObjCPropAttr']@.
 --
--- [@dictelems@] A list dictionary elements. The argument must have type
+-- [@dictelems@] A list of dictionary elements. The argument must have type
 -- @['ObjCDictElem']@.
 --
 -- [@methparam@] A method parameter. The argument must have type
@@ -240,14 +258,14 @@
 -- @'ObjCMethodProto'@.
 --
 -- [@methdef@] A method definition. The argument must have type
--- @['Definition']@.
+-- @'Definition'@.
 --
 -- [@methdefs@] A list of method definitions. The argument must have type
 -- @['Definition']@.
 --
 -- [@recv@] A receiver. The argument must have type @'ObjCRecv'@.
 --
--- [@kwarg@] A keywords argument. The argument must have type
+-- [@kwarg@] A keyword argument. The argument must have type
 -- @'ObjCArg'@.
 --
 -- [@kwargs@] A list of keyword arguments. The argument must have type
