@@ -1,10 +1,6 @@
-{-# LANGUAGE CPP                #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE CPP #-}
 
 module Main where
-
-import           Data.Generics
 
 import           Language.C.Syntax
 
