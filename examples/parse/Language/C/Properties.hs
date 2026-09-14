@@ -10,6 +10,7 @@ module Language.C.Properties where
 import qualified Data.ByteString.Char8 as B
 import Data.Loc
 import Text.PrettyPrint.Mainland
+import Text.PrettyPrint.Mainland.Class
 
 import Language.C.Syntax as C
 import qualified Language.C.Parser as P
@@ -29,7 +30,7 @@ prop_ParsePrintUnitId exts s_ =
     parse :: B.ByteString -> Either String [C.Definition]
     parse s =
         case P.parse exts [] P.parseUnit s (Just pos) of
-          Left err   -> fail $ show err
+          Left err   -> Left $ show err
           Right defs -> return defs
       where
         pos = startPos "<internal>"

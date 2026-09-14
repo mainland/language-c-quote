@@ -4,6 +4,7 @@ import qualified Data.ByteString.Char8 as B
 import Data.Loc
 import System.Environment (getArgs)
 import Text.PrettyPrint.Mainland
+import Text.PrettyPrint.Mainland.Class
 
 import qualified Language.C.Parser as P
 import qualified Language.C.Parser.Tokens as T
@@ -63,7 +64,7 @@ parseFile flags exts filename = do
                          else putStr $ pretty 80 (ppr defs)
                     else return ()
     when (not (prop_ParsePrintUnitId exts s)) $
-        putStrLn $ "Bad pretty-printing: " ++ filename
+        fail $ "Bad pretty-printing: " ++ filename
   where
     doPrint :: Bool
     doPrint = Print `elem` flags

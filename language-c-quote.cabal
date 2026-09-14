@@ -37,12 +37,21 @@ build-type: Simple
 extra-source-files:
   src/Language/C/Syntax-instances.hs
   CHANGELOG.md
+  CONTRIBUTING.md
+  README.md
+  scripts/regenerate-instances.sh
+  examples/parse/test.sh
 
 flag full-haskell-antiquotes
   description: Support full Haskell expressions/patterns in antiquotes. This
                adds a dependency on haskell-src-meta, which increases
                compilation time.
   default:     True
+  manual:      True
+
+flag development-tools
+  description: Build the instance generator and example C parser.
+  default:     False
   manual:      True
 
 library
@@ -112,6 +121,46 @@ library
 
   if flag(full-haskell-antiquotes)
     cpp-options: -DFULL_HASKELL_ANTIQUOTES
+
+executable gen-instances
+  if !flag(development-tools)
+    buildable: False
+
+  hs-source-dirs: bin src
+  main-is: gen-instances.hs
+  other-modules:
+    Derive
+    Language.C.Syntax
+
+  default-language: Haskell2010
+  ghc-options: -Wall
+  cpp-options: -DONLY_TYPEDEFS
+
+  build-depends:
+    base            >= 4.9 && < 5,
+    mainland-pretty >= 0.7 && < 0.8,
+    srcloc          >= 0.4 && < 0.7,
+    syb             >= 0.3 && < 0.8
+
+executable parse-c
+  if !flag(development-tools)
+    buildable: False
+
+  hs-source-dirs: examples/parse
+  main-is: Main.hs
+  other-modules:
+    Opts
+    Language.C.Properties
+
+  default-language: Haskell2010
+  ghc-options: -Wall
+
+  build-depends:
+    base            >= 4.9 && < 5,
+    bytestring      >= 0.9 && < 0.13,
+    language-c-quote,
+    mainland-pretty >= 0.7 && < 0.8,
+    srcloc          >= 0.4 && < 0.7
 
 test-suite unit
   type:             exitcode-stdio-1.0

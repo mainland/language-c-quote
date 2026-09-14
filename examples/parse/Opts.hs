@@ -41,4 +41,4 @@ compilerOpts argv =
       ; (_,_,errs) -> ioError (userError (concat errs ++ usageInfo header options))
       }
   where
-    header = "Usage: parse [OPTION...] files..."
+    header = "Usage: parse-c [OPTION...] files..."
