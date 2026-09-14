@@ -1,3 +1,40 @@
+## [Unreleased]
+
+### Added
+
+- Support GHC 9.12 and 9.14, `mainland-pretty` 0.8, and `srcloc` 0.7.
+- Add tests for source locations, pretty-printing, and parser state restoration
+  and underflow.
+
+### Changed
+
+- With `srcloc` 0.7, quotation positions and positions set by line directives
+  have unknown character offsets (`Nothing`). Filename, line, and column
+  tracking is preserved. Older `srcloc` versions retain their integer-offset
+  behavior.
+- Align dependency lower bounds with the existing GHC 8.0 minimum. Remove
+  obsolete compatibility code and redundant `Typeable` derivations.
+- Move library sources under `src/` and replace the Makefiles with Cabal
+  development commands. The optional `development-tools` flag enables the
+  `gen-instances` and `parse-c` executables. See `CONTRIBUTING.md` for instance
+  regeneration and optional C compiler checks.
+- Migrate the unit suite to Tasty and restore GitHub Actions CI across the
+  supported compiler matrix. CI builds and runs tests with full Haskell
+  antiquotes both enabled and disabled.
+- Configure Stylish Haskell and VS Code formatting, update the quotation
+  reference, and include the Markdown documentation in Haddock output.
+
+### Fixed
+
+- Make tests compatible with the simpler Haskell antiquote parser. Keep the
+  test requiring infix Haskell syntax exclusive to full Haskell antiquotes.
+- Return `ParserException` through the parser's `Either` result when reading
+  or popping an empty lexer state stack, or popping an empty scope stack.
+  These operations previously used partial list functions and could leave
+  runtime exceptions in otherwise successful results.
+- Make the example parser return an unsuccessful exit status when its
+  parse/print/parse round-trip check fails.
+
 ## [0.13] - 2021-04-29
 ### Added
  - Add quotation support for attributes (Richard Marko)
