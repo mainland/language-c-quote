@@ -16,6 +16,7 @@ import qualified Language.C.Parser               as P
 import           Language.C.Quote.C
 import qualified Language.C.Quote.GCC            as GCC
 import qualified Language.C.Syntax               as C
+import           LocationTests                   (locationTests)
 import           MainCPP
 import           Numeric                         (showHex)
 import           Objc                            (objcRegressionTests,
@@ -39,6 +40,7 @@ tests = [ constantTests
         , objcRegressionTests
         , cudaTests
         , prettyTests
+        , locationTests
         ]
 
 constantTests :: Test

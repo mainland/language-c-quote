@@ -21,6 +21,11 @@ import           Language.C.Parser.Monad
 import           Language.C.Parser.Parser
 import           Language.C.Syntax
 
+-- | Parse bytes, optionally tracking source positions. Each byte advances the
+-- position by one character, with tabs and newlines updating the column and
+-- line. With @srcloc >= 0.7@, line directives set the mapped filename and line
+-- and make the character offset unknown. Without a starting position, parsed
+-- nodes have no source location.
 parse :: [Extensions]
       -> [String]
       -> P a

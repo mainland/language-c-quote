@@ -271,7 +271,12 @@ setLineFromPragma beg end = do
     pos' :: Maybe Pos
     pos' = case alexPos beg of
              Nothing  -> Nothing
+#if MIN_VERSION_srcloc(0,7,0)
+             -- The directive gives no character offset in the mapped file.
+             Just _   -> Just $ linePos filename line
+#else
              Just pos -> Just $ Pos filename line 1 (posCoff pos)
+#endif
 
 identifier :: Action
 identifier beg end =

@@ -113,7 +113,7 @@ empty' = Data.Generics.empty
   `extB` sloc
   where
     pos :: Pos
-    pos = Pos "" 1 1 1
+    pos = startPos ""
 
     loc :: Loc
     loc = NoLoc

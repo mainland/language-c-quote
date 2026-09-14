@@ -790,9 +790,17 @@ parse exts typenames p s = do
       Right x  -> return x
   where
     locToPos :: TH.Loc -> Pos
+#if MIN_VERSION_srcloc(0,7,0)
+    locToPos TH.Loc {loc_filename = filename, loc_start = (line, col)} =
+        Pos filename line col Nothing
+#else
     locToPos TH.Loc {loc_filename = filename, loc_start = (line, col)} =
         Pos filename line col 0
+#endif
 
+-- | Construct a C quasiquoter. Quotation positions use the Haskell source
+-- filename, line, and column. With @srcloc >= 0.7@, their character offsets
+-- are unknown because Template Haskell does not provide those offsets.
 quasiquote :: Data a
            => [C.Extensions]
            -> [String]
