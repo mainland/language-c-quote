@@ -68,7 +68,7 @@ library
     exception-mtl          >= 0.3   && < 0.5,
     exception-transformers >= 0.3   && < 0.5,
     filepath               >= 1.2   && < 1.6,
-    mainland-pretty        >= 0.7   && < 0.8,
+    mainland-pretty        >= 0.7   && < 0.9,
     mtl                    >= 2.0   && < 3,
     srcloc                 >= 0.4   && < 0.7,
     syb                    >= 0.3   && < 0.8,
@@ -139,7 +139,7 @@ executable gen-instances
 
   build-depends:
     base            >= 4.9 && < 5,
-    mainland-pretty >= 0.7 && < 0.8,
+    mainland-pretty >= 0.7 && < 0.9,
     srcloc          >= 0.4 && < 0.7,
     syb             >= 0.3 && < 0.8
 
@@ -160,7 +160,7 @@ executable parse-c
     base            >= 4.9 && < 5,
     bytestring      >= 0.9 && < 0.13,
     language-c-quote,
-    mainland-pretty >= 0.7 && < 0.8,
+    mainland-pretty >= 0.7 && < 0.9,
     srcloc          >= 0.4 && < 0.7
 
 test-suite unit
@@ -172,6 +172,7 @@ test-suite unit
     GCC
     Objc
     MainCPP
+    PrettyTests
 
   default-language: Haskell2010
 
@@ -180,7 +181,7 @@ test-suite unit
     base                 >= 4   && < 5,
     bytestring           >= 0.9 && < 0.13,
     language-c-quote,
-    mainland-pretty      >= 0.7 && < 0.8,
+    mainland-pretty      >= 0.7 && < 0.9,
     srcloc               >= 0.4 && < 0.7,
     test-framework       >= 0.8 && < 0.9,
     test-framework-hunit >= 0.3 && < 0.4
