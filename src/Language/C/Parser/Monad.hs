@@ -88,7 +88,7 @@ import           Control.Monad.State
 import           Data.Bits
 import qualified Data.ByteString.Char8           as B
 import           Data.ByteString.Internal        (c2w)
-import           Data.List                       (foldl')
+import qualified Data.List                       as List
 import           Data.Loc
 #if !MIN_VERSION_base(4,11,0)
 import           Data.Semigroup                  (Semigroup (..))
@@ -122,7 +122,7 @@ emptyPState exts typnames buf pos = PState
     , pbToken     = Nothing
     , curToken    = error "no token"
     , lexState    = [0]
-    , extensions  = foldl' setBit 0 (map fromEnum exts)
+    , extensions  = List.foldl' setBit 0 (map fromEnum exts)
     , typedefs    = Set.fromList typnames
     , classdefs   = Set.empty
     , scopes      = []

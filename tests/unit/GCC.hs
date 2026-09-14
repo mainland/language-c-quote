@@ -7,11 +7,6 @@ module GCC (
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
-import           Control.Exception               (SomeException)
-import qualified Data.ByteString.Char8           as B
-import           Data.Char                       (isSpace)
-import           Data.Loc                        (SrcLoc, noLoc, startPos)
-import qualified Language.C.Parser               as P
 import           Language.C.Quote.GCC
 import           Language.C.Smart                ()
 import qualified Language.C.Syntax               as C

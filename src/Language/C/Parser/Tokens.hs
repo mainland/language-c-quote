@@ -16,7 +16,7 @@ module Language.C.Parser.Tokens (
 
 import           Data.Bits
 import           Data.Char                       (isAlphaNum, isLower)
-import           Data.List                       (foldl')
+import qualified Data.List                       as List
 import qualified Data.Map                        as Map
 import           Data.Maybe                      (fromMaybe)
 import           Data.Word
@@ -664,4 +664,4 @@ keywordMap = Map.fromList (map f keywords)
     f (s, t, Nothing)    = (s, (t, Nothing))
     f (s, t, Just exts)  = (s, (t, Just i))
       where
-        i = foldl' setBit 0 (map fromEnum exts)
+        i = List.foldl' setBit 0 (map fromEnum exts)

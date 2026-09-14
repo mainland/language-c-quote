@@ -8,9 +8,11 @@
 module MainCPP where
 
 import           Test.Tasty
+#ifdef FULL_HASKELL_ANTIQUOTES
 import           Test.Tasty.HUnit
 
 import           Language.C.Quote.C
+#endif
 
 testCase_test_int_hsexp :: [TestTree]
 #ifdef FULL_HASKELL_ANTIQUOTES

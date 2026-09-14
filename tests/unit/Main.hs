@@ -13,7 +13,6 @@ import           Data.Loc                        (SrcLoc, noLoc, startPos)
 import           GCC                             (gccTests)
 import qualified Language.C.Parser               as P
 import           Language.C.Quote.C
-import qualified Language.C.Quote.GCC            as GCC
 import qualified Language.C.Syntax               as C
 import           LocationTests                   (locationTests)
 import           MainCPP
