@@ -11,8 +11,9 @@ import           Text.PrettyPrint.Mainland.Class
 
 prettyTests :: TestTree
 prettyTests = testGroup "Pretty printing" $
-    [ testCase ("round trip at width " ++ show width) (roundTrip (pretty width))
-    | width <- [0, 12, 80]
+    [ testCase ("round trip at width " ++ show pageWidth)
+               (roundTrip (pretty pageWidth))
+    | pageWidth <- [0, 12, 80]
     ] ++
     [ testCase "compact round trip" (roundTrip prettyCompact)
     , testCase "source pragma" $ do
@@ -20,9 +21,9 @@ prettyTests = testGroup "Pretty printing" $
         prettyPragma 80 (ppr defs) @?= "#line 1 \"pretty-test.c\"\nint x;\n"
     ]
   where
-    roundTrip render = do
+    roundTrip renderDoc = do
         expected <- parseUnit source
-        actual <- parseUnit (render (ppr expected))
+        actual <- parseUnit (renderDoc (ppr expected))
         actual @?= expected
 
     source = "int values[1] = {1 + 2 * 3};\n" ++

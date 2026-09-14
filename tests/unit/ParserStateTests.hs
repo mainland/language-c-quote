@@ -64,10 +64,10 @@ initialState :: PState
 initialState = emptyPState [] [] B.empty Nothing
 
 assertResult :: (Eq a, Show a) => a -> P a -> Assertion
-assertResult expected action =
+assertResult expectedResult action =
     case evalP action initialState of
       Left err     -> assertFailure (show err)
-      Right actual -> actual @?= expected
+      Right actual -> actual @?= expectedResult
 
 assertParserError :: String -> P a -> Assertion
 assertParserError message action =

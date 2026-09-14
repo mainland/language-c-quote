@@ -18,10 +18,10 @@
   development commands. The optional `development-tools` flag enables the
   `gen-instances` and `parse-c` executables. See `CONTRIBUTING.md` for instance
   regeneration and optional C compiler checks.
-- Migrate the unit suite to Tasty and restore GitHub Actions CI across the
-  supported compiler matrix. CI builds and runs tests with full Haskell
-  antiquotes both enabled and disabled, and builds the optional development
-  tools from source archives.
+- Migrate the unit suite to Tasty, enable `-Wall` for tests, and restore GitHub
+  Actions CI across the supported compiler matrix. CI builds and runs tests
+  with full Haskell antiquotes both enabled and disabled, and builds the
+  optional development tools from source archives.
 - Configure Stylish Haskell and VS Code formatting, update the quotation
   reference, and include the Markdown documentation in Haddock output.
 
