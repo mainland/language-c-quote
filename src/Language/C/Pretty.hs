@@ -15,10 +15,7 @@ module Language.C.Pretty where
 import           Data.Char                       (isAlphaNum, isLower)
 import           Data.Loc
 import           Data.Maybe                      (isJust)
-#if !(MIN_VERSION_base(4,9,0))
-import           Data.Monoid                     (Monoid (..), (<>))
-#endif /* !(MIN_VERSION_base(4,9,0)) */
-#if MIN_VERSION_base(4,9,0) && !(MIN_VERSION_base(4,11,0))
+#if !MIN_VERSION_base(4,11,0)
 import           Data.Semigroup                  (Semigroup (..))
 #endif
 
