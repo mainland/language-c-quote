@@ -7,13 +7,12 @@
 
 module MainCPP where
 
-import           Test.Framework                 (Test)
-import           Test.Framework.Providers.HUnit
-import           Test.HUnit                     (Assertion, (@?=))
+import           Test.Tasty
+import           Test.Tasty.HUnit
 
 import           Language.C.Quote.C
 
-testCase_test_int_hsexp :: [Test]
+testCase_test_int_hsexp :: [TestTree]
 #ifdef FULL_HASKELL_ANTIQUOTES
 testCase_test_int_hsexp =
     [testCase "unsigned long antiquote of Haskell expression" test_int_hsexp]

@@ -2,9 +2,8 @@
 
 module Main where
 
-import           Test.Framework
-import           Test.Framework.Providers.HUnit
-import           Test.HUnit                      (Assertion, (@?=))
+import           Test.Tasty
+import           Test.Tasty.HUnit
 
 import           Control.Exception               (SomeException)
 import           CUDA                            (cudaTests)
@@ -26,9 +25,9 @@ import           Text.PrettyPrint.Mainland
 import           Text.PrettyPrint.Mainland.Class
 
 main :: IO ()
-main = defaultMain tests
+main = defaultMain $ testGroup "language-c-quote" tests
 
-tests :: [Test]
+tests :: [TestTree]
 tests = [ constantTests
         , constantAntiquotationsTests
         , cQuotationTests
@@ -43,7 +42,7 @@ tests = [ constantTests
         , locationTests
         ]
 
-constantTests :: Test
+constantTests :: TestTree
 constantTests = testGroup "Constants"
     [ testCase "octal constant" test_octint
     , testCase "hex constant" test_hexint
@@ -77,7 +76,7 @@ constantTests = testGroup "Constants"
         [cexp|0x10ULL|]
           @?= C.Const (C.LongLongIntConst "0x10ULL" C.Unsigned 16 noLoc) noLoc
 
-constantAntiquotationsTests :: Test
+constantAntiquotationsTests :: TestTree
 constantAntiquotationsTests = testGroup "Constant antiquotations" $
     [ testCase "int antiquotes" test_int
     , testCase "hex Const antiquote" test_hexconst
@@ -125,7 +124,7 @@ constantAntiquotationsTests = testGroup "Constant antiquotations" $
             x :: Integer
             x = fromIntegral i
 
-    floatConstTests :: [Test]
+    floatConstTests :: [TestTree]
     floatConstTests = [ testCase "float antiquotes" test_float
                       , testCase "NaN" test_NaN
                       , testCase "Infinity" test_infinity
@@ -165,18 +164,18 @@ constantAntiquotationsTests = testGroup "Constant antiquotations" $
       where
         hello = "Hello, world\n"
 
-    charConstTests :: [Test]
+    charConstTests :: [TestTree]
     charConstTests = [ charConstTest '\0' "'\\0'"
                      , charConstTest '\xfff' "'\\u0fff'"
                      , charConstTest '\xfffff' "'\\U000fffff'"
                      ]
       where
-        charConstTest :: Char -> String -> Test
+        charConstTest :: Char -> String -> TestTree
         charConstTest c s =
           testCase ("character constant " ++ show c) $
           showCompact [cexp|$char:c|] @?= s
 
-cQuotationTests :: Test
+cQuotationTests :: TestTree
 cQuotationTests = testGroup "C quotations"
     [ testCase "raw expression-level escape" test_escexp
     , testCase "raw statement-level escape" test_escstm
@@ -379,7 +378,7 @@ cQuotationTests = testGroup "C quotations"
       where
         tau = [cty|int|]
 
-cPatternAntiquotationTests :: Test
+cPatternAntiquotationTests :: TestTree
 cPatternAntiquotationTests = testGroup "C pattern antiquotations"
     [ testCase "arguments pattern antiquote" pat_args
     ]
@@ -392,7 +391,7 @@ cPatternAntiquotationTests = testGroup "C pattern antiquotations"
                  [cstm|f(1, $args:es);|] -> es
                  _                       -> []
 
-statementCommentTests :: Test
+statementCommentTests :: TestTree
 statementCommentTests = testGroup "Statement comments"
     [ testCase "lbrace comment" test_lbrace_comment
     , testCase "semi comment" test_semi_comment
@@ -502,7 +501,7 @@ statementCommentTests = testGroup "Statement comments"
         d1 = [cedecl|int i;|]
         d2 = [cedecl|int j;|]
 
-regressionTests :: Test
+regressionTests :: TestTree
 regressionTests = testGroup "Regressions"
     [ issue81
     , issue76
@@ -535,13 +534,13 @@ regressionTests = testGroup "Regressions"
                       noLoc
             ]
 
-    issue81 :: Test
+    issue81 :: TestTree
     issue81 = testCase "Issue #81"$
         showCompact [cstm|if (x > 1) { /* comment */ if (x > 2) x++; }|]
         @?=
         "if (x > 1) { /* comment */ if (x > 2) x++; }"
 
-    issue76 :: Test
+    issue76 :: TestTree
     issue76 = testCase "Issue #76" $
         [cunit|
           /* AAA */
@@ -557,7 +556,7 @@ regressionTests = testGroup "Regressions"
           struct B { int bar; };
         |]
 
-    issue68 :: Test
+    issue68 :: TestTree
     issue68 = testCase "Issue #68"$
         showCompact [cstm|if (!initialized) { $stms:init_stms }|]
         @?=
@@ -566,7 +565,7 @@ regressionTests = testGroup "Regressions"
         init_stms :: [C.Stm]
         init_stms = [[cstm|return;|]]
 
-    issue64 :: Test
+    issue64 :: TestTree
     issue64 = testGroup "Issue #64"
               [ testCase "-($int:i)"  test_issue64_1
               , testCase "--($int:i)" test_issue64_2
@@ -581,7 +580,7 @@ regressionTests = testGroup "Regressions"
         test_issue64_2 :: Assertion
         test_issue64_2 = pretty 80 (ppr [cexp|--$int:i|]) @?= "--(-42)"
 
-    issue48 :: Test
+    issue48 :: TestTree
     issue48 = testGroup "Issue #48"
               [ testCase "-(-42)"  test_issue48_1
               , testCase "--(-42)" test_issue48_2
@@ -618,7 +617,7 @@ regressionTests = testGroup "Regressions"
         parseDecl :: String -> Either SomeException C.InitGroup
         parseDecl s = P.parse [C.Antiquotation] [] P.parseDecl (B.pack s) (Just (startPos "<inline>"))
 
-    issue43 :: Test
+    issue43 :: TestTree
     issue43 = testGroup "Issue #43"
               [ testCase "float _Complex" test_issue43_1
               , testCase "long double _Complex" test_issue43_2

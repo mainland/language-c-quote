@@ -2,11 +2,10 @@
 
 module CUDA (cudaTests) where
 
-import           Test.Framework
-import           Test.Framework.Providers.HUnit
-import           Test.HUnit                     (Assertion, (@?=))
+import           Test.Tasty
+import           Test.Tasty.HUnit
 
-import           Data.Loc                       (noLoc)
+import           Data.Loc              (noLoc)
 import           Language.C.Quote.CUDA
 import           Language.C.Syntax
 
@@ -34,7 +33,7 @@ lambdaByParams params = Lambda (mkIntroducer []) (Just $ mkDeclarator params Fal
 mutableLambdaByParams :: [Param] -> Exp
 mutableLambdaByParams params = Lambda (mkIntroducer []) (Just $ mkDeclarator params True) [] noLoc
 
-cudaTests :: Test
+cudaTests :: TestTree
 cudaTests = testGroup "CUDA"
     $ map (testCase "lambda-expressions parsing") lambdas
   where

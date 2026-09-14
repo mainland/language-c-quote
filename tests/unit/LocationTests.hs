@@ -3,19 +3,17 @@
 
 module LocationTests (locationTests) where
 
-import qualified Data.ByteString.Char8          as B
+import qualified Data.ByteString.Char8     as B
 import           Data.Loc
-import qualified Language.C.Parser              as P
-import           Language.C.Quote.C             (cexp)
-import qualified Language.C.Syntax              as C
-import qualified Language.Haskell.TH            as TH
-import           Language.Haskell.TH.Quote      (quoteExp)
-import           Test.Framework
-import           Test.Framework.Providers.HUnit
-import           Test.HUnit                     (Assertion, assertFailure,
-                                                 (@?=))
+import qualified Language.C.Parser         as P
+import           Language.C.Quote.C        (cexp)
+import qualified Language.C.Syntax         as C
+import qualified Language.Haskell.TH       as TH
+import           Language.Haskell.TH.Quote (quoteExp)
+import           Test.Tasty
+import           Test.Tasty.HUnit
 
-locationTests :: Test
+locationTests :: TestTree
 locationTests = testGroup "Source locations"
     [ testCase "known offsets across tabs and newlines" $ do
         expr <- parseExp "\tfoo\n + bar" (Just (startPos "input.c"))

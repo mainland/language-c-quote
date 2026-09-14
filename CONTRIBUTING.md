@@ -24,6 +24,14 @@ Keep shared tests within the simpler parser's syntax, with type annotations in
 ordinary Haskell bindings. Put tests requiring full Haskell syntax in
 `tests/unit/MainCPP.hs`, guarded by `FULL_HASKELL_ANTIQUOTES`.
 
+The unit suite uses Tasty with `tasty-hunit`. List cases or run a selected group
+by passing options to the test executable:
+
+```sh
+cabal test unit --test-option=--list-tests --test-show-details=direct
+cabal test unit --test-option='--pattern=/Source locations/' --test-show-details=direct
+```
+
 ## Continuous integration
 
 The generated GitHub Actions workflow checks the default configuration and the

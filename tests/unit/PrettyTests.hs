@@ -4,13 +4,12 @@ import qualified Data.ByteString.Char8           as B
 import           Data.Loc                        (startPos)
 import qualified Language.C.Parser               as P
 import qualified Language.C.Syntax               as C
-import           Test.Framework
-import           Test.Framework.Providers.HUnit
-import           Test.HUnit                      ((@?=))
+import           Test.Tasty
+import           Test.Tasty.HUnit
 import           Text.PrettyPrint.Mainland
 import           Text.PrettyPrint.Mainland.Class
 
-prettyTests :: Test
+prettyTests :: TestTree
 prettyTests = testGroup "Pretty printing" $
     [ testCase ("round trip at width " ++ show width) (roundTrip (pretty width))
     | width <- [0, 12, 80]

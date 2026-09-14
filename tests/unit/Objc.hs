@@ -5,13 +5,12 @@ module Objc (
     objcRegressionTests
   ) where
 
-import           Test.Framework
-import           Test.Framework.Providers.HUnit
-import           Test.HUnit                     (Assertion, (@?=))
+import           Test.Tasty
+import           Test.Tasty.HUnit
 
 import           Language.C.Quote.ObjC
 
-objcTests :: Test
+objcTests :: TestTree
 objcTests = testGroup "Objective-C"
     [ testCase "Objective-C params" objcProp
     , testCase "Objective-C property" objcDict
@@ -152,7 +151,7 @@ objcTests = testGroup "Objective-C"
         [cexp|@[$(objcLit "foo"), $(objcLit True), $(objcLit False), $(objcLit 'a'), nil]|]
         @?= [cexp|@[@"foo", @YES, @NO, @'a', nil]|]
 
-objcRegressionTests :: Test
+objcRegressionTests :: TestTree
 objcRegressionTests = testGroup "Objective-C Regressions"
     [ testCase "Issue #51" issue51 ]
   where

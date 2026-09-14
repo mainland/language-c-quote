@@ -4,9 +4,8 @@ module GCC (
     gccTests
   ) where
 
-import           Test.Framework
-import           Test.Framework.Providers.HUnit
-import           Test.HUnit                      (Assertion, assert, (@?=))
+import           Test.Tasty
+import           Test.Tasty.HUnit
 
 import           Control.Exception               (SomeException)
 import qualified Data.ByteString.Char8           as B
@@ -19,7 +18,7 @@ import qualified Language.C.Syntax               as C
 import           Text.PrettyPrint.Mainland
 import           Text.PrettyPrint.Mainland.Class
 
-gccTests :: Test
+gccTests :: TestTree
 gccTests = testGroup "GCC attribute quotations"
     [ testCase "attr antiquote" test_attr
     , testCase "attrs antiquote" test_attrs
@@ -52,9 +51,11 @@ gccTests = testGroup "GCC attribute quotations"
       pretty 80 (ppr [cattr|section(".sram2")|]) @?= "section(\".sram2\")"
 
     test_case_ranges :: Assertion
-    test_case_ranges = assert $ case [cstm| case 10 ... 20: ; |] of
-      C.CaseRange 10 20 (C.Exp Nothing _) _ -> True
-      _                                     -> False
+    test_case_ranges =
+        assertBool "Expected a case range from 10 to 20" $
+        case [cstm| case 10 ... 20: ; |] of
+          C.CaseRange 10 20 (C.Exp Nothing _) _ -> True
+          _                                     -> False
 
     test_case_ranges_p :: Assertion
     test_case_ranges_p =
