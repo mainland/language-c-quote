@@ -6,7 +6,6 @@
 -- Maintainer  :  mainland@drexel.edu
 
 {-# LANGUAGE CPP                   #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
@@ -95,7 +94,6 @@ import           Data.Loc
 import           Data.Semigroup                  (Semigroup (..))
 #endif
 import qualified Data.Set                        as Set
-import           Data.Typeable                   (Typeable)
 import           Data.Word
 import           Text.PrettyPrint.Mainland
 import           Text.PrettyPrint.Mainland.Class
@@ -310,7 +308,6 @@ useObjCExts :: P Bool
 useObjCExts = useExts objcExts
 
 data LexerException = LexerException (Maybe Pos) Doc
-  deriving (Typeable)
 
 instance Exception LexerException where
 
@@ -319,7 +316,6 @@ instance Show LexerException where
         pretty 80 $ nest 4 $ ppr pos <> text ":" </> msg
 
 data ParserException = ParserException Loc Doc
-  deriving (Typeable)
 
 instance Exception ParserException where
 

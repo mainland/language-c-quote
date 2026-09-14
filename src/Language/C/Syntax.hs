@@ -13,10 +13,9 @@
 
 module Language.C.Syntax where
 
-import           Data.Data     (Data (..))
+import           Data.Data   (Data (..))
 import           Data.Loc
-import           Data.String   (IsString (..))
-import           Data.Typeable (Typeable)
+import           Data.String (IsString (..))
 
 data Extensions = Antiquotation
                 | C99
@@ -30,10 +29,10 @@ data Extensions = Antiquotation
 
 data Id = Id     String !SrcLoc
         | AntiId String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data StringLit = StringLit [String] String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 type Linkage = StringLit
 
@@ -50,7 +49,7 @@ data Storage = Tauto                   !SrcLoc
              | TObjC__weak              !SrcLoc
              | TObjC__strong            !SrcLoc
              | TObjC__unsafe_unretained !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data TypeQual = Tconst    !SrcLoc
               | Tvolatile !SrcLoc
@@ -85,11 +84,11 @@ data TypeQual = Tconst    !SrcLoc
               | TCLreadonly  !SrcLoc
               | TCLwriteonly !SrcLoc
               | TCLkernel    !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Sign = Tsigned   !SrcLoc
           | Tunsigned !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data TypeSpec = Tvoid                   !SrcLoc
               | Tchar      (Maybe Sign) !SrcLoc
@@ -120,12 +119,12 @@ data TypeSpec = Tvoid                   !SrcLoc
               | TtypeofExp  Exp  !SrcLoc
               | TtypeofType Type !SrcLoc
               | Tva_list         !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data DeclSpec = DeclSpec         [Storage] [TypeQual] TypeSpec !SrcLoc
               | AntiDeclSpec                          String   !SrcLoc
               | AntiTypeDeclSpec [Storage] [TypeQual] String   !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 -- | There are two types of declarators in C, regular declarators and abstract
 -- declarators. The former is for declaring variables, function parameters,
@@ -137,7 +136,7 @@ data DeclSpec = DeclSpec         [Storage] [TypeQual] TypeSpec !SrcLoc
 data ArraySize = ArraySize Bool Exp !SrcLoc
                | VariableArraySize !SrcLoc
                | NoArraySize !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Decl = DeclRoot !SrcLoc
           | Ptr [TypeQual] Decl !SrcLoc
@@ -148,68 +147,68 @@ data Decl = DeclRoot !SrcLoc
 
           -- Clang blocks
           | BlockPtr [TypeQual] Decl !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Type = Type DeclSpec Decl !SrcLoc
           | AntiType String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Designator = IndexDesignator Exp !SrcLoc
                 | MemberDesignator Id !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Designation = Designation [Designator] !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Initializer = ExpInitializer Exp !SrcLoc
                  | CompoundInitializer [(Maybe Designation, Initializer)] !SrcLoc
                  | AntiInit  String !SrcLoc
                  | AntiInits String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 type AsmLabel = StringLit
 
 data Init = Init Id Decl (Maybe AsmLabel) (Maybe Initializer) [Attr] !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Typedef = Typedef Id Decl [Attr] !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data InitGroup = InitGroup    DeclSpec [Attr] [Init]    !SrcLoc
                | TypedefGroup DeclSpec [Attr] [Typedef] !SrcLoc
                | AntiDecl  String !SrcLoc
                | AntiDecls String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Field = Field (Maybe Id) (Maybe Decl) (Maybe Exp) !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data FieldGroup  =  FieldGroup DeclSpec [Field] !SrcLoc
                  |  AntiSdecl  String !SrcLoc
                  |  AntiSdecls String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data CEnum  =  CEnum Id (Maybe Exp) !SrcLoc
             |  AntiEnum  String !SrcLoc
             |  AntiEnums String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Attr  =  Attr Id [Exp] !SrcLoc
            | AntiAttr String !SrcLoc
            | AntiAttrs String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Param  =  Param (Maybe Id) DeclSpec Decl !SrcLoc
             |  AntiParam  String !SrcLoc
             |  AntiParams String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Params = Params [Param] Bool !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Func  =  Func    DeclSpec Id Decl Params                   [BlockItem] !SrcLoc
            |  OldFunc DeclSpec Id Decl [Id] (Maybe [InitGroup]) [BlockItem] !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Definition  =  FuncDef    Func      !SrcLoc
                  |  DecDef     InitGroup !SrcLoc
@@ -234,7 +233,7 @@ data Definition  =  FuncDef    Func      !SrcLoc
 
                  |  AntiObjCMeth  String !SrcLoc
                  |  AntiObjCMeths String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Stm  = Label Id [Attr] Stm !SrcLoc
           | Case Exp Stm !SrcLoc
@@ -282,17 +281,17 @@ data Stm  = Label Id [Attr] Stm !SrcLoc
           | ObjCThrow (Maybe Exp) !SrcLoc
           | ObjCSynchronized Exp [BlockItem] !SrcLoc
           | ObjCAutoreleasepool [BlockItem] !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data BlockItem = BlockDecl InitGroup
                | BlockStm Stm
                | AntiBlockItem  String !SrcLoc
                | AntiBlockItems String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Signed = Signed
             | Unsigned
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 -- | The 'String' parameter to 'Const' data constructors is the raw string
 -- representation of the constant as it was parsed.
@@ -317,7 +316,7 @@ data Const = IntConst         String   Signed Integer !SrcLoc
            | AntiLongDouble String !SrcLoc
            | AntiChar       String !SrcLoc
            | AntiString     String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data Exp = Var Id !SrcLoc
          | Const Const !SrcLoc
@@ -370,7 +369,7 @@ data Exp = Var Id !SrcLoc
 
          -- CUDA: C++11 lambda-expression
          | Lambda LambdaIntroducer (Maybe LambdaDeclarator) [BlockItem] !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data BinOp = Add
            | Sub
@@ -390,7 +389,7 @@ data BinOp = Add
            | Xor
            | Lsh
            | Rsh
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data AssignOp = JustAssign
               | AddAssign
@@ -403,7 +402,7 @@ data AssignOp = JustAssign
               | AndAssign
               | XorAssign
               | OrAssign
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data UnOp = AddrOf
           | Deref
@@ -411,7 +410,7 @@ data UnOp = AddrOf
           | Negate
           | Not
           | Lnot
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 {------------------------------------------------------------------------------
  -
@@ -422,10 +421,10 @@ data UnOp = AddrOf
 type AsmTemplate = StringLit
 
 data AsmOut = AsmOut (Maybe Id) String Id
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data AsmIn = AsmIn (Maybe Id) String Exp
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 type AsmClobber = String
 
@@ -439,7 +438,7 @@ data BlockType = BlockVoid !SrcLoc
                | BlockType Type !SrcLoc
                  -- NB: Type may be something other than 'Proto', in which case clang defaults to
                  --     regard the type as the return type and assume the arguments to be 'void'.
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 {------------------------------------------------------------------------------
  -
@@ -450,13 +449,13 @@ data BlockType = BlockVoid !SrcLoc
 data ObjCIvarDecl = ObjCIvarVisi ObjCVisibilitySpec !SrcLoc
                   | ObjCIvarDecl FieldGroup !SrcLoc
                   -- -=chak FIXME: needs ANTI forms
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data ObjCVisibilitySpec = ObjCPrivate !SrcLoc
                         | ObjCPublic !SrcLoc
                         | ObjCProtected !SrcLoc
                         | ObjCPackage !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data ObjCIfaceDecl = ObjCIfaceProp [ObjCPropAttr] FieldGroup !SrcLoc
                    | ObjCIfaceReq ObjCMethodReq !SrcLoc
@@ -467,7 +466,7 @@ data ObjCIfaceDecl = ObjCIfaceProp [ObjCPropAttr] FieldGroup !SrcLoc
                    | AntiObjCProps      String !SrcLoc
                    | AntiObjCIfaceDecl  String !SrcLoc
                    | AntiObjCIfaceDecls String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data ObjCPropAttr = ObjCGetter Id !SrcLoc
                   | ObjCSetter Id !SrcLoc
@@ -484,39 +483,39 @@ data ObjCPropAttr = ObjCGetter Id !SrcLoc
 
                   | AntiObjCAttr  String !SrcLoc
                   | AntiObjCAttrs String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data ObjCMethodReq = ObjCRequired !SrcLoc
                    | ObjCOptional !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data ObjCParam = ObjCParam (Maybe Id) (Maybe Type) [Attr] (Maybe Id) !SrcLoc
                | AntiObjCParam  String !SrcLoc
                | AntiObjCParams String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data ObjCMethodProto = ObjCMethodProto Bool (Maybe Type) [Attr] [ObjCParam] Bool [Attr] !SrcLoc
                        -- ^Invariant: First parameter must at least either have a selector or
                        --  an identifier; all other parameters must have an identifier.
                      | AntiObjCMethodProto String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data ObjCCatch = ObjCCatch (Maybe Param) [BlockItem] !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data ObjCDictElem = ObjCDictElem Exp Exp !SrcLoc
                   | AntiObjCDictElems String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data ObjCRecv = ObjCRecvSuper !SrcLoc
               | ObjCRecvExp Exp !SrcLoc
               | AntiObjCRecv String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data ObjCArg = ObjCArg (Maybe Id) (Maybe Exp) !SrcLoc
              | AntiObjCArg String !SrcLoc
              | AntiObjCArgs String !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 {------------------------------------------------------------------------------
  -
@@ -525,14 +524,14 @@ data ObjCArg = ObjCArg (Maybe Id) (Maybe Exp) !SrcLoc
  ------------------------------------------------------------------------------}
 
 data LambdaIntroducer = LambdaIntroducer [CaptureListEntry] !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data LambdaDeclarator = LambdaDeclarator Params Bool (Maybe Type) !SrcLoc
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data CaptureListEntry = DefaultByReference
                       | DefaultByValue
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 data ExeConfig = ExeConfig
     {  exeGridDim    :: Exp
@@ -541,7 +540,7 @@ data ExeConfig = ExeConfig
     ,  exeStream     :: Maybe Exp
     ,  exeLoc        :: !SrcLoc
     }
-    deriving (Eq, Ord, Show, Data, Typeable)
+    deriving (Eq, Ord, Show, Data)
 
 {------------------------------------------------------------------------------
  -
