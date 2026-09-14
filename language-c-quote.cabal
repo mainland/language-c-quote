@@ -164,6 +164,7 @@ test-suite unit
     MainCPP
     PrettyTests
     LocationTests
+    ParserStateTests
 
   default-language: Haskell2010
 

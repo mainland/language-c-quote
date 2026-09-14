@@ -19,6 +19,7 @@ import           MainCPP
 import           Numeric                         (showHex)
 import           Objc                            (objcRegressionTests,
                                                   objcTests)
+import           ParserStateTests                (parserStateTests)
 import           PrettyTests                     (prettyTests)
 import           Text.PrettyPrint.Mainland
 import           Text.PrettyPrint.Mainland.Class
@@ -39,6 +40,7 @@ tests = [ constantTests
         , cudaTests
         , prettyTests
         , locationTests
+        , parserStateTests
         ]
 
 constantTests :: TestTree

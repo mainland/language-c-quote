@@ -196,15 +196,24 @@ pushLexState :: Int -> P ()
 pushLexState ls = modify $ \s ->
     s { lexState = ls : lexState s }
 
+-- | Remove and return the current lexer state. An empty stack produces a
+-- 'ParserException'. The initial state can be popped like any other state.
 popLexState :: P Int
 popLexState = do
-    ls <- getLexState
-    modify $ \s ->
-        s { lexState = tail (lexState s) }
-    return ls
+    s <- get
+    case lexState s of
+      [] -> fail "Cannot pop an empty lexer state stack."
+      ls : rest -> do
+          put s { lexState = rest }
+          return ls
 
+-- | Return the current lexer state, or a 'ParserException' if the stack is empty.
 getLexState :: P Int
-getLexState = gets (head . lexState)
+getLexState = do
+    states <- gets lexState
+    case states of
+      []     -> fail "Cannot read an empty lexer state stack."
+      ls : _ -> return ls
 
 pushbackToken :: L Token -> P ()
 pushbackToken tok = do
@@ -251,12 +260,18 @@ pushScope :: P ()
 pushScope = modify  $ \s ->
     s { scopes = (typedefs s, classdefs s) : scopes s }
 
+-- | Restore the typedef and class names saved by the most recent 'pushScope'.
+-- An empty scope stack produces a 'ParserException'.
 popScope :: P ()
-popScope = modify  $ \s ->
-    s { scopes     = (tail . scopes) s
-      , typedefs   = (fst . head . scopes) s
-      , classdefs  = (snd . head . scopes) s
-      }
+popScope = do
+    s <- get
+    case scopes s of
+      [] -> fail "Cannot pop an empty scope stack."
+      (types, classes) : rest ->
+          put s { scopes    = rest
+                , typedefs  = types
+                , classdefs = classes
+                }
 
 antiquotationExts :: ExtensionsInt
 antiquotationExts = (bit . fromEnum) Antiquotation
