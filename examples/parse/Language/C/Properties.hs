@@ -7,18 +7,18 @@
 
 module Language.C.Properties where
 
-import qualified Data.ByteString.Char8 as B
-import Data.Loc
-import Text.PrettyPrint.Mainland
-import Text.PrettyPrint.Mainland.Class
+import qualified Data.ByteString.Char8           as B
+import           Data.Loc
+import           Text.PrettyPrint.Mainland
+import           Text.PrettyPrint.Mainland.Class
 
-import Language.C.Syntax as C
-import qualified Language.C.Parser as P
+import qualified Language.C.Parser               as P
+import           Language.C.Syntax               as C
 
 prop_ParsePrintUnitId :: [C.Extensions] -> B.ByteString -> Bool
 prop_ParsePrintUnitId exts s_ =
     case comp s_ of
-      Left _ ->  False
+      Left _  ->  False
       Right x -> x
   where
     comp :: B.ByteString -> Either String Bool

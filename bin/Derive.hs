@@ -1,6 +1,6 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable  #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE StandaloneDeriving  #-}
 
 -- |
 -- Module      :  Derive
@@ -14,9 +14,9 @@ module Derive (
     deriveRelocatable
   ) where
 
-import Data.Generics
-import Data.Loc
-import Text.PrettyPrint.Mainland as PP
+import           Data.Generics
+import           Data.Loc
+import           Text.PrettyPrint.Mainland as PP
 
 deriveM :: (a -> Doc) -> a -> IO ()
 deriveM derive (_ :: a) = do

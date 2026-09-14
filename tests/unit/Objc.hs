@@ -5,11 +5,11 @@ module Objc (
     objcRegressionTests
   ) where
 
-import Test.Framework
-import Test.Framework.Providers.HUnit
-import Test.HUnit (Assertion, (@?=))
+import           Test.Framework
+import           Test.Framework.Providers.HUnit
+import           Test.HUnit                     (Assertion, (@?=))
 
-import Language.C.Quote.ObjC
+import           Language.C.Quote.ObjC
 
 objcTests :: Test
 objcTests = testGroup "Objective-C"

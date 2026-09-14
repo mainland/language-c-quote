@@ -7,16 +7,16 @@
 -- License     :  BSD-style
 -- Maintainer  :  mainland@drexel.edu
 
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances  #-}
 
 module Language.C.Syntax where
 
-import Data.Data (Data(..))
-import Data.Loc
-import Data.String (IsString(..))
-import Data.Typeable (Typeable)
+import           Data.Data     (Data (..))
+import           Data.Loc
+import           Data.String   (IsString (..))
+import           Data.Typeable (Typeable)
 
 data Extensions = Antiquotation
                 | C99

@@ -4,20 +4,20 @@ module GCC (
     gccTests
   ) where
 
-import Test.Framework
-import Test.Framework.Providers.HUnit
-import Test.HUnit (Assertion, assert, (@?=))
+import           Test.Framework
+import           Test.Framework.Providers.HUnit
+import           Test.HUnit                      (Assertion, assert, (@?=))
 
-import qualified Data.ByteString.Char8 as B
-import Data.Char (isSpace)
-import Data.Loc (SrcLoc, noLoc, startPos)
-import Control.Exception (SomeException)
-import Language.C.Quote.GCC
-import Language.C.Smart ()
-import qualified Language.C.Syntax as C
-import qualified Language.C.Parser as P
-import Text.PrettyPrint.Mainland
-import Text.PrettyPrint.Mainland.Class
+import           Control.Exception               (SomeException)
+import qualified Data.ByteString.Char8           as B
+import           Data.Char                       (isSpace)
+import           Data.Loc                        (SrcLoc, noLoc, startPos)
+import qualified Language.C.Parser               as P
+import           Language.C.Quote.GCC
+import           Language.C.Smart                ()
+import qualified Language.C.Syntax               as C
+import           Text.PrettyPrint.Mainland
+import           Text.PrettyPrint.Mainland.Class
 
 gccTests :: Test
 gccTests = testGroup "GCC attribute quotations"
@@ -54,7 +54,7 @@ gccTests = testGroup "GCC attribute quotations"
     test_case_ranges :: Assertion
     test_case_ranges = assert $ case [cstm| case 10 ... 20: ; |] of
       C.CaseRange 10 20 (C.Exp Nothing _) _ -> True
-      _ -> False
+      _                                     -> False
 
     test_case_ranges_p :: Assertion
     test_case_ranges_p =

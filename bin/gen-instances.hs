@@ -1,14 +1,14 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
 module Main where
 
-import Data.Generics
+import           Data.Generics
 
-import Language.C.Syntax
+import           Language.C.Syntax
 
-import Derive
+import           Derive
 
 main :: IO ()
 main = do

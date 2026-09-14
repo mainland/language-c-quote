@@ -5,9 +5,9 @@
 -- License     :  BSD-style
 -- Maintainer  :  mainland@drexel.edu
 
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE CPP                   #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Language.C.Parser.Monad (
@@ -85,29 +85,29 @@ module Language.C.Parser.Monad (
   ) where
 
 #if !MIN_VERSION_base(4,8,0)
-import Control.Applicative (Applicative(..))
+import           Control.Applicative             (Applicative (..))
 #endif /* !MIN_VERSION_base(4,8,0) */
-import Control.Monad.Exception
-import Control.Monad.State
-import Data.Bits
-import qualified Data.ByteString.Char8 as B
-import Data.ByteString.Internal (c2w)
-import Data.List (foldl')
-import Data.Loc
+import           Control.Monad.Exception
+import           Control.Monad.State
+import           Data.Bits
+import qualified Data.ByteString.Char8           as B
+import           Data.ByteString.Internal        (c2w)
+import           Data.List                       (foldl')
+import           Data.Loc
 #if !(MIN_VERSION_base(4,9,0))
-import Data.Monoid (Monoid(..), (<>))
+import           Data.Monoid                     (Monoid (..), (<>))
 #endif /* !(MIN_VERSION_base(4,9,0)) */
 #if MIN_VERSION_base(4,9,0) && !(MIN_VERSION_base(4,11,0))
-import Data.Semigroup (Semigroup(..))
+import           Data.Semigroup                  (Semigroup (..))
 #endif
-import qualified Data.Set as Set
-import Data.Typeable (Typeable)
-import Data.Word
-import Text.PrettyPrint.Mainland
-import Text.PrettyPrint.Mainland.Class
+import qualified Data.Set                        as Set
+import           Data.Typeable                   (Typeable)
+import           Data.Word
+import           Text.PrettyPrint.Mainland
+import           Text.PrettyPrint.Mainland.Class
 
-import Language.C.Parser.Tokens
-import Language.C.Syntax
+import           Language.C.Parser.Tokens
+import           Language.C.Syntax
 
 data PState = PState
     { input      :: !AlexInput
@@ -148,20 +148,20 @@ newtype P a = P { runP :: PState -> Either SomeException (a, PState) }
 
 instance Functor P where
     fmap f mx = P $ \s -> case runP mx s of
-                            Left e         -> Left e
-                            Right (x, s')  -> Right (f x, s')
+                            Left e        -> Left e
+                            Right (x, s') -> Right (f x, s')
 
 instance Applicative P where
     pure x = P $ \s -> Right (x, s)
 
     mf <*> mx = P $ \s -> case runP mf s of
-                            Left e         -> Left e
-                            Right (f, s')  -> runP (fmap f mx) s'
+                            Left e        -> Left e
+                            Right (f, s') -> runP (fmap f mx) s'
 
 instance Monad P where
     m >>= k = P $ \s -> case runP m s of
-                          Left e         -> Left e
-                          Right (a, s')  -> runP (k a) s'
+                          Left e        -> Left e
+                          Right (a, s') -> runP (k a) s'
 
     return = pure
 
@@ -183,15 +183,15 @@ instance MonadException P where
         case runP m s of
           Left e ->
               case fromException e of
-                Just e'  -> runP (h e') s
-                Nothing  -> Left e
+                Just e' -> runP (h e') s
+                Nothing -> Left e
           Right (a, s')  -> Right (a, s')
 
 evalP :: P a -> PState -> Either SomeException a
 evalP comp st =
     case runP comp st of
-      Left e        -> Left e
-      Right (a, _)  -> Right a
+      Left e       -> Left e
+      Right (a, _) -> Right a
 
 getInput  :: P AlexInput
 getInput = gets input
@@ -378,14 +378,14 @@ expectedAt tok@(L loc _) alts after = do
     parserError (locStart loc) (text "expected" <+> pprAlts alts <+> pprGot tok <> pprAfter after)
   where
     pprAlts :: [String] -> Doc
-    pprAlts []        = empty
-    pprAlts [s]       = text s
-    pprAlts [s1, s2]  = text s1 <+> text "or" <+> text s2
-    pprAlts (s : ss)  = text s <> comma <+> pprAlts ss
+    pprAlts []       = empty
+    pprAlts [s]      = text s
+    pprAlts [s1, s2] = text s1 <+> text "or" <+> text s2
+    pprAlts (s : ss) = text s <> comma <+> pprAlts ss
 
     pprGot :: L Token -> Doc
-    pprGot (L _ Teof)  = text "but reached end of file"
-    pprGot (L _ t)     = text "but got" <+> quoteTok (ppr t)
+    pprGot (L _ Teof) = text "but reached end of file"
+    pprGot (L _ t)    = text "but got" <+> quoteTok (ppr t)
 
     pprAfter :: Maybe String -> Doc
     pprAfter Nothing     = empty
@@ -427,29 +427,29 @@ nextChar :: P Char
 nextChar = do
     inp <- getInput
     case alexGetChar inp of
-      Nothing         -> unexpectedEOF inp
-      Just (c, inp')  -> setInput inp' >> return c
+      Nothing        -> unexpectedEOF inp
+      Just (c, inp') -> setInput inp' >> return c
 
 peekChar ::P Char
 peekChar = do
     inp <- getInput
     case B.uncons (alexInput inp) of
-      Nothing      -> unexpectedEOF inp
-      Just (c, _)  -> return c
+      Nothing     -> unexpectedEOF inp
+      Just (c, _) -> return c
 
 maybePeekChar :: P (Maybe Char)
 maybePeekChar = do
     inp <- getInput
     case alexGetChar inp of
-      Nothing      -> return Nothing
-      Just (c, _)  -> return (Just c)
+      Nothing     -> return Nothing
+      Just (c, _) -> return (Just c)
 
 skipChar :: P ()
 skipChar = do
     inp <- getInput
     case alexGetChar inp of
-      Nothing         -> unexpectedEOF inp
-      Just (_, inp')  -> setInput inp'
+      Nothing        -> unexpectedEOF inp
+      Just (_, inp') -> setInput inp'
 
 -- | The components of an 'AlexPredicate' are the predicate state, input stream
 -- before the token, length of the token, input stream after the token.

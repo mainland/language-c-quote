@@ -14,18 +14,16 @@ module Language.C.Parser.Tokens (
     keywordMap
   ) where
 
-import Data.Bits
-import Data.Char (isAlphaNum,
-                  isLower)
-import Data.List (foldl')
-import qualified Data.Map as Map
-import Data.Maybe (fromMaybe)
-import Data.Word
-import Text.PrettyPrint.Mainland
-import Text.PrettyPrint.Mainland.Class
+import           Data.Bits
+import           Data.Char                       (isAlphaNum, isLower)
+import           Data.List                       (foldl')
+import qualified Data.Map                        as Map
+import           Data.Maybe                      (fromMaybe)
+import           Data.Word
+import           Text.PrettyPrint.Mainland
+import           Text.PrettyPrint.Mainland.Class
 
-import Language.C.Syntax (Extensions(..),
-                          Signed(..))
+import           Language.C.Syntax               (Extensions (..), Signed (..))
 
 data Token = Teof
            | Tpragma String

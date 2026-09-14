@@ -39,6 +39,7 @@ extra-source-files:
   CHANGELOG.md
   CONTRIBUTING.md
   README.md
+  .stylish-haskell.yaml
   scripts/regenerate-instances.sh
   examples/parse/test.sh
 

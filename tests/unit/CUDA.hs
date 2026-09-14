@@ -2,13 +2,13 @@
 
 module CUDA (cudaTests) where
 
-import Test.Framework
-import Test.Framework.Providers.HUnit
-import Test.HUnit (Assertion, (@?=))
+import           Test.Framework
+import           Test.Framework.Providers.HUnit
+import           Test.HUnit                     (Assertion, (@?=))
 
-import Language.C.Quote.CUDA
-import Language.C.Syntax
-import Data.Loc (noLoc)
+import           Data.Loc                       (noLoc)
+import           Language.C.Quote.CUDA
+import           Language.C.Syntax
 
 mkDeclarator :: [Param] -> Bool -> LambdaDeclarator
 mkDeclarator params mutability = LambdaDeclarator (Params params False noLoc) mutability Nothing noLoc

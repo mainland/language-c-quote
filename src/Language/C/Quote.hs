@@ -260,5 +260,5 @@ module Language.C.Quote (
     module Language.C.Syntax
   ) where
 
-import Language.C.Quote.Base
-import Language.C.Syntax
+import           Language.C.Quote.Base
+import           Language.C.Syntax

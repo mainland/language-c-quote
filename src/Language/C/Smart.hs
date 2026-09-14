@@ -5,14 +5,14 @@
 -- License     :  BSD-style
 -- Maintainer  :  mainland@drexel.edu
 
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP         #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Language.C.Smart where
 
-import Language.C.Quote.C
-import Language.C.Syntax as C
+import           Language.C.Quote.C
+import           Language.C.Syntax  as C
 
 #if !MIN_VERSION_template_haskell(2,7,0)
 import qualified Data.Loc

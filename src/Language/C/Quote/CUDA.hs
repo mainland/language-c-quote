@@ -46,10 +46,11 @@ module Language.C.Quote.CUDA (
     cfun
   ) where
 
-import qualified Language.C.Parser as P
-import qualified Language.C.Syntax as C
-import Language.C.Quote.Base (ToIdent(..), ToConst(..), ToExp(..), quasiquote)
-import Language.Haskell.TH.Quote (QuasiQuoter)
+import qualified Language.C.Parser         as P
+import           Language.C.Quote.Base     (ToConst (..), ToExp (..),
+                                            ToIdent (..), quasiquote)
+import qualified Language.C.Syntax         as C
+import           Language.Haskell.TH.Quote (QuasiQuoter)
 
 exts :: [C.Extensions]
 exts = [C.CUDA]

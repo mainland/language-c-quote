@@ -6,9 +6,9 @@
 -- License     :  BSD-style
 -- Maintainer  :  mainland@drexel.edu
 
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell   #-}
 {-# OPTIONS_GHC -w #-}
 
 module Language.C.Quote.Base (
@@ -20,34 +20,32 @@ module Language.C.Quote.Base (
     quasiquote
   ) where
 
-import Control.Monad ((>=>))
-import qualified Data.ByteString.Char8 as B
-import Data.Char (isAscii, isPrint, ord)
-import Data.Data (Data(..))
-import Data.Generics (extQ)
-import Data.Int
-import Data.Loc
-import Data.Typeable (Typeable(..))
-import Data.Word
+import           Control.Monad              ((>=>))
+import qualified Data.ByteString.Char8      as B
+import           Data.Char                  (isAscii, isPrint, ord)
+import           Data.Data                  (Data (..))
+import           Data.Generics              (extQ)
+import           Data.Int
+import           Data.Loc
+import           Data.Typeable              (Typeable (..))
+import           Data.Word
 #ifdef FULL_HASKELL_ANTIQUOTES
-import Language.Haskell.Meta (parseExp,parsePat)
+import           Language.Haskell.Meta      (parseExp, parsePat)
 #else
-import Language.Haskell.ParseExp (parseExp,parsePat)
+import           Language.Haskell.ParseExp  (parseExp, parsePat)
 #endif
-import Language.Haskell.TH as TH
+import           Language.Haskell.TH        as TH
 #if MIN_VERSION_template_haskell(2,7,0)
-import Language.Haskell.TH.Quote (QuasiQuoter(..),
-                                  dataToQa,
-                                  dataToExpQ,
-                                  dataToPatQ)
+import           Language.Haskell.TH.Quote  (QuasiQuoter (..), dataToExpQ,
+                                             dataToPatQ, dataToQa)
 #else /* !MIN_VERSION_template_haskell(2,7,0) */
-import Language.Haskell.TH.Quote (QuasiQuoter(..))
+import           Language.Haskell.TH.Quote  (QuasiQuoter (..))
 #endif /* !MIN_VERSION_template_haskell(2,7,0) */
-import Language.Haskell.TH.Syntax
-import Numeric (showOct, showHex)
+import           Language.Haskell.TH.Syntax
+import           Numeric                    (showHex, showOct)
 
-import qualified Language.C.Parser as P
-import qualified Language.C.Syntax as C
+import qualified Language.C.Parser          as P
+import qualified Language.C.Syntax          as C
 
 newtype LongDouble = LongDouble Double
 
@@ -218,8 +216,8 @@ qqStringE :: String -> Maybe (Q Exp)
 qqStringE s = Just $ litE $ stringL s
 
 qqIdE :: C.Id -> Maybe (Q Exp)
-qqIdE (C.AntiId v loc)  = Just [|toIdent $(antiVarE v) $(qqLocE loc)|]
-qqIdE _                 = Nothing
+qqIdE (C.AntiId v loc) = Just [|toIdent $(antiVarE v) $(qqLocE loc)|]
+qqIdE _                = Nothing
 
 qqDeclSpecE :: C.DeclSpec -> Maybe (Q Exp)
 qqDeclSpecE (C.AntiDeclSpec v _) = Just $ antiVarE v
@@ -251,8 +249,8 @@ qqDeclE (C.AntiTypeDecl v _) =
 qqDeclE _ = Nothing
 
 qqTypeQualE :: C.TypeQual -> Maybe (Q Exp)
-qqTypeQualE (C.AntiTypeQual v _)  = Just $ antiVarE v
-qqTypeQualE _                     = Nothing
+qqTypeQualE (C.AntiTypeQual v _) = Just $ antiVarE v
+qqTypeQualE _                    = Nothing
 
 qqTypeQualListE :: [C.TypeQual] -> Maybe (Q Exp)
 qqTypeQualListE [] = Just [|[]|]
@@ -262,12 +260,12 @@ qqTypeQualListE (stm : stms) =
     Just [|$(dataToExpQ qqExp stm) : $(dataToExpQ qqExp stms)|]
 
 qqTypeE :: C.Type -> Maybe (Q Exp)
-qqTypeE (C.AntiType v _)  = Just $ antiVarE v
-qqTypeE _                 = Nothing
+qqTypeE (C.AntiType v _) = Just $ antiVarE v
+qqTypeE _                = Nothing
 
 qqInitializerE :: C.Initializer -> Maybe (Q Exp)
-qqInitializerE (C.AntiInit v _)  = Just $ antiVarE v
-qqInitializerE _                 = Nothing
+qqInitializerE (C.AntiInit v _) = Just $ antiVarE v
+qqInitializerE _                = Nothing
 
 qqInitializerListE :: [(Maybe C.Designation, C.Initializer)] -> Maybe (Q Exp)
 qqInitializerListE [] = Just [|[]|]
@@ -277,8 +275,8 @@ qqInitializerListE (field : fields) =
     Just [|$(dataToExpQ qqExp field) : $(dataToExpQ qqExp fields)|]
 
 qqInitGroupE :: C.InitGroup -> Maybe (Q Exp)
-qqInitGroupE (C.AntiDecl v _)  = Just $ antiVarE v
-qqInitGroupE _                 = Nothing
+qqInitGroupE (C.AntiDecl v _) = Just $ antiVarE v
+qqInitGroupE _                = Nothing
 
 qqInitGroupListE :: [C.InitGroup] -> Maybe (Q Exp)
 qqInitGroupListE [] = Just [|[]|]
@@ -288,8 +286,8 @@ qqInitGroupListE (ini : inis) =
     Just [|$(dataToExpQ qqExp ini) : $(dataToExpQ qqExp inis)|]
 
 qqAttrE :: C.Attr -> Maybe (Q Exp)
-qqAttrE (C.AntiAttr v _)  = Just $ antiVarE v
-qqAttrE _                 = Nothing
+qqAttrE (C.AntiAttr v _) = Just $ antiVarE v
+qqAttrE _                = Nothing
 
 qqAttrListE :: [C.Attr] -> Maybe (Q Exp)
 qqAttrListE [] = Just [|[]|]
@@ -299,8 +297,8 @@ qqAttrListE (field : fields) =
     Just [|$(dataToExpQ qqExp field) : $(dataToExpQ qqExp fields)|]
 
 qqFieldGroupE :: C.FieldGroup -> Maybe (Q Exp)
-qqFieldGroupE (C.AntiSdecl v _)  = Just $ antiVarE v
-qqFieldGroupE _                  = Nothing
+qqFieldGroupE (C.AntiSdecl v _) = Just $ antiVarE v
+qqFieldGroupE _                 = Nothing
 
 qqFieldGroupListE :: [C.FieldGroup] -> Maybe (Q Exp)
 qqFieldGroupListE [] = Just [|[]|]
@@ -310,8 +308,8 @@ qqFieldGroupListE (field : fields) =
     Just [|$(dataToExpQ qqExp field) : $(dataToExpQ qqExp fields)|]
 
 qqCEnumE :: C.CEnum -> Maybe (Q Exp)
-qqCEnumE (C.AntiEnum v _)  = Just $ antiVarE v
-qqCEnumE _                 = Nothing
+qqCEnumE (C.AntiEnum v _) = Just $ antiVarE v
+qqCEnumE _                = Nothing
 
 qqCEnumListE :: [C.CEnum] -> Maybe (Q Exp)
 qqCEnumListE [] = Just [|[]|]
@@ -321,8 +319,8 @@ qqCEnumListE (field : fields) =
     Just [|$(dataToExpQ qqExp field) : $(dataToExpQ qqExp fields)|]
 
 qqParamE :: C.Param -> Maybe (Q Exp)
-qqParamE (C.AntiParam v _)  = Just $ antiVarE v
-qqParamE _                  = Nothing
+qqParamE (C.AntiParam v _) = Just $ antiVarE v
+qqParamE _                 = Nothing
 
 qqParamListE :: [C.Param] -> Maybe (Q Exp)
 qqParamListE [] = Just [|[]|]
@@ -499,11 +497,11 @@ qqObjCMethodProtoE _                           = Nothing
 
 qqObjCRecvE :: C.ObjCRecv -> Maybe (Q Exp)
 qqObjCRecvE (C.AntiObjCRecv p _) = Just $ antiVarE p
-qqObjCRecvE _                  = Nothing
+qqObjCRecvE _                    = Nothing
 
 qqObjCArgE :: C.ObjCArg -> Maybe (Q Exp)
 qqObjCArgE (C.AntiObjCArg p _) = Just $ antiVarE p
-qqObjCArgE _                  = Nothing
+qqObjCArgE _                   = Nothing
 
 qqObjCArgsE :: [C.ObjCArg] -> Maybe (Q Exp)
 qqObjCArgsE [] = Just [|[]|]
@@ -590,12 +588,12 @@ qqTypeQualListP (arg : args) =
     Just $ conP (mkName ":") [dataToPatQ qqPat arg, dataToPatQ qqPat args]
 
 qqTypeP :: C.Type -> Maybe (Q Pat)
-qqTypeP (C.AntiType v _)  = Just $ antiVarP v
-qqTypeP _                 = Nothing
+qqTypeP (C.AntiType v _) = Just $ antiVarP v
+qqTypeP _                = Nothing
 
 qqInitializerP :: C.Initializer -> Maybe (Q Pat)
-qqInitializerP (C.AntiInit v _)  = Just $ antiVarP v
-qqInitializerP _                 = Nothing
+qqInitializerP (C.AntiInit v _) = Just $ antiVarP v
+qqInitializerP _                = Nothing
 
 qqInitializerListP :: [C.Initializer] -> Maybe (Q Pat)
 qqInitializerListP [] = Just $ listP []
@@ -618,8 +616,8 @@ qqInitGroupListP (ini : inis) =
     Just $ conP (mkName ":") [dataToPatQ qqPat ini,  dataToPatQ qqPat inis]
 
 qqAttrP :: C.Attr -> Maybe (Q Pat)
-qqAttrP (C.AntiAttr v _)  = Just $ antiVarP v
-qqAttrP _                 = Nothing
+qqAttrP (C.AntiAttr v _) = Just $ antiVarP v
+qqAttrP _                = Nothing
 
 qqAttrListP :: [C.Attr] -> Maybe (Q Pat)
 qqAttrListP [] = Just $ listP []

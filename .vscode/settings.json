@@ -1,0 +1,11 @@
+{
+  "files.trimTrailingWhitespace": true,
+  "haskell.formattingProvider": "stylish-haskell",
+  "[haskell]": {
+    "editor.detectIndentation": false,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "editor.defaultFormatter": "haskell.haskell",
+    "editor.formatOnSave": true
+  }
+}

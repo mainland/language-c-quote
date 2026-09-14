@@ -11,6 +11,27 @@ Supported compilers start at GHC 8.0. The tested versions are listed in
 `language-c-quote.cabal`. Use Cabal's `-w` option to select another compiler.
 Cabal manages dependencies and generates the lexer and parser with Alex and Happy.
 
+## Formatting
+
+Format hand-written Haskell modules with Stylish Haskell:
+
+```sh
+stylish-haskell -i path/to/Module.hs
+```
+
+The repository configuration matches the sibling libraries' import and pragma
+style, expands tabs to eight spaces, and removes trailing whitespace. VS Code
+uses the same formatter on save and inserts four-space indentation.
+
+Review formatting changes inside string literals and quasiquotes, where
+whitespace may be significant. Do not run the formatter on the Alex and Happy
+inputs (`.x` and `.y`), build outputs, or the generated
+`src/Language/C/Syntax-instances.hs` include. Keep generated instances in sync
+through the generator below.
+
+Place CPP conditionals around complete definitions when possible so the
+formatter can parse the source without evaluating the conditionals.
+
 ## Development tools
 
 The manual `development-tools` flag enables two optional executables. It is

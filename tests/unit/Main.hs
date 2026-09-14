@@ -2,25 +2,26 @@
 
 module Main where
 
-import Test.Framework
-import Test.Framework.Providers.HUnit
-import Test.HUnit (Assertion, (@?=))
+import           Test.Framework
+import           Test.Framework.Providers.HUnit
+import           Test.HUnit                      (Assertion, (@?=))
 
-import qualified Data.ByteString.Char8 as B
-import Data.Char (isSpace)
-import Data.Loc (SrcLoc, noLoc, startPos)
-import Control.Exception (SomeException)
-import Language.C.Quote.C
-import qualified Language.C.Quote.GCC as GCC
-import qualified Language.C.Syntax as C
-import qualified Language.C.Parser as P
-import MainCPP
-import Numeric (showHex)
-import GCC (gccTests)
-import Objc (objcTests, objcRegressionTests)
-import CUDA (cudaTests)
-import Text.PrettyPrint.Mainland
-import Text.PrettyPrint.Mainland.Class
+import           Control.Exception               (SomeException)
+import           CUDA                            (cudaTests)
+import qualified Data.ByteString.Char8           as B
+import           Data.Char                       (isSpace)
+import           Data.Loc                        (SrcLoc, noLoc, startPos)
+import           GCC                             (gccTests)
+import qualified Language.C.Parser               as P
+import           Language.C.Quote.C
+import qualified Language.C.Quote.GCC            as GCC
+import qualified Language.C.Syntax               as C
+import           MainCPP
+import           Numeric                         (showHex)
+import           Objc                            (objcRegressionTests,
+                                                  objcTests)
+import           Text.PrettyPrint.Mainland
+import           Text.PrettyPrint.Mainland.Class
 
 main :: IO ()
 main = defaultMain tests
@@ -379,7 +380,7 @@ cPatternAntiquotationTests = testGroup "C pattern antiquotations"
       where
         stms = case [cstm|f(1, 2, 3);|] of
                  [cstm|f(1, $args:es);|] -> es
-                 _ -> []
+                 _                       -> []
 
 statementCommentTests :: Test
 statementCommentTests = testGroup "Statement comments"

@@ -1,7 +1,7 @@
 module Opts where
 
-import System.Console.GetOpt
-import Data.Maybe (fromMaybe)
+import           Data.Maybe            (fromMaybe)
+import           System.Console.GetOpt
 
 data Flag = C99
           | C11

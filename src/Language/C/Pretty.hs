@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -12,20 +12,19 @@
 
 module Language.C.Pretty where
 
-import Data.Char (isAlphaNum,
-                  isLower)
-import Data.Loc
-import Data.Maybe (isJust)
+import           Data.Char                       (isAlphaNum, isLower)
+import           Data.Loc
+import           Data.Maybe                      (isJust)
 #if !(MIN_VERSION_base(4,9,0))
-import Data.Monoid (Monoid(..), (<>))
+import           Data.Monoid                     (Monoid (..), (<>))
 #endif /* !(MIN_VERSION_base(4,9,0)) */
 #if MIN_VERSION_base(4,9,0) && !(MIN_VERSION_base(4,11,0))
-import Data.Semigroup (Semigroup(..))
+import           Data.Semigroup                  (Semigroup (..))
 #endif
 
-import Language.C.Syntax
-import Text.PrettyPrint.Mainland
-import Text.PrettyPrint.Mainland.Class
+import           Language.C.Syntax
+import           Text.PrettyPrint.Mainland
+import           Text.PrettyPrint.Mainland.Class
 
 pprLoc :: SrcLoc -> Doc -> Doc
 pprLoc loc doc = srcloc loc <> doc
@@ -202,8 +201,8 @@ instance CFixity UnOp where
     fixity _ = infixr_ unopPrec
 
 instance Pretty Id where
-    ppr (Id ident _)  = text ident
-    ppr (AntiId v _)  = pprAnti "id" v
+    ppr (Id ident _) = text ident
+    ppr (AntiId v _) = pprAnti "id" v
 
 instance Pretty StringLit where
     ppr (StringLit ss _ _) = sep (map string ss)
@@ -252,8 +251,8 @@ instance Pretty TypeQual where
     ppr (TCLkernel _)       = text "__kernel"
 
 instance Pretty Sign where
-    ppr (Tsigned _)    = text "signed"
-    ppr (Tunsigned _)  = text "unsigned"
+    ppr (Tsigned _)   = text "signed"
+    ppr (Tunsigned _) = text "unsigned"
 
 instance Pretty TypeSpec where
     ppr (Tvoid _)            = text "void"
@@ -345,7 +344,7 @@ instance Pretty ArraySize where
 pprDeclarator :: Maybe Id -> Decl -> Doc
 pprDeclarator maybe_ident declarator =
     case maybe_ident of
-      Nothing ->    pprDecl declarator empty
+      Nothing    ->    pprDecl declarator empty
       Just ident -> pprDecl declarator (ppr ident)
     where
       pprPtr :: Decl -> Doc -> (Decl, Doc)
@@ -386,12 +385,12 @@ pprDeclarator maybe_ident declarator =
           (decl', declDoc) = uncurry pprPtr (pprDirDecl decl mid)
 
 instance Pretty Type where
-    ppr (Type spec decl _)  = ppr spec <+> pprDeclarator Nothing decl
-    ppr (AntiType v _)      = pprAnti "ty" v
+    ppr (Type spec decl _) = ppr spec <+> pprDeclarator Nothing decl
+    ppr (AntiType v _)     = pprAnti "ty" v
 
 instance Pretty Designator where
-    ppr (IndexDesignator e _)       = brackets $ ppr e
-    ppr (MemberDesignator ident _)  = dot <> ppr ident
+    ppr (IndexDesignator e _)      = brackets $ ppr e
+    ppr (MemberDesignator ident _) = dot <> ppr ident
 
 instance Pretty Designation where
     ppr (Designation ds _) = folddoc (<>) (map ppr ds)
@@ -414,10 +413,10 @@ instance Pretty Init where
         pprDeclarator (Just ident) decl <+/> ppr attrs
         <+> case maybe_asmlabel of
               Nothing -> empty
-              Just l ->  text "asm" <+> parens (ppr l)
+              Just l  ->  text "asm" <+> parens (ppr l)
         <+> case maybe_e of
               Nothing -> empty
-              Just e ->  text "=" <+/> ppr e
+              Just e  ->  text "=" <+/> ppr e
 
 instance Pretty Typedef where
     ppr (Typedef ident decl attrs loc) =
@@ -460,7 +459,7 @@ instance Pretty CEnum where
         ppr ident <+>
         case maybe_e of
           Nothing -> empty
-          Just e ->  text "=" <+/> ppr e
+          Just e  ->  text "=" <+/> ppr e
 
     ppr (AntiEnums v _)  = pprAnti "enums" v
     ppr (AntiEnum v _)   = pprAnti "enum" v
@@ -608,9 +607,9 @@ instance Pretty Stm where
         pprThen then' (fmap pprElse maybe_else)
       where
         isIf :: Stm -> Bool
-        isIf If{} = True
+        isIf If{}              = True
         isIf (Comment _ stm _) = isIf stm
-        isIf _ = False
+        isIf _                 = False
 
         pprThen :: Stm -> Maybe Doc -> Doc
         pprThen stm@(Block {}) rest        = space <> ppr stm <+> maybe empty id rest
@@ -681,18 +680,18 @@ instance Pretty Stm where
         srcloc sloc <>
         text "__asm__"
         <> case isVolatile of
-             True ->  space <> text "__volatile__"
+             True  ->  space <> text "__volatile__"
              False -> empty
         <> parens (ppr template
                    <> case outs of
                         [] -> space <> colon
-                        _ ->  colon <+/> ppr outs
+                        _  ->  colon <+/> ppr outs
                    <> case ins of
                         [] -> space <> colon
-                        _ ->  colon <+/> ppr ins
+                        _  ->  colon <+/> ppr ins
                    <> case clobbered of
                         [] -> space <> colon
-                        _ ->  colon <+/> commasep (map text clobbered)
+                        _  ->  colon <+/> commasep (map text clobbered)
                   )
         <> semi
 
@@ -700,19 +699,19 @@ instance Pretty Stm where
         srcloc sloc <>
         text "__asm__"
         <> case isVolatile of
-             True ->  space <> text "__volatile__"
+             True  ->  space <> text "__volatile__"
              False -> empty
         <> parens (ppr template
                    <> colon
                    <> case ins of
                         [] -> space <> colon
-                        _ ->  colon <+/> ppr ins
+                        _  ->  colon <+/> ppr ins
                    <> case clobbered of
                         [] -> space <> colon
-                        _ ->  colon <+/> commasep (map text clobbered)
+                        _  ->  colon <+/> commasep (map text clobbered)
                    <> case clobbered of
                         [] -> space <> colon
-                        _ ->  colon <+/> commasep (map ppr labels)
+                        _  ->  colon <+/> commasep (map ppr labels)
                   )
         <> semi
 
@@ -748,8 +747,8 @@ pprBlock stm@(If {})    = space <> ppr [BlockStm stm]
 pprBlock stm            = nest 4 $ line <> ppr stm
 
 instance Pretty BlockItem where
-    ppr (BlockDecl decl) = ppr decl <> semi
-    ppr (BlockStm stm)   = ppr stm
+    ppr (BlockDecl decl)     = ppr decl <> semi
+    ppr (BlockStm stm)       = ppr stm
 
     ppr (AntiBlockItem v _)  = pprAnti "item" v
     ppr (AntiBlockItems v _) = pprAnti "items" v
@@ -942,11 +941,11 @@ instance Pretty Exp where
             [ppr (exeGridDim conf), ppr (exeBlockDim conf)] ++
             (case exeSharedSize conf of
                Nothing -> []
-               Just e -> [ppr e])
+               Just e  -> [ppr e])
             ++
             (case exeStream conf of
                Nothing -> []
-               Just e -> [ppr e])
+               Just e  -> [ppr e])
 
     pprPrec _ (ObjCMsg recv args varArgs loc1) =
         pprLoc loc1 $
@@ -1031,7 +1030,7 @@ instance Pretty LambdaIntroducer where
     pprPrec _ (LambdaIntroducer items loc) = pprLoc loc $ brackets $ commasep (map ppr items)
 
 instance Pretty CaptureListEntry where
-    pprPrec _ DefaultByValue = char '='
+    pprPrec _ DefaultByValue     = char '='
     pprPrec _ DefaultByReference = char '&'
 
 instance Pretty ObjCDictElem where

@@ -1,17 +1,17 @@
-import Control.Exception
-import Control.Monad (when)
-import qualified Data.ByteString.Char8 as B
-import Data.Loc
-import System.Environment (getArgs)
-import Text.PrettyPrint.Mainland
-import Text.PrettyPrint.Mainland.Class
+import           Control.Exception
+import           Control.Monad                   (when)
+import qualified Data.ByteString.Char8           as B
+import           Data.Loc
+import           System.Environment              (getArgs)
+import           Text.PrettyPrint.Mainland
+import           Text.PrettyPrint.Mainland.Class
 
-import qualified Language.C.Parser as P
-import qualified Language.C.Parser.Tokens as T
-import qualified Language.C.Syntax as C
-import Language.C.Properties
+import qualified Language.C.Parser               as P
+import qualified Language.C.Parser.Tokens        as T
+import           Language.C.Properties
+import qualified Language.C.Syntax               as C
 
-import Opts
+import           Opts
 
 extsMap :: [(Flag, C.Extensions)]
 extsMap = [(C99,    C.C99)
@@ -50,8 +50,8 @@ lexFile exts filename = do
     tokensP = do
         t <- P.lexToken
         case t of
-          L _ T.Teof  -> return []
-          _           -> tokensP >>= \ts -> return (t : ts)
+          L _ T.Teof -> return []
+          _          -> tokensP >>= \ts -> return (t : ts)
 
 parseFile :: [Flag] -> [C.Extensions] -> String -> IO ()
 parseFile flags exts filename = do

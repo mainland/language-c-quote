@@ -10,6 +10,6 @@ module Language.C (
     module Language.C.Syntax
   ) where
 
-import Language.C.Parser
-import Language.C.Pretty
-import Language.C.Syntax
+import           Language.C.Parser
+import           Language.C.Pretty
+import           Language.C.Syntax
