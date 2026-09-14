@@ -1,0 +1,4 @@
+constraint-set simple-haskell-antiquotes
+  constraints: language-c-quote -full-haskell-antiquotes
+  tests: True
+  run-tests: True

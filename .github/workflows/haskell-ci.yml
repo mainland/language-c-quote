@@ -245,6 +245,16 @@ jobs:
         run: |
           rm -f cabal.project.local
           $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks all
+      - name: prepare for constraint sets
+        run: |
+          rm -f cabal.project.local
+      - name: constraint set simple-haskell-antiquotes
+        run: |
+          $CABAL v2-build $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='language-c-quote -full-haskell-antiquotes' all --dry-run
+          cabal-plan topo | sort
+          $CABAL v2-build $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='language-c-quote -full-haskell-antiquotes' --dependencies-only -j2 all
+          $CABAL v2-build $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='language-c-quote -full-haskell-antiquotes' all
+          $CABAL v2-test $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='language-c-quote -full-haskell-antiquotes' all
       - name: save cache
         if: always()
         uses: actions/cache/save@v6

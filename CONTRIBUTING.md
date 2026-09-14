@@ -24,6 +24,22 @@ Keep shared tests within the simpler parser's syntax, with type annotations in
 ordinary Haskell bindings. Put tests requiring full Haskell syntax in
 `tests/unit/MainCPP.hs`, guarded by `FULL_HASKELL_ANTIQUOTES`.
 
+## Continuous integration
+
+The generated GitHub Actions workflow checks the default configuration and the
+`simple-haskell-antiquotes` constraint set across the supported compiler matrix.
+The constraint set in `cabal.haskell-ci` disables full Haskell antiquotes and
+enables both building and running the tests.
+
+After changing `tested-with` or `cabal.haskell-ci`, regenerate the workflow with
+the haskell-ci version recorded in `.github/workflows/haskell-ci.yml`:
+
+```sh
+haskell-ci regenerate
+```
+
+Review the generated diff alongside the configuration change.
+
 ## Formatting
 
 Format hand-written Haskell modules with Stylish Haskell:
