@@ -2,4 +2,7 @@
 
 The package provides quasiquoters for several dialects of the C language, including CUDA, OpenCL, and Objective-C.
 
+See the [API documentation](https://hackage.haskell.org/package/language-c-quote/docs/Language-C-Quote.html)
+for quasiquoters and antiquotation syntax, and the [changelog](CHANGELOG.md) for release notes.
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for Cabal build instructions and development tools.

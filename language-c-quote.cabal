@@ -38,12 +38,14 @@ build-type: Simple
 
 extra-source-files:
   src/Language/C/Syntax-instances.hs
-  CHANGELOG.md
-  CONTRIBUTING.md
-  README.md
   .stylish-haskell.yaml
   scripts/regenerate-instances.sh
   examples/parse/test.sh
+
+extra-doc-files:
+  CHANGELOG.md
+  CONTRIBUTING.md
+  README.md
 
 flag full-haskell-antiquotes
   description: Support full Haskell expressions/patterns in antiquotes. This
