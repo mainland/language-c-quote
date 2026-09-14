@@ -1,3 +1,7 @@
+-- Allow containers and its bundled dependents to satisfy published
+-- pretty-printer dependencies on newer GHC versions.
+installed: -containers -binary -text
+
 constraint-set simple-haskell-antiquotes
   constraints: language-c-quote -full-haskell-antiquotes
   tests: True

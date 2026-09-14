@@ -25,7 +25,9 @@ tested-with:   GHC==8.0.2,
                GHC==9.4.8,
                GHC==9.6.4,
                GHC==9.8.2,
-               GHC==9.10.1
+               GHC==9.10.1,
+               GHC==9.12.2,
+               GHC==9.14.1
 
 description:
   This package provides a general parser for the C language, including most GCC
@@ -64,7 +66,7 @@ library
     array                  >= 0.2   && < 0.6,
     base                   >= 4.9   && < 5,
     bytestring             >= 0.9   && < 0.13,
-    containers             >= 0.4   && < 0.8,
+    containers             >= 0.4   && < 0.9,
     exception-mtl          >= 0.3   && < 0.5,
     exception-transformers >= 0.3   && < 0.5,
     filepath               >= 1.2   && < 1.6,
@@ -72,7 +74,7 @@ library
     mtl                    >= 2.0   && < 3,
     srcloc                 >= 0.4   && < 0.8,
     syb                    >= 0.3   && < 0.8,
-    template-haskell       >= 2.11
+    template-haskell       >= 2.11  && < 2.25
 
   if flag(full-haskell-antiquotes)
     if impl(ghc < 8.1)
@@ -173,7 +175,7 @@ test-suite unit
     mainland-pretty      >= 0.7 && < 0.9,
     srcloc               >= 0.4 && < 0.8,
     test-framework       >= 0.8 && < 0.9,
-    template-haskell     >= 2.11,
+    template-haskell     >= 2.11 && < 2.25,
     test-framework-hunit >= 0.3 && < 0.4
 
   if flag(full-haskell-antiquotes)

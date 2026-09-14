@@ -31,6 +31,10 @@ The generated GitHub Actions workflow checks the default configuration and the
 The constraint set in `cabal.haskell-ci` disables full Haskell antiquotes and
 enables both building and running the tests.
 
+CI lets Cabal select `containers`, `binary`, and `text` instead of requiring
+the copies bundled with GHC. This lets newer compilers build with published
+pretty-printer versions whose dependency bounds require older `containers`.
+
 After changing `tested-with` or `cabal.haskell-ci`, regenerate the workflow with
 the haskell-ci version recorded in `.github/workflows/haskell-ci.yml`:
 
